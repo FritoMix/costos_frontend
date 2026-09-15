@@ -1,0 +1,15 @@
+# Lo que NO debe ir al contexto de build de Docker.
+# Mantiene el build rapido y no filtra secretos ni basura de desarrollo.
+
+node_modules
+dist
+.git
+.gitignore
+coverage
+e2e
+playwright-report
+test-results
+*.log
+.env
+.env.*
+!.env.example

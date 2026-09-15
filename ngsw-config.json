@@ -1,0 +1,46 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/logo.png",
+          "/icon-192.png",
+          "/icon-512.png",
+          "/icon-maskable-192.png",
+          "/icon-maskable-512.png",
+          "/apple-touch-icon.png",
+          "/manifest.webmanifest",
+          "/index.html",
+          "/*.css",
+          "/*.js"
+        ]
+      }
+    },
+    {
+      "name": "tipografias",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": ["/*.woff2", "/*.woff"]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "api-lectura",
+      "urls": ["/api/**", "!/api/v1/auth/**"],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 50,
+        "maxAge": "30s",
+        "timeout": "8s"
+      }
+    }
+  ]
+}

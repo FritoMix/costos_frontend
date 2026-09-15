@@ -1,0 +1,427 @@
+/* ---------------------------------------------------------------------------
+   DATACONTROL - Hoja de estilos global y Sistema de Diseño Futurista Azul Cálido
+   Fritomix SAS - Planta de Producción
+--------------------------------------------------------------------------- */
+
+@import 'tailwindcss';
+
+/* Tipografias empaquetadas con la app (no se piden a Google): la planta debe
+   verse igual con o sin internet, y asi la politica de seguridad (CSP) puede
+   seguir prohibiendo cualquier origen externo. Son fuentes VARIABLES: un solo
+   archivo por familia cubre todos los grosores que usa el diseño. */
+@import '@fontsource-variable/plus-jakarta-sans';
+@import '@fontsource-variable/jetbrains-mono';
+
+@theme {
+  /* Marca: Azul zafiro/cyan cálido y luminoso, de alta tecnología y agrado visual */
+  --color-marca-50: #f0f9ff;
+  --color-marca-100: #e0f2fe;
+  --color-marca-200: #bae6fd;
+  --color-marca-300: #7dd3fc;
+  --color-marca-400: #38bdf8;
+  --color-marca-500: #0284c7;
+  --color-marca-600: #0369a1;
+  --color-marca-700: #075985;
+  --color-marca-800: #0c4a6e;
+  --color-marca-900: #0a3650;
+  --color-marca-950: #08283e;
+
+  /* Paleta Azul Cálido: Fondos y superficies en azul claro/luminoso reconfortante */
+  --color-calido-50: #f4f9fd;
+  --color-calido-100: #e7f3fc;
+  --color-calido-200: #d4e7f8;
+  --color-calido-300: #b4d7f4;
+  --color-calido-400: #88c0ee;
+  --color-calido-500: #5fa2e2;
+  --color-calido-600: #3f81d1;
+  --color-calido-700: #2b65ba;
+  --color-calido-800: #255198;
+  --color-calido-900: #23457a;
+  --color-calido-950: #162b4e;
+
+  /* El sufijo "Variable" es el nombre con que las registra @fontsource-variable.
+     Detras van los respaldos del sistema por si la fuente no cargara. */
+  --font-sans: 'Plus Jakarta Sans Variable', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-calido-50 text-slate-800 antialiased min-h-screen;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-marca-500 ring-2 ring-marca-500/20;
+  }
+
+  /* Scrollbar azul cálido y sutil */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(56, 189, 248, 0.3);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(56, 189, 248, 0.5);
+  }
+}
+
+@layer components {
+  /* Campos de formulario amplios, ergonómicos y limpios con azul cálido glassmorphism */
+  .campo {
+    @apply block w-full rounded-2xl border border-sky-200/90 bg-white/80 px-4 py-3 text-sm font-medium
+           text-slate-900 shadow-2xs transition-all duration-200 placeholder:text-slate-400
+           hover:border-sky-300 hover:shadow-sm focus:border-marca-500 focus:bg-white focus:ring-4
+           focus:ring-marca-500/15 focus:outline-none
+           disabled:cursor-not-allowed disabled:bg-sky-50/50 disabled:text-slate-400 disabled:border-sky-200;
+    backdrop-filter: blur(8px);
+  }
+
+  .campo-invalido {
+    @apply border-rose-300 bg-rose-50/30 text-rose-900 focus:border-rose-500 focus:ring-rose-500/20;
+  }
+
+  .etiqueta {
+    @apply mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600;
+  }
+
+  .ayuda {
+    @apply mt-1 text-xs text-slate-500 leading-relaxed;
+  }
+
+  .error-campo {
+    @apply mt-1 text-xs font-semibold text-rose-600 flex items-center gap-1;
+  }
+
+  /* Tarjeta en azul cálido con glassmorphism sutil y profundidad elegante */
+  .tarjeta {
+    @apply rounded-3xl border border-sky-100/80 bg-white/85 shadow-sm transition-all duration-300;
+    backdrop-filter: blur(12px);
+  }
+
+  /* Tablas de producción */
+  .tabla {
+    @apply w-full border-collapse text-left text-sm;
+  }
+
+  .tabla thead th {
+    @apply border-b border-sky-100 bg-sky-50/60 px-4 py-3.5 text-xs font-bold uppercase tracking-wider
+           text-slate-600 whitespace-nowrap;
+  }
+
+  .tabla tbody td {
+    @apply border-b border-sky-50 px-4 py-3.5 align-middle text-slate-700 font-medium;
+  }
+
+  .tabla tbody tr {
+    @apply transition-all duration-200;
+  }
+
+  .tabla tbody tr:hover {
+    @apply bg-sky-50/50;
+  }
+
+  /* Tarjeta que reacciona al pasar el mouse: sube un poco y gana sombra azul cálida. */
+  .tarjeta-hover {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-sky-200/40 hover:border-sky-300/70;
+  }
+
+  /* Panel de formulario que se queda fijo */
+  .panel-sticky {
+    @apply lg:sticky lg:top-20;
+  }
+
+  /* Efecto de resplandor azul cálido para elementos destacados */
+  .resplandor {
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.2), 0 0 60px rgba(2, 132, 199, 0.08);
+  }
+
+  /* Glassmorphism card variant */
+  .glass {
+    @apply bg-white/70 border border-white/40;
+    backdrop-filter: blur(16px) saturate(1.2);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Sistema de animaciones futuristas
+--------------------------------------------------------------------------- */
+@layer utilities {
+  @keyframes dc-subir {
+    from {
+      opacity: 0;
+      transform: translateY(20px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes dc-aparecer {
+    from {
+      opacity: 0;
+      filter: blur(4px);
+    }
+    to {
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+
+  @keyframes dc-escala {
+    from {
+      opacity: 0;
+      transform: scale(0.92);
+      filter: blur(4px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+      filter: blur(0);
+    }
+  }
+
+  @keyframes dc-bajar {
+    from {
+      opacity: 0;
+      transform: translateY(-12px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes dc-pulsar {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(56, 189, 248, 0);
+    }
+  }
+
+  @keyframes dc-flotar {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  @keyframes dc-brillar {
+    0% {
+      background-position: -200% center;
+    }
+    100% {
+      background-position: 200% center;
+    }
+  }
+
+  @keyframes dc-deslizar-derecha {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Nuevas keyframes de alto impacto visual */
+  @keyframes dc-orb-1 {
+    0%, 100% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(40px, -60px) scale(1.15); }
+    66% { transform: translate(-30px, 30px) scale(0.9); }
+  }
+
+  @keyframes dc-orb-2 {
+    0%, 100% { transform: translate(0px, 0px) scale(1); }
+    50% { transform: translate(-50px, -40px) scale(1.2); }
+  }
+
+  @keyframes dc-orb-3 {
+    0%, 100% { transform: translate(0px, 0px) scale(1); }
+    50% { transform: translate(35px, 45px) scale(1.1); }
+  }
+
+  @keyframes dc-logo-float {
+    0%, 100% {
+      transform: translateY(0) scale(1);
+    }
+    50% {
+      transform: translateY(-8px) scale(1.03);
+    }
+  }
+
+  @keyframes dc-rotar-suave {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes dc-glow-pulse {
+    0%, 100% { opacity: 0.45; transform: scale(1); }
+    50% { opacity: 0.85; transform: scale(1.08); }
+  }
+
+  @keyframes dc-shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+  }
+
+  @keyframes dc-aurora-sweep {
+    0% { transform: translateX(-100%) rotate(-10deg); opacity: 0; }
+    50% { opacity: 0.6; }
+    100% { transform: translateX(200%) rotate(-10deg); opacity: 0; }
+  }
+
+  @keyframes dc-shimmer-btn {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  @keyframes dc-glow-ring {
+    0%, 100% { transform: rotate(0deg) scale(1); filter: hue-rotate(0deg); }
+    50% { transform: rotate(180deg) scale(1.05); filter: hue-rotate(30deg); }
+  }
+
+  @keyframes dc-gradient-bg {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .anim-gradient-bg {
+    background-size: 300% 300% !important;
+    animation: dc-gradient-bg 12s ease infinite !important;
+  }
+
+  .anim-aurora {
+    animation: dc-aurora-sweep 9s ease-in-out infinite;
+  }
+
+  .anim-shimmer-btn {
+    animation: dc-shimmer-btn 3s ease-in-out infinite;
+  }
+
+  .anim-glow-ring {
+    animation: dc-glow-ring 12s linear infinite;
+  }
+
+  /* Entrada de una pantalla completa. */
+  .anim-pagina {
+    animation: dc-subir 0.6s cubic-bezier(0.16, 0.84, 0.44, 1) both;
+  }
+
+  /* Entrada de un elemento suelto. */
+  .anim-entrada {
+    animation: dc-subir 0.5s cubic-bezier(0.16, 0.84, 0.44, 1) both;
+  }
+
+  .anim-escala {
+    animation: dc-escala 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  .anim-bajar {
+    animation: dc-bajar 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  .anim-aparecer {
+    animation: dc-aparecer 0.4s ease-out both;
+  }
+
+  .anim-pulsar {
+    animation: dc-pulsar 2s ease-in-out infinite;
+  }
+
+  .anim-flotar {
+    animation: dc-flotar 4s ease-in-out infinite;
+  }
+
+  .anim-logo-float {
+    animation: dc-logo-float 4.5s ease-in-out infinite;
+  }
+
+  .anim-rotar-lento {
+    animation: dc-rotar-suave 25s linear infinite;
+  }
+
+  .anim-glow-pulse {
+    animation: dc-glow-pulse 3.5s ease-in-out infinite;
+  }
+
+  .anim-orb-1 {
+    animation: dc-orb-1 14s ease-in-out infinite;
+  }
+
+  .anim-orb-2 {
+    animation: dc-orb-2 18s ease-in-out infinite;
+  }
+
+  .anim-orb-3 {
+    animation: dc-orb-3 12s ease-in-out infinite;
+  }
+
+  .anim-shake {
+    animation: dc-shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
+
+  .anim-deslizar {
+    animation: dc-deslizar-derecha 0.5s cubic-bezier(0.16, 0.84, 0.44, 1) both;
+  }
+
+
+  /* Efecto shimmer para loading states */
+  .anim-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.4) 50%,
+      rgba(255,255,255,0) 100%
+    );
+    background-size: 200% 100%;
+    animation: dc-brillar 2s ease-in-out infinite;
+  }
+
+  /* Aparición escalonada */
+  .escalona > * {
+    animation: dc-subir 0.55s cubic-bezier(0.16, 0.84, 0.44, 1) both;
+  }
+  .escalona > *:nth-child(1) { animation-delay: 0.03s; }
+  .escalona > *:nth-child(2) { animation-delay: 0.08s; }
+  .escalona > *:nth-child(3) { animation-delay: 0.13s; }
+  .escalona > *:nth-child(4) { animation-delay: 0.18s; }
+  .escalona > *:nth-child(5) { animation-delay: 0.23s; }
+  .escalona > *:nth-child(6) { animation-delay: 0.28s; }
+  .escalona > *:nth-child(7) { animation-delay: 0.33s; }
+  .escalona > *:nth-child(8) { animation-delay: 0.38s; }
+  .escalona > *:nth-child(9) { animation-delay: 0.43s; }
+  .escalona > *:nth-child(10) { animation-delay: 0.48s; }
+  .escalona > *:nth-child(n + 11) { animation-delay: 0.53s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

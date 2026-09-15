@@ -1,0 +1,8 @@
+{
+  "name": "DATACONTROL",
+  "description": "Sistema de recolección y análisis de datos de producción para Productos Alimenticios Fritomix SAS",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
