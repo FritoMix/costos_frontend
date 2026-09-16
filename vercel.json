@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:ruta*",
-      "destination": "https://backdata-ydd6.onrender.com/api/:ruta*"
+      "destination": "https://costos-backend-4fm3.onrender.com/api/:ruta*"
     },
     {
       "source": "/(.*)",
