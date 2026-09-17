@@ -324,7 +324,9 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                     <th>Producto</th>
                     <th>Bultos</th>
                     <th>Kg crudos</th>
+                    <th>Kg freídos</th>
                     <th>Aceite</th>
+                    <th>Aceite*Bulto</th>
                     <th>Temp.</th>
                     <th>Rendim.</th>
                     <th>Absorc.</th>
@@ -340,8 +342,16 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                       <td class="font-medium text-slate-800">{{ fila.producto }}</td>
                       <td class="tabular-nums font-mono text-xs text-slate-700">{{ fila.cantidad_bultos | number: '1.0-2' }}</td>
                       <td class="tabular-nums font-mono font-bold text-xs text-slate-900">{{ fila.kg_crudos | number: '1.0-2' }}</td>
+                      <td class="tabular-nums font-mono text-xs text-slate-700">{{ fila.kg_papa_frita_orden | number: '1.0-2' }}</td>
                       <td class="tabular-nums font-mono text-xs text-slate-700">
                         {{ fila.kg_aceite !== null ? (fila.kg_aceite | number: '1.0-2') : '—' }}
+                      </td>
+                      <td class="tabular-nums font-mono text-xs text-slate-700">
+                        {{
+                          fila.aceite_por_bulto !== null
+                            ? (fila.aceite_por_bulto | number: '1.0-2')
+                            : '—'
+                        }}
                       </td>
                       <td class="tabular-nums font-mono text-xs text-slate-700">
                         {{
