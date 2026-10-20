@@ -51,7 +51,10 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
               {{ textoVolver() }}
             </a>
             <div class="flex flex-wrap items-center gap-3">
-              <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 font-mono">
+              <h1
+                class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 font-mono"
+                data-testid="orden-numero"
+              >
                 #{{ datos.orden.numero_orden }}
               </h1>
               <app-etiqueta-estado
@@ -79,7 +82,7 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
               <!-- Tomar la orden y arrancar: también lo hace el operario que
                    va a trabajarla, sin esperar al supervisor. -->
               @if (datos.orden.estado === 'pendiente' && puedeIniciar()) {
-                <app-boton variante="primario" (click)="iniciar()">
+                <app-boton variante="primario" (click)="iniciar()" testId="iniciar-orden">
                   <span class="flex items-center gap-2">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" /></svg>
                     {{ auth.esOperarioHorno() || auth.esOperarioSaborizado() ? 'Tomar e Iniciar Producción' : 'Iniciar Producción' }}
@@ -87,7 +90,7 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
                 </app-boton>
               }
               @if (datos.orden.estado === 'en_produccion' && puedeGestionar()) {
-                <app-boton variante="acento" (click)="finalizar()">
+                <app-boton variante="acento" (click)="finalizar()" testId="finalizar-orden">
                   <span class="flex items-center gap-2">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v1.5M3 21v-6m0 0l2.77-.693a9 9 0 016.208.682l.108.054a9 9 0 006.086.71l3.114-.732a48.524 48.524 0 01-.005-10.499l-3.11.732a9 9 0 01-6.085-.711l-.108-.054a9 9 0 00-6.208-.682L3 4.5M3 15V4.5" /></svg>
                     Finalizar Orden
@@ -218,6 +221,7 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
         <nav class="flex flex-wrap items-center gap-2 rounded-2xl bg-white p-2 border border-slate-200/80 shadow-xs">
           <button
             type="button"
+            data-testid="tab-resumen"
             (click)="tabActiva.set('resumen')"
             class="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-150"
             [class]="tabActiva() === 'resumen' ? 'bg-slate-950 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
@@ -228,6 +232,7 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
 
           <button
             type="button"
+            data-testid="tab-horno"
             (click)="tabActiva.set('horno')"
             class="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-150"
             [class]="tabActiva() === 'horno' ? 'bg-slate-950 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
@@ -244,6 +249,7 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
 
           <button
             type="button"
+            data-testid="tab-saborizado"
             (click)="tabActiva.set('saborizado')"
             class="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-150"
             [class]="tabActiva() === 'saborizado' ? 'bg-slate-950 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"

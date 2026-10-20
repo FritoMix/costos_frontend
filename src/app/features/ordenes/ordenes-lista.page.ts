@@ -41,7 +41,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
         </div>
         @if (auth.esSupervisor() || auth.esAdmin()) {
           <a routerLink="/ordenes/nueva">
-            <app-boton variante="primario" icono="nueva">
+            <app-boton variante="primario" icono="nueva" testId="nueva-orden">
               + Nueva Orden
             </app-boton>
           </a>
@@ -133,6 +133,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                     <td class="text-right whitespace-nowrap">
                       <a
                         [routerLink]="['/ordenes', orden.id]"
+                        [attr.data-testid]="'ver-orden-' + orden.id"
                         class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-2xs hover:border-slate-300 hover:bg-slate-50 hover:text-marca-700 transition"
                       >
                         <span>Ver</span>

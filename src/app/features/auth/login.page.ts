@@ -92,6 +92,7 @@ import { BotonComponent } from '../../ui/boton.component';
                   </div>
                   <input
                     id="usuario"
+                    data-testid="login-usuario"
                     type="text"
                     class="w-full !bg-transparent !pl-15 !pr-4 !py-3.5 !rounded-2xl !text-white placeholder:!text-sky-200/40 focus:!outline-none font-semibold text-sm"
                     placeholder="Ej. operador01"
@@ -127,6 +128,7 @@ import { BotonComponent } from '../../ui/boton.component';
                   </div>
                   <input
                     id="password"
+                    data-testid="login-password"
                     [type]="mostrarPassword() ? 'text' : 'password'"
                     class="w-full !bg-transparent !pl-15 !pr-13 !py-3.5 !rounded-2xl !text-white placeholder:!text-sky-200/40 focus:!outline-none font-semibold text-sm"
                     placeholder="••••••••"
@@ -169,7 +171,13 @@ import { BotonComponent } from '../../ui/boton.component';
 
             <!-- Botón Submit -->
             <div class="pt-3">
-              <app-boton tipo="submit" tamano="grande" [anchoCompleto]="true" [cargando]="enviando()">
+              <app-boton
+                tipo="submit"
+                tamano="grande"
+                [anchoCompleto]="true"
+                [cargando]="enviando()"
+                testId="login-submit"
+              >
                 Ingresar al Sistema
               </app-boton>
             </div>

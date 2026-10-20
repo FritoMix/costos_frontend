@@ -14,6 +14,7 @@ export type TamanoBoton = 'normal' | 'grande' | 'pequeno';
       [type]="tipo()"
       [disabled]="deshabilitado() || cargando()"
       [class]="clases()"
+      [attr.data-testid]="testId() || null"
     >
       @if (cargando()) {
         <svg
@@ -49,6 +50,8 @@ export class BotonComponent {
   readonly deshabilitado = input(false);
   readonly cargando = input(false);
   readonly anchoCompleto = input(false);
+  /** Identificador estable para las pruebas E2E (se renderiza como data-testid). */
+  readonly testId = input('');
 
   protected readonly clases = computed(() => {
     const base =

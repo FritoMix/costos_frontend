@@ -77,7 +77,7 @@ type PasoTanda =
           </div>
 
           <!-- Cuerpo -->
-          <div class="px-5 py-8 sm:px-8">
+          <div class="px-5 py-8 sm:px-8" [attr.data-testid]="'paso-' + pasoActual()">
             <div class="mx-auto max-w-md text-center">
               <span class="text-[11px] font-extrabold uppercase tracking-widest text-marca-500">
                 {{ etiquetaPaso() }} · Paso {{ indicePaso() + 1 }}
@@ -158,7 +158,12 @@ type PasoTanda =
                       <!-- Un toque y listo: la tanda siempre va entre 30 y 55 bultos -->
                       <div class="mx-auto mt-4 flex max-w-md flex-wrap justify-center gap-2.5">
                         @for (b of bultosComunes; track b) {
-                          <button type="button" (click)="bultos.set(b)" [class]="claseValor(bultos() === b, 'text-2xl')">
+                          <button
+                            type="button"
+                            [attr.data-testid]="'bultos-' + b"
+                            (click)="bultos.set(b)"
+                            [class]="claseValor(bultos() === b, 'text-2xl')"
+                          >
                             {{ b }}
                           </button>
                         }
@@ -203,6 +208,7 @@ type PasoTanda =
                         @for (t of temperaturasComunes; track t) {
                           <button
                             type="button"
+                            [attr.data-testid]="'temperatura-' + t"
                             (click)="temperatura.set(t)"
                             [class]="claseValor(temperatura() === t, 'text-xl')"
                           >
@@ -231,6 +237,7 @@ type PasoTanda =
                       @for (n of personalZonaHumeda; track n) {
                         <button
                           type="button"
+                          [attr.data-testid]="'personal-zona-' + n"
                           (click)="operariosZonaHumeda.set(n)"
                           [class]="claseValorGrande(operariosZonaHumeda() === n)"
                         >
@@ -254,6 +261,7 @@ type PasoTanda =
                       @for (n of personalSeleccion; track n) {
                         <button
                           type="button"
+                          [attr.data-testid]="'personal-seleccion-' + n"
                           (click)="operariosSeleccion.set(n)"
                           [class]="claseValorGrande(operariosSeleccion() === n)"
                         >
@@ -299,12 +307,22 @@ type PasoTanda =
                   <div class="anim-entrada mx-auto max-w-sm">
                     @if (!hayDesperdicio()) {
                       <div class="grid grid-cols-2 gap-3">
-                        <button type="button" (click)="continuar()" [class]="claseTarjetaGrande(false)">
+                        <button
+                          type="button"
+                          data-testid="sin-desperdicio"
+                          (click)="continuar()"
+                          [class]="claseTarjetaGrande(false)"
+                        >
                           <span class="mb-1 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-2xl">✅</span>
                           <span class="text-base font-extrabold text-slate-900">Sin desperdicio</span>
                           <span class="text-xs font-medium text-slate-500">Tanda limpia</span>
                         </button>
-                        <button type="button" (click)="hayDesperdicio.set(true)" [class]="claseTarjetaGrande(false)">
+                        <button
+                          type="button"
+                          data-testid="si-desperdicio"
+                          (click)="hayDesperdicio.set(true)"
+                          [class]="claseTarjetaGrande(false)"
+                        >
                           <span class="mb-1 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-2xl">⚠️</span>
                           <span class="text-base font-extrabold text-slate-900">Sí hubo</span>
                           <span class="text-xs font-medium text-slate-500">Registrar merma</span>
@@ -408,16 +426,33 @@ type PasoTanda =
 
           <!-- Navegación -->
           <footer class="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-5 py-4 sm:px-7">
-            <app-boton variante="secundario" (click)="atras()" [deshabilitado]="indicePaso() === 0">
+            <app-boton
+              variante="secundario"
+              (click)="atras()"
+              [deshabilitado]="indicePaso() === 0"
+              testId="horno-atras"
+            >
               Atrás
             </app-boton>
 
             @if (pasoActual() === 'resumen') {
-              <app-boton variante="primario" tamano="grande" (click)="guardar()" [cargando]="enviando()">
+              <app-boton
+                variante="primario"
+                tamano="grande"
+                (click)="guardar()"
+                [cargando]="enviando()"
+                testId="guardar-tanda"
+              >
                 Guardar tanda
               </app-boton>
             } @else {
-              <app-boton variante="primario" tamano="grande" (click)="continuar()" [deshabilitado]="!pasoValido()">
+              <app-boton
+                variante="primario"
+                tamano="grande"
+                (click)="continuar()"
+                [deshabilitado]="!pasoValido()"
+                testId="continuar-horno"
+              >
                 Continuar
               </app-boton>
             }

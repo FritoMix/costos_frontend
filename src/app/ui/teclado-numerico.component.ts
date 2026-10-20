@@ -19,7 +19,12 @@ import { ChangeDetectionStrategy, Component, input, model } from '@angular/core'
       <!-- Visor -->
       <div class="rounded-3xl border border-calido-200/80 p-6 text-center shadow-inner relative overflow-hidden"
            style="background: linear-gradient(135deg, rgba(250,245,238,0.9) 0%, rgba(255,249,240,0.7) 100%); backdrop-filter: blur(8px);">
-        <p class="text-6xl font-extrabold text-stone-900 tabular-nums font-mono tracking-tight">{{ valor() || '0' }}</p>
+        <p
+          class="text-6xl font-extrabold text-stone-900 tabular-nums font-mono tracking-tight"
+          data-testid="teclado-valor"
+        >
+          {{ valor() || '0' }}
+        </p>
         @if (unidad()) {
           <span class="mt-1.5 inline-block rounded-full bg-marca-50 px-3 py-0.5 text-xs font-extrabold uppercase tracking-widest text-marca-700 border border-marca-200/50">
             {{ unidad() }}
@@ -30,15 +35,36 @@ import { ChangeDetectionStrategy, Component, input, model } from '@angular/core'
       <!-- Teclas -->
       <div class="mt-4 grid grid-cols-3 gap-2.5">
         @for (tecla of teclas; track tecla) {
-          <button type="button" (click)="pulsar(tecla)" [class]="claseTecla">{{ tecla }}</button>
+          <button
+            type="button"
+            [attr.data-testid]="'tecla-' + tecla"
+            (click)="pulsar(tecla)"
+            [class]="claseTecla"
+          >
+            {{ tecla }}
+          </button>
         }
         @if (permiteDecimales()) {
-          <button type="button" (click)="pulsarDecimal()" [class]="claseTecla" aria-label="Coma decimal">,</button>
+          <button
+            type="button"
+            data-testid="tecla-decimal"
+            (click)="pulsarDecimal()"
+            [class]="claseTecla"
+            aria-label="Coma decimal"
+          >
+            ,
+          </button>
         } @else {
           <span></span>
         }
-        <button type="button" (click)="pulsar('0')" [class]="claseTecla">0</button>
-        <button type="button" (click)="borrar()" [class]="claseTeclaAccion" aria-label="Borrar">
+        <button type="button" data-testid="tecla-0" (click)="pulsar('0')" [class]="claseTecla">0</button>
+        <button
+          type="button"
+          data-testid="tecla-borrar"
+          (click)="borrar()"
+          [class]="claseTeclaAccion"
+          aria-label="Borrar"
+        >
           <svg class="mx-auto h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path
               stroke-linecap="round"

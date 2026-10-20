@@ -1,0 +1,72 @@
+# Stack efímero para las pruebas E2E en CI.
+#
+# Se ejecuta desde el repo del frontend con el backend clonado en `backdata`
+# (ver .github/workflows/ci.yml). Levanta PostgreSQL, la API y Nginx con las
+# imágenes de producción, sin publicar la base ni la API al host.
+#
+#   docker compose -f e2e/docker-compose.e2e.yml up -d --build --wait
+#   E2E_BASE_URL=http://127.0.0.1:4200 E2E_SKIP_WEBSERVER=1 \
+#     E2E_ADMIN_PASS=... npm run test:e2e
+#   docker compose -f e2e/docker-compose.e2e.yml down -v
+
+name: datacontrol-e2e
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: datacontrol
+      POSTGRES_PASSWORD: datacontrol
+      POSTGRES_DB: datacontrol
+      TZ: America/Bogota
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U datacontrol -d datacontrol']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      # En local el backend es un repo hermano (../../backdata). En CI se
+      # clona dentro del workspace y se pasa E2E_BACKEND_CONTEXT=../backdata.
+      context: ${E2E_BACKEND_CONTEXT:-../../backdata}
+      target: produccion
+    environment:
+      POSTGRES_USER: datacontrol
+      POSTGRES_PASSWORD: datacontrol
+      POSTGRES_DB: datacontrol
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      JWT_SECRET_KEY: e2e-secret-no-usar-en-produccion
+      # HTTP local: la cookie no debe llevar Secure o el navegador la descarta.
+      APP_ENV: development
+      ADMIN_PASSWORD: ${E2E_ADMIN_PASS:-e2e-admin-pass}
+      TZ: America/Bogota
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/v1/salud', timeout=3).status == 200 else 1)"
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  front:
+    build:
+      context: ..
+      target: produccion
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - '${E2E_FRONT_PORT:-4200}:80'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1/ || exit 1']
+      interval: 5s
+      timeout: 5s
+      retries: 20

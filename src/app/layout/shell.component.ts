@@ -90,6 +90,7 @@ interface OpcionMenu {
           @for (opcion of menuVisible(); track opcion.ruta) {
             <a
               [routerLink]="opcion.ruta"
+              [attr.data-testid]="'nav' + opcion.ruta.replace('/', '-')"
               routerLinkActive="active-link"
               [routerLinkActiveOptions]="{ exact: opcion.ruta === '/inicio' }"
               (click)="menuAbierto.set(false)"
