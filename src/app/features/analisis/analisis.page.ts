@@ -38,7 +38,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
     GraficaBarrasComponent,
   ],
   template: `
-    <div class="space-y-8">
+    <div class="space-y-8" data-testid="analisis-page">
       <!-- Encabezado Principal Espacioso -->
       <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
         <div>
@@ -46,19 +46,24 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
             <span class="h-2 w-2 rounded-full bg-marca-500"></span>
             <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Reportes & Eficiencia</span>
           </div>
-          <h1 class="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Métricas & Análisis KPI</h1>
+          <h1
+            class="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900"
+            data-testid="analisis-titulo"
+          >
+            Métricas & Análisis KPI
+          </h1>
           <p class="mt-1 text-sm text-slate-500 font-medium max-w-2xl leading-relaxed">
             Indicadores de rendimiento, balance de masa, absorción de aceite y mermas calculados sobre datos consolidados de planta.
           </p>
         </div>
         <div class="flex items-center gap-3">
-          <app-boton variante="secundario" (click)="exportar('csv')">
+          <app-boton variante="secundario" (click)="exportar('csv')" testId="exportar-csv">
             <span class="flex items-center gap-2">
               <svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
               Descargar CSV
             </span>
           </app-boton>
-          <app-boton variante="acento" (click)="exportar('xlsx')">
+          <app-boton variante="acento" (click)="exportar('xlsx')" testId="exportar-xlsx">
             <span class="flex items-center gap-2">
               <svg class="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               Excel (.xlsx)

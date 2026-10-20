@@ -74,7 +74,7 @@ type ClavePaso =
           </header>
 
           <!-- Cuerpo del paso -->
-          <div class="px-5 py-8 sm:px-8">
+          <div class="px-5 py-8 sm:px-8" [attr.data-testid]="'paso-' + pasoActual()">
             <!-- Encabezado del paso (centrado y coherente en todos) -->
             <div class="mx-auto max-w-md text-center">
               <span class="text-[11px] font-extrabold uppercase tracking-widest text-marca-500">
@@ -94,13 +94,23 @@ type ClavePaso =
                 <!-- 1. Destino (dos tejas grandes) -->
                 @case ('destino') {
                   <div class="grid grid-cols-2 gap-3 sm:gap-4 anim-entrada">
-                    <button type="button" (click)="elegirDestino('nacional')" [class]="claseTeja(destino() === 'nacional')">
+                    <button
+                      type="button"
+                      data-testid="opcion-destino-nacional"
+                      (click)="elegirDestino('nacional')"
+                      [class]="claseTeja(destino() === 'nacional')"
+                    >
                       <span [class]="claseIcono(destino() === 'nacional')">🏭</span>
                       <span class="text-base font-extrabold text-slate-900">Nacional</span>
                       <span class="text-xs font-medium text-slate-500">Consumo en el país</span>
                       @if (destino() === 'nacional') { <span [class]="claseBadge()" [innerHTML]="iconoCheck"></span> }
                     </button>
-                    <button type="button" (click)="elegirDestino('exportacion')" [class]="claseTeja(destino() === 'exportacion')">
+                    <button
+                      type="button"
+                      data-testid="opcion-destino-exportacion"
+                      (click)="elegirDestino('exportacion')"
+                      [class]="claseTeja(destino() === 'exportacion')"
+                    >
                       <span [class]="claseIcono(destino() === 'exportacion')">🌎</span>
                       <span class="text-base font-extrabold text-slate-900">Exportación</span>
                       <span class="text-xs font-medium text-slate-500">Hornos habilitados</span>
@@ -113,7 +123,12 @@ type ClavePaso =
                 @case ('categoria') {
                   <div class="space-y-2.5 anim-entrada">
                     @for (categoria of categorias(); track categoria.id) {
-                      <button type="button" (click)="elegirCategoria(categoria.id)" [class]="claseFila(categoriaId() === categoria.id)">
+                      <button
+                        type="button"
+                        data-testid="opcion-categoria"
+                        (click)="elegirCategoria(categoria.id)"
+                        [class]="claseFila(categoriaId() === categoria.id)"
+                      >
                         <span [class]="claseAvatar(categoriaId() === categoria.id)">{{ inicial(categoria.nombre) }}</span>
                         <span class="min-w-0 flex-1 text-left">
                           <span class="block truncate font-bold text-slate-900">{{ categoria.nombre }}</span>
@@ -130,7 +145,12 @@ type ClavePaso =
                 @case ('producto') {
                   <div class="space-y-2.5 anim-entrada">
                     @for (producto of productosFiltrados(); track producto.id) {
-                      <button type="button" (click)="elegirProducto(producto.id)" [class]="claseFila(productoId() === producto.id)">
+                      <button
+                        type="button"
+                        data-testid="opcion-producto"
+                        (click)="elegirProducto(producto.id)"
+                        [class]="claseFila(productoId() === producto.id)"
+                      >
                         <span [class]="claseAvatar(productoId() === producto.id)">{{ inicial(producto.nombre_comercial) }}</span>
                         <span class="min-w-0 flex-1 text-left">
                           <span class="block truncate font-bold text-slate-900">{{ producto.nombre_comercial }}</span>
@@ -152,7 +172,12 @@ type ClavePaso =
                     <!-- Atajos de jornada -->
                     <div class="grid grid-cols-4 gap-2.5">
                       @for (opcion of horasSugeridas; track opcion) {
-                        <button type="button" (click)="elegirHoras(opcion)" [class]="claseHora(horas() === opcion)">
+                        <button
+                          type="button"
+                          [attr.data-testid]="'horas-' + opcion"
+                          (click)="elegirHoras(opcion)"
+                          [class]="claseHora(horas() === opcion)"
+                        >
                           <span class="text-xl font-extrabold">{{ opcion }}</span>
                           <span class="text-[10px] font-bold uppercase tracking-wider opacity-70">
                             {{ opcion === 1 ? 'hora' : 'horas' }}
@@ -204,7 +229,12 @@ type ClavePaso =
                 @case ('horno') {
                   <div class="space-y-2.5 anim-entrada">
                     @for (horno of hornosFiltrados(); track horno.id) {
-                      <button type="button" (click)="elegirHorno(horno.id)" [class]="claseFila(hornoId() === horno.id)">
+                      <button
+                        type="button"
+                        data-testid="opcion-horno"
+                        (click)="elegirHorno(horno.id)"
+                        [class]="claseFila(hornoId() === horno.id)"
+                      >
                         <span [class]="claseAvatar(hornoId() === horno.id)">🔥</span>
                         <span class="min-w-0 flex-1 text-left">
                           <span class="block truncate font-bold text-slate-900">{{ horno.nombre }}</span>
@@ -224,7 +254,12 @@ type ClavePaso =
                 @case ('turno') {
                   <div class="space-y-2.5 anim-entrada">
                     @for (turno of turnos(); track turno.id) {
-                      <button type="button" (click)="elegirTurno(turno.id)" [class]="claseFila(turnoId() === turno.id)">
+                      <button
+                        type="button"
+                        data-testid="opcion-turno"
+                        (click)="elegirTurno(turno.id)"
+                        [class]="claseFila(turnoId() === turno.id)"
+                      >
                         <span [class]="claseAvatar(turnoId() === turno.id)">🕒</span>
                         <span class="min-w-0 flex-1 text-left">
                           <span class="block truncate font-bold text-slate-900">{{ turno.nombre }}</span>
@@ -240,13 +275,23 @@ type ClavePaso =
                 <!-- 6. Unidad (dos tejas grandes) -->
                 @case ('unidad') {
                   <div class="grid grid-cols-2 gap-3 sm:gap-4 anim-entrada">
-                    <button type="button" (click)="elegirUnidad('kg')" [class]="claseTeja(unidad() === 'kg')">
+                    <button
+                      type="button"
+                      data-testid="opcion-unidad-kg"
+                      (click)="elegirUnidad('kg')"
+                      [class]="claseTeja(unidad() === 'kg')"
+                    >
                       <span [class]="claseIcono(unidad() === 'kg')">⚖️</span>
                       <span class="text-base font-extrabold text-slate-900">Kilogramos</span>
                       <span class="text-xs font-medium text-slate-500">Cantidad directa</span>
                       @if (unidad() === 'kg') { <span [class]="claseBadge()" [innerHTML]="iconoCheck"></span> }
                     </button>
-                    <button type="button" (click)="elegirUnidad('canastillas')" [class]="claseTeja(unidad() === 'canastillas')">
+                    <button
+                      type="button"
+                      data-testid="opcion-unidad-canastillas"
+                      (click)="elegirUnidad('canastillas')"
+                      [class]="claseTeja(unidad() === 'canastillas')"
+                    >
                       <span [class]="claseIcono(unidad() === 'canastillas')">🧺</span>
                       <span class="text-base font-extrabold text-slate-900">Canastillas</span>
                       <span class="text-xs font-medium text-slate-500">Se convierten a kg</span>
@@ -262,6 +307,7 @@ type ClavePaso =
                     <div class="rounded-3xl border border-slate-200 bg-slate-50/70 px-5 py-6 text-center">
                       <input
                         type="text"
+                        data-testid="cantidad-input"
                         inputmode="decimal"
                         [value]="cantidadTexto()"
                         (input)="editarTexto($event)"
@@ -363,16 +409,33 @@ type ClavePaso =
 
           <!-- Navegación (dentro del panel) -->
           <footer class="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-5 py-4 sm:px-7">
-            <app-boton variante="secundario" (click)="atras()" [deshabilitado]="indicePaso() === 0">
+            <app-boton
+              variante="secundario"
+              (click)="atras()"
+              [deshabilitado]="indicePaso() === 0"
+              testId="orden-atras"
+            >
               Atrás
             </app-boton>
 
             @if (pasoActual() === 'resumen') {
-              <app-boton variante="primario" tamano="grande" (click)="crear()" [cargando]="enviando()">
+              <app-boton
+                variante="primario"
+                tamano="grande"
+                (click)="crear()"
+                [cargando]="enviando()"
+                testId="crear-orden"
+              >
                 Crear orden
               </app-boton>
             } @else {
-              <app-boton variante="primario" tamano="grande" (click)="continuar()" [deshabilitado]="!pasoValido()">
+              <app-boton
+                variante="primario"
+                tamano="grande"
+                (click)="continuar()"
+                [deshabilitado]="!pasoValido()"
+                testId="continuar-orden"
+              >
                 Continuar
               </app-boton>
             }

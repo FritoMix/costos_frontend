@@ -77,7 +77,7 @@ type PasoRecepcion =
           </div>
 
           <!-- Cuerpo -->
-          <div class="px-5 py-8 sm:px-8">
+          <div class="px-5 py-8 sm:px-8" [attr.data-testid]="'paso-' + pasoActual()">
             <div class="mx-auto max-w-md text-center">
               <span class="text-[11px] font-extrabold uppercase tracking-widest text-marca-500">
                 {{ etiquetaPaso() }} · Paso {{ indicePaso() + 1 }}
@@ -136,7 +136,12 @@ type PasoRecepcion =
                 @case ('sabor') {
                   <div class="anim-entrada space-y-3">
                     @for (sabor of sabores(); track sabor.id) {
-                      <button type="button" (click)="saborId.set(sabor.id)" [class]="claseFila(saborId() === sabor.id)">
+                      <button
+                        type="button"
+                        data-testid="sabor-opcion"
+                        (click)="saborId.set(sabor.id)"
+                        [class]="claseFila(saborId() === sabor.id)"
+                      >
                         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-marca-50 text-lg">👅</span>
                         <span class="min-w-0 flex-1 text-left font-bold text-slate-900">{{ sabor.nombre }}</span>
                         @if (saborId() === sabor.id) {
@@ -182,6 +187,7 @@ type PasoRecepcion =
                           (click)="agregarCanastilla()"
                           [deshabilitado]="pesoCanastillaValido() === false"
                           class="mt-4"
+                          testId="agregar-canastilla"
                         >
                           {{ canastillaActualValor() > 0 ? 'Agregar canastilla' : 'Ingresa el peso y agrega' }}
                         </app-boton>
@@ -270,16 +276,33 @@ type PasoRecepcion =
 
           <!-- Navegación -->
           <footer class="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-5 py-4 sm:px-7">
-            <app-boton variante="secundario" (click)="atras()" [deshabilitado]="indicePaso() === 0">
+            <app-boton
+              variante="secundario"
+              (click)="atras()"
+              [deshabilitado]="indicePaso() === 0"
+              testId="saborizado-atras"
+            >
               Atrás
             </app-boton>
 
             @if (pasoActual() === 'resumen') {
-              <app-boton variante="primario" tamano="grande" (click)="guardar()" [cargando]="enviando()">
+              <app-boton
+                variante="primario"
+                tamano="grande"
+                (click)="guardar()"
+                [cargando]="enviando()"
+                testId="registrar-recepcion"
+              >
                 {{ editandoId() ? 'Guardar corrección' : 'Registrar recepción' }}
               </app-boton>
             } @else {
-              <app-boton variante="primario" tamano="grande" (click)="continuar()" [deshabilitado]="!pasoValido()">
+              <app-boton
+                variante="primario"
+                tamano="grande"
+                (click)="continuar()"
+                [deshabilitado]="!pasoValido()"
+                testId="continuar-saborizado"
+              >
                 Continuar
               </app-boton>
             }

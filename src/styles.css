@@ -9,8 +9,24 @@
    verse igual con o sin internet, y asi la politica de seguridad (CSP) puede
    seguir prohibiendo cualquier origen externo. Son fuentes VARIABLES: un solo
    archivo por familia cubre todos los grosores que usa el diseño. */
-@import '@fontsource-variable/plus-jakarta-sans';
-@import '@fontsource-variable/jetbrains-mono';
+/* Solo el subconjunto latino: la planta escribe en español y no necesita
+   cirílico, griego ni vietnamita. Menos archivos en el build y en el service
+   worker sin cambiar el aspecto de la interfaz. */
+@font-face {
+  font-family: 'Plus Jakarta Sans Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('../node_modules/@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 800;
+  src: url('../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2') format('woff2-variations');
+}
 
 @theme {
   /* Marca: Azul zafiro/cyan cálido y luminoso, de alta tecnología y agrado visual */

@@ -97,7 +97,10 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
       } @else {
         <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           @for (orden of ordenes(); track orden.id) {
-            <div class="group relative flex flex-col justify-between rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs transition-all duration-200 hover:border-slate-300 hover:shadow-md">
+            <div
+              class="group relative flex flex-col justify-between rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs transition-all duration-200 hover:border-slate-300 hover:shadow-md"
+              [attr.data-testid]="'saborizado-orden-' + orden.id"
+            >
               <div>
                 <!-- Top metadata -->
                 <div class="flex items-center justify-between gap-2 mb-3">
@@ -136,7 +139,11 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
 
               <!-- Action Button -->
               <div class="mt-5">
-                <a [routerLink]="['/saborizado', orden.id]" class="block">
+                <a
+                  [routerLink]="['/saborizado', orden.id]"
+                  class="block"
+                  [attr.data-testid]="'registrar-recepcion-' + orden.id"
+                >
                   <app-boton tamano="grande" [anchoCompleto]="true" variante="primario">
                     <span class="flex items-center justify-center gap-2">
                       <span>Registrar Recepción</span>

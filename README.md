@@ -44,15 +44,56 @@ To execute unit tests with the [Karma](https://karma-runner.github.io) test runn
 ng test
 ```
 
-## Running end-to-end tests
+## Pruebas E2E (Playwright)
 
-For end-to-end (e2e) testing, run:
+El flujo crítico de planta está en `e2e/flujo-critico.spec.ts`: login, crear
+orden, iniciar producción, tanda de horno, recepción de saborizado, análisis
+y descarga del CSV. Usa `data-testid` estables y un seed idempotente que crea
+`Producto E2E` si falta; **no lo ejecutes contra la base de producción**.
+
+Requisitos: API y frontend arriba, y la contraseña del administrador en una
+variable de entorno (nunca en el repo):
 
 ```bash
-ng e2e
+E2E_ADMIN_PASS="tu-contraseña" npm run test:e2e
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Por defecto Playwright levanta `npm run dev` en `http://localhost:3000` y
+reutiliza la API de `http://localhost:8000`. Para apuntar a otro entorno:
+
+```bash
+E2E_BASE_URL="https://staging.ejemplo" \
+E2E_ADMIN_USER="admin" \
+E2E_ADMIN_PASS="..." \
+E2E_SKIP_WEBSERVER=1 \
+npm run test:e2e
+```
+
+### Stack de producción efímero
+
+El workflow de CI construye las imágenes reales y valida Nginx + API +
+PostgreSQL con `e2e/docker-compose.e2e.yml`. En local:
+
+```bash
+npx playwright install --with-deps chromium
+E2E_ADMIN_PASS=e2e-admin-pass E2E_FRONT_PORT=4201 \
+  docker compose -f e2e/docker-compose.e2e.yml up -d --build --wait
+
+E2E_ADMIN_PASS=e2e-admin-pass \
+E2E_BASE_URL=http://127.0.0.1:4201 \
+E2E_SKIP_WEBSERVER=1 \
+npm run test:e2e
+
+docker compose -f e2e/docker-compose.e2e.yml down -v
+```
+
+En CI el backend se clona en `backdata` dentro del workspace y se pasa
+`E2E_BACKEND_CONTEXT=../backdata`. Si el repo del backend es privado, define
+el secreto `BACKEND_REPO_TOKEN` con permiso de lectura.
+
+Los fallos dejan trazas, video y reporte HTML en `playwright-report/` y
+`test-results/`; ambos están ignorados por Git y se publican como artefactos
+en GitHub Actions.
 
 ## Additional Resources
 
@@ -85,8 +126,8 @@ segunda regla, recargar la página en cualquiera de ellas daría 404.
 
 Configuración del proyecto en Vercel:
 
-| Ajuste | Valor |
-| --- | --- |
-| Framework Preset | Angular |
-| Build Command | `npm run build` |
+| Ajuste           | Valor                   |
+| ---------------- | ----------------------- |
+| Framework Preset | Angular                 |
+| Build Command    | `npm run build`         |
 | Output Directory | `dist/frontend/browser` |

@@ -1,54 +1,236 @@
+import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 
 /**
- * Flujo critico de planta en DATACONTROL.
+ * Flujo crítico de planta, de punta a punta.
  *
- * Requiere un admin de pruebas. Configura E2E_ADMIN_USER / E2E_ADMIN_PASS
- * (defaults: admin / admin123). La base debe tener datos de catalogo:
- * al menos un horno, un producto y una categoria apta para ese horno.
+ * Login → crear orden → iniciar → tanda de horno → recepción de saborizado
+ * → análisis → exportar CSV. Usa selectores `data-testid` estables y datos
+ * que el global-setup deja preparados de forma idempotente.
+ *
+ * Las credenciales salen de E2E_ADMIN_USER / E2E_ADMIN_PASS.
  */
 
-const ADMIN = {
-  usuario: process.env.E2E_ADMIN_USER || 'admin',
-  password: process.env.E2E_ADMIN_PASS || 'admin123',
-};
+const USUARIO = process.env['E2E_ADMIN_USER'] || 'admin';
+const PASSWORD = process.env['E2E_ADMIN_PASS'] || '';
+const CATEGORIA = process.env['E2E_CATEGORIA'] || 'Papa Hojuela';
+const PRODUCTO = 'Producto E2E';
+
+let ordenId: number | null = null;
+let numeroOrden = '';
 
 async function iniciarSesion(page: Page): Promise<void> {
   await page.goto('/entrar');
-  // El formulario de login: buscar por placeholder o label.
-  await page
-    .getByLabel(/usuario|nombre de usuario/i)
-    .or(page.getByPlaceholder(/usuario|nombre de usuario/i))
-    .fill(ADMIN.usuario);
-  await page
-    .getByLabel(/contrase|password/i)
-    .or(page.getByPlaceholder(/contrase|password/i))
-    .fill(ADMIN.password);
-  await page.getByRole('button', { name: /entrar|ingresar|iniciar/i }).first().click();
+  await expect(page.getByTestId('login-usuario')).toBeVisible();
+  await page.getByTestId('login-usuario').fill(USUARIO);
+  await page.getByTestId('login-password').fill(PASSWORD);
+  await page.getByTestId('login-submit').click();
+  await expect(page).toHaveURL(/\/inicio/);
 }
 
-test.describe('Flujo critico', () => {
-  test('iniciar sesion como admin', async ({ page }) => {
-    await iniciarSesion(page);
-    // Tras entrar como admin, la primera pantalla es Inicio.
-    await expect(page).toHaveURL(/\/inicio|\/ordenes/);
-    // El marco de la app (barra lateral) esta visible.
-    await expect(page.getByText('DATACONTROL')).toBeVisible();
+async function esperarPaso(page: Page, paso: string): Promise<void> {
+  await expect(page.getByTestId(`paso-${paso}`)).toBeVisible();
+}
+
+async function continuar(page: Page, testId: string): Promise<void> {
+  const boton = page.getByTestId(testId);
+  await expect(boton).toBeEnabled();
+  await boton.click();
+}
+
+async function sinViolacionesCriticas(page: Page, contexto: string): Promise<void> {
+  const resultado = await new AxeBuilder({ page }).analyze();
+  const criticas = resultado.violations.filter((v) => v.impact === 'critical');
+  expect(
+    criticas,
+    `${contexto}: ${criticas.map((v) => `${v.id} (${v.nodes.length} nodo(s))`).join(', ')}`,
+  ).toEqual([]);
+}
+
+test.describe('Flujo crítico de planta', () => {
+  test.afterEach(async ({ page }) => {
+    if (ordenId === null) {
+      return;
+    }
+    try {
+      // page.request comparte las cookies de sesión del navegador.
+      // Cancelar antes de borrar libera el horno incluso si el test falló
+      // mientras la orden estaba en producción.
+      await page.request.post(`/api/v1/ordenes/${ordenId}/cancelar`);
+      await page.request.delete(`/api/v1/ordenes/${ordenId}`);
+    } catch {
+      // Si el navegador ya se cerró, el global-setup limpiará en la próxima corrida.
+    } finally {
+      ordenId = null;
+      numeroOrden = '';
+    }
   });
 
-  test('navegar a analisis y ver los filtros', async ({ page }) => {
-    await iniciarSesion(page);
-    await page.goto('/analisis');
-    await expect(page).toHaveURL(/\/analisis/);
-    // La pantalla de analisis debe cargar (buscamos texto del titulo o un filtro).
-    await expect(page.getByText(/indicador|kpi|rendimiento|analisis/i).first()).toBeVisible();
-  });
+  test('login, orden, horno, saborizado, análisis y exportación', async ({ page }) => {
+    await test.step('login con credenciales de entorno', async () => {
+      await page.goto('/entrar');
+      await expect(page.getByTestId('login-usuario')).toBeVisible();
+      await sinViolacionesCriticas(page, 'login');
 
-  test('listar ordenes vacias muestra estado vacio', async ({ page }) => {
-    await iniciarSesion(page);
-    await page.goto('/ordenes');
-    await expect(page).toHaveURL(/\/ordenes/);
-    // La lista carga; ya sea con datos o con estado vacio, no debe haber error.
-    await expect(page.getByRole('button', { name: /nueva orden/i })).toBeVisible();
+      await page.getByTestId('login-usuario').fill(USUARIO);
+      await page.getByTestId('login-password').fill(PASSWORD);
+      await page.getByTestId('login-submit').click();
+
+      await expect(page).toHaveURL(/\/inicio/);
+      await expect(page.getByRole('heading', { name: /Hola,/ })).toBeVisible();
+      await sinViolacionesCriticas(page, 'inicio');
+    });
+
+    await test.step('crear una orden con el asistente', async () => {
+      await page.goto('/ordenes/nueva');
+      await esperarPaso(page, 'destino');
+      await page.getByTestId('opcion-destino-nacional').click();
+
+      await esperarPaso(page, 'categoria');
+      await page
+        .getByTestId('paso-categoria')
+        .getByRole('button', { name: new RegExp(CATEGORIA, 'i') })
+        .click();
+
+      await esperarPaso(page, 'producto');
+      await page
+        .getByTestId('paso-producto')
+        .getByRole('button', { name: new RegExp(PRODUCTO, 'i') })
+        .click();
+
+      await esperarPaso(page, 'horas');
+      await continuar(page, 'horas-1');
+
+      await esperarPaso(page, 'horno');
+      await page.getByTestId('opcion-horno').first().click();
+
+      await esperarPaso(page, 'turno');
+      await page.getByTestId('opcion-turno').first().click();
+
+      await esperarPaso(page, 'unidad');
+      await page.getByTestId('opcion-unidad-kg').click();
+
+      await esperarPaso(page, 'cantidad');
+      await page.getByTestId('cantidad-input').fill('250');
+      await expect(page.getByTestId('continuar-orden')).toBeEnabled();
+      await page.getByTestId('continuar-orden').click();
+
+      await esperarPaso(page, 'resumen');
+      await expect(page.getByText(PRODUCTO).first()).toBeVisible();
+      await page.getByTestId('crear-orden').click();
+
+      await expect(page).toHaveURL(/\/ordenes\/\d+$/);
+      ordenId = Number(page.url().match(/\/ordenes\/(\d+)$/)?.[1]);
+      expect(ordenId).toBeGreaterThan(0);
+
+      const numeroVisible = await page.getByTestId('orden-numero').innerText();
+      numeroOrden = numeroVisible.replace('#', '').trim();
+      expect(numeroOrden).toMatch(/^[A-Z0-9-]+$/);
+      await expect(page.getByText('Pendiente', { exact: true }).first()).toBeVisible();
+      await sinViolacionesCriticas(page, 'detalle de orden');
+    });
+
+    await test.step('iniciar la producción', async () => {
+      await page.getByTestId('iniciar-orden').click();
+      await expect(page.getByTestId('finalizar-orden')).toBeVisible();
+      await expect(page.getByText(/En producción/i).first()).toBeVisible();
+    });
+
+    await test.step('registrar la tanda de horno', async () => {
+      await page.goto(`/horno/${ordenId}`);
+      await esperarPaso(page, 'horario');
+      await continuar(page, 'continuar-horno');
+
+      await esperarPaso(page, 'bultos');
+      await page.getByTestId('bultos-40').click();
+      await continuar(page, 'continuar-horno');
+
+      await esperarPaso(page, 'temperatura');
+      await page.getByTestId('temperatura-180').click();
+      await continuar(page, 'continuar-horno');
+
+      await esperarPaso(page, 'personal_zona_humeda');
+      await page.getByTestId('personal-zona-5').click();
+      await continuar(page, 'continuar-horno');
+
+      await esperarPaso(page, 'personal_seleccion');
+      await page.getByTestId('personal-seleccion-5').click();
+      await continuar(page, 'continuar-horno');
+
+      await esperarPaso(page, 'aceite_inicial');
+      await page.getByTestId('tecla-5').click();
+      await page.getByTestId('tecla-0').click();
+      await expect(page.getByTestId('teclado-valor')).toHaveText('50');
+      await continuar(page, 'continuar-horno');
+
+      await esperarPaso(page, 'aceite_final');
+      await page.getByTestId('tecla-4').click();
+      await page.getByTestId('tecla-5').click();
+      await expect(page.getByTestId('teclado-valor')).toHaveText('45');
+      await continuar(page, 'continuar-horno');
+
+      await esperarPaso(page, 'desperdicio');
+      await page.getByTestId('sin-desperdicio').click();
+
+      await esperarPaso(page, 'resumen');
+      await page.getByTestId('guardar-tanda').click();
+      await expect(page).toHaveURL(/\/horno$/);
+
+      await page.goto(`/ordenes/${ordenId}`);
+      await page.getByTestId('tab-horno').click();
+      await expect(page.getByText('40 bto').first()).toBeVisible();
+      await expect(page.getByText('180 °C').first()).toBeVisible();
+    });
+
+    await test.step('registrar la recepción de saborizado', async () => {
+      await page.goto(`/saborizado/${ordenId}`);
+      await esperarPaso(page, 'horario');
+      await continuar(page, 'continuar-saborizado');
+
+      await esperarPaso(page, 'sabor');
+      await page.getByTestId('sabor-opcion').first().click();
+      await continuar(page, 'continuar-saborizado');
+
+      await esperarPaso(page, 'cantidad_sabor');
+      await page.getByTestId('tecla-2').click();
+      await continuar(page, 'continuar-saborizado');
+
+      await esperarPaso(page, 'canastillas');
+      await page.getByTestId('tecla-2').click();
+      await page.getByTestId('tecla-5').click();
+      await expect(page.getByTestId('teclado-valor')).toHaveText('25');
+      await page.getByTestId('agregar-canastilla').click();
+      await expect(page.getByText('25 kg').first()).toBeVisible();
+      await continuar(page, 'continuar-saborizado');
+
+      await esperarPaso(page, 'resumen');
+      await page.getByTestId('registrar-recepcion').click();
+      await expect(page.getByText(/Recepciones ya registradas \(1\)/)).toBeVisible();
+
+      await page.goto(`/ordenes/${ordenId}`);
+      await page.getByTestId('tab-saborizado').click();
+      await expect(page.getByText('25 kg').first()).toBeVisible();
+    });
+
+    await test.step('ver análisis y exportar CSV', async () => {
+      await page.goto('/analisis');
+      await expect(page.getByTestId('analisis-titulo')).toBeVisible();
+      await expect(page.getByText('Órdenes Procesadas')).toBeVisible();
+      await expect(page.getByText(`#${numeroOrden}`).first()).toBeVisible();
+
+      const [descarga] = await Promise.all([
+        page.waitForEvent('download'),
+        page.getByTestId('exportar-csv').click(),
+      ]);
+
+      expect(descarga.suggestedFilename()).toMatch(/^datacontrol_.*\.csv$/);
+      const ruta = await descarga.path();
+      expect(ruta).not.toBeNull();
+      const csv = await readFile(ruta!, 'utf8');
+      expect(csv).toContain('numero_orden');
+      expect(csv).toContain(numeroOrden);
+      expect(csv).toContain(PRODUCTO);
+    });
   });
 });

@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  calidad:
+    name: Lint y build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint (eslint)
+        run: npm run lint
+
+      - name: Pruebas unitarias (Karma + ChromeHeadless)
+        run: npm test -- --watch=false --browsers=ChromeHeadless
+
+      - name: Build de produccion
+        run: npm run build
+
+  e2e:
+    name: E2E del flujo crítico
+    runs-on: ubuntu-latest
+    needs: calidad
+    env:
+      E2E_ADMIN_PASS: e2e-admin-pass
+      E2E_BACKEND_CONTEXT: ../backdata
+
+    steps:
+      - name: Descargar frontend
+        uses: actions/checkout@v4
+
+      # El E2E vive en el repo del frontend pero necesita la API real.
+      # Si el repo del backend es privado, define BACKEND_REPO_TOKEN con
+      # permiso de lectura; si es público alcanza con el token del job.
+      - name: Descargar backend
+        uses: actions/checkout@v4
+        with:
+          repository: FritoMix/costos_Backend
+          path: backdata
+          token: ${{ secrets.BACKEND_REPO_TOKEN || github.token }}
+
+      - name: Configurar Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Instalar Chromium de Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Levantar stack de producción
+        run: docker compose -f e2e/docker-compose.e2e.yml up -d --build --wait
+
+      - name: Ejecutar E2E headless
+        env:
+          E2E_BASE_URL: http://127.0.0.1:4200
+          E2E_SKIP_WEBSERVER: "1"
+        run: npm run test:e2e
+
+      - name: Logs del stack (si falla)
+        if: failure()
+        run: docker compose -f e2e/docker-compose.e2e.yml logs --no-color
+
+      - name: Publicar trace, video y reporte (si falla)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Apagar stack
+        if: always()
+        run: docker compose -f e2e/docker-compose.e2e.yml down -v
