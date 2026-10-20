@@ -31,5 +31,8 @@ jobs:
       - name: Lint (eslint)
         run: npm run lint
 
+      - name: Pruebas unitarias (Karma + ChromeHeadless)
+        run: npm test -- --watch=false --browsers=ChromeHeadless
+
       - name: Build de produccion
         run: npm run build
