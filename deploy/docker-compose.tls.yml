@@ -1,0 +1,39 @@
+# Overlay de Docker Compose para publicar DATACONTROL por HTTPS.
+#
+# Uso, desde la raiz del proyecto:
+#   docker compose -f docker-compose.yml -f frontdata/deploy/docker-compose.tls.yml \
+#     --profile tls up -d --build
+#
+# El frontend deja de estar publicado en la red (solo loopback para
+# diagnostico) y Caddy pasa a ser el unico borde HTTP/HTTPS.
+name: datacontrol
+
+services:
+  front:
+    ports: !override
+      - "127.0.0.1:4200:80"
+
+  caddy:
+    image: caddy:2.10-alpine
+    container_name: datacontrol-caddy
+    profiles: [tls]
+    restart: unless-stopped
+    depends_on:
+      front:
+        condition: service_started
+    environment:
+      DATACONTROL_DOMAIN: ${DATACONTROL_DOMAIN:-datacontrol.local}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${CADDYFILE:-./frontdata/deploy/Caddyfile.internal}:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - datacontrol_net
+
+volumes:
+  caddy_data:
+  caddy_config:

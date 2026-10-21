@@ -39,8 +39,12 @@ services:
       POSTGRES_PORT: 5432
       JWT_SECRET_KEY: e2e-secret-no-usar-en-produccion
       # HTTP local: la cookie no debe llevar Secure o el navegador la descarta.
-      APP_ENV: development
+      # Para la prueba de TLS se puede forzar production temporalmente.
+      APP_ENV: ${E2E_APP_ENV:-development}
       ADMIN_PASSWORD: ${E2E_ADMIN_PASS:-e2e-admin-pass}
+      # La prueba de carga necesita un cupo alto por IP; el E2E normal no
+      # depende de este valor. En produccion se usa el default de la app.
+      RATE_LIMIT_MINUTE: ${E2E_RATE_LIMIT_MINUTE:-1200/minute}
       TZ: America/Bogota
     depends_on:
       db:

@@ -1,0 +1,19 @@
+# DATACONTROL - HTTPS con un dominio publico y certificado de Let's Encrypt.
+#
+# Requisitos: el dominio resuelve al servidor y los puertos 80/443 llegan
+# desde Internet (Caddy usa HTTP-01 o TLS-ALPN-01).
+{
+	email {$ACME_EMAIL}
+	admin off
+}
+
+{$DATACONTROL_DOMAIN} {
+	encode gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy front:80
+}

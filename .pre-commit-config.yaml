@@ -1,0 +1,16 @@
+# Instalar una vez:  pipx install pre-commit && pre-commit install
+# Ejecutar a mano:   pre-commit run --all-files
+repos:
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier (archivos modificados)
+        entry: npx prettier --write
+        language: system
+        files: \.(ts|html|css|json)$
+      - id: eslint
+        name: eslint
+        entry: npm run lint
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]

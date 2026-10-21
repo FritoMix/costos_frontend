@@ -9,6 +9,9 @@ concurrency:
   group: frontend-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   calidad:
     name: Lint y build
@@ -27,6 +30,12 @@ jobs:
 
       - name: Instalar dependencias
         run: npm ci
+
+      - name: Escaneo de dependencias de producción (npm audit)
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Escaneo de dependencias críticas (npm audit)
+        run: npm audit --audit-level=critical
 
       - name: Lint (eslint)
         run: npm run lint
