@@ -160,6 +160,9 @@ test.describe('Flujo crítico de planta', () => {
 
       await esperarPaso(page, 'bultos');
       await page.getByTestId('bultos-40').click();
+      await expect(page.getByTestId('horno-preview')).toBeVisible();
+      await expect(page.getByTestId('horno-kg-crudos')).toContainText('2.000');
+      await expect(page.getByTestId('horno-kg-fritos')).toContainText('500');
       await continuar(page, 'continuar-horno');
 
       await esperarPaso(page, 'temperatura');

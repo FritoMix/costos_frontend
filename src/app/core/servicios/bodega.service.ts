@@ -4,7 +4,11 @@ import type { Observable } from 'rxjs';
 import { shareReplay, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import type { ReferenciaPapa, ReferenciaPapaGuardar } from '../modelos/bodega.model';
+import type {
+  ProyeccionProduccion,
+  ReferenciaPapa,
+  ReferenciaPapaGuardar,
+} from '../modelos/bodega.model';
 
 /**
  * Catalogo de referencias de papa que administra Bodega.
@@ -52,5 +56,16 @@ export class BodegaService {
 
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`).pipe(tap(() => this.limpiarCache()));
+  }
+
+  /**
+   * Simula la distribucion de la capacidad del horno entre las referencias
+   * activas. El backend es la fuente definitiva: valida la suma de 100 %,
+   * la capacidad y calcula kg crudos/fritos con Decimal.
+   */
+  proyectar(hornoId: number, horas = 1): Observable<ProyeccionProduccion> {
+    return this.http.get<ProyeccionProduccion>(`${environment.apiUrl}/bodega/proyeccion`, {
+      params: { horno_id: hornoId, horas },
+    });
   }
 }

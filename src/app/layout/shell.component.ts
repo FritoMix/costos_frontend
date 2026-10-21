@@ -224,7 +224,8 @@ export class ShellComponent {
   private readonly menu: OpcionMenu[] = [
     { ruta: '/inicio', texto: 'Inicio', icono: 'inicio', roles: ['admin', 'supervisor', 'operario_horno', 'operario_saborizado', 'bodeguero'] },
     { ruta: '/ordenes', texto: 'Órdenes', icono: 'ordenes', roles: ['admin', 'supervisor'] },
-    { ruta: '/bodega', texto: 'Bodega de Papa', icono: 'bodega', roles: ['admin', 'bodeguero'] },
+    { ruta: '/bodega', texto: 'Bodega de Papa', icono: 'bodega', roles: ['admin', 'supervisor', 'bodeguero'] },
+    { ruta: '/hornos', texto: 'Hornos', icono: 'horno', roles: ['supervisor'] },
     { ruta: '/horno', texto: 'Registro Horno', icono: 'horno', roles: ['admin', 'operario_horno'] },
     { ruta: '/saborizado', texto: 'Saborizado', icono: 'saborizado', roles: ['admin', 'operario_saborizado'] },
     { ruta: '/analisis', texto: 'Análisis & KPI', icono: 'analisis', roles: ['admin'] },

@@ -37,12 +37,16 @@ interface Producto {
 
 interface Horno extends Catalogo {
   categorias: Catalogo[];
+  capacidad_bultos_hora: number | null;
 }
 
 interface ReferenciaPapa {
   id: number;
   nombre: string;
+  tipo: string | null;
   peso_promedio_bulto_kg: number;
+  rendimiento_fritura_pct: number | null;
+  porcentaje_produccion_pct: number | null;
   activo: boolean;
 }
 
@@ -154,19 +158,44 @@ async function asegurarReferenciaPapa(ctx: APIRequestContext): Promise<Referenci
   );
   const existente = referencias.find((r) => r.nombre === REFERENCIA_PAPA);
 
+  const datos = {
+    nombre: REFERENCIA_PAPA,
+    tipo: 'Papa pareja',
+    peso_promedio_bulto_kg: 50,
+    rendimiento_fritura_pct: 25,
+    porcentaje_produccion_pct: 100,
+    activo: true,
+  };
+
   if (existente) {
-    if (existente.activo && Number(existente.peso_promedio_bulto_kg) === 50) {
+    if (
+      existente.activo &&
+      existente.tipo === datos.tipo &&
+      Number(existente.peso_promedio_bulto_kg) === 50 &&
+      Number(existente.rendimiento_fritura_pct) === 25 &&
+      Number(existente.porcentaje_produccion_pct) === 100
+    ) {
       return existente;
     }
     return api<ReferenciaPapa>(ctx, `/bodega/referencias-papa/${existente.id}`, {
       method: 'PUT',
-      data: { nombre: REFERENCIA_PAPA, peso_promedio_bulto_kg: 50, activo: true },
+      data: datos,
     });
   }
 
   return api<ReferenciaPapa>(ctx, '/bodega/referencias-papa', {
     method: 'POST',
-    data: { nombre: REFERENCIA_PAPA, peso_promedio_bulto_kg: 50, activo: true },
+    data: datos,
+  });
+}
+
+async function asegurarCapacidadHorno(ctx: APIRequestContext, horno: Horno): Promise<void> {
+  if (Number(horno.capacidad_bultos_hora) === 50) {
+    return;
+  }
+  await api<Horno>(ctx, `/catalogos/hornos/${horno.id}/capacidad`, {
+    method: 'PATCH',
+    data: { capacidad_bultos_hora: 50 },
   });
 }
 
@@ -216,6 +245,7 @@ export default async function globalSetup(): Promise<void> {
     await asegurarConfiguracion(ctx);
     await asegurarSabor(ctx);
     await asegurarProducto(ctx, categoria);
+    await asegurarCapacidadHorno(ctx, hornoCompatible);
     const referencia = await asegurarReferenciaPapa(ctx);
     const limpiadas = await limpiarOrdenesAnteriores(ctx);
 
