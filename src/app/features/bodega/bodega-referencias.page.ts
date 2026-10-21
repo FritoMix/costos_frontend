@@ -505,7 +505,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                 <button
                   type="button"
                   class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-50"
-                  [disabled]="cargandoProyeccion()"
+                  [disabled]="cargandoProyeccion() || !configuracionCompleta()"
                   (click)="proyectar()"
                 >
                   {{ cargandoProyeccion() ? 'Calculando…' : 'Actualizar proyección' }}
@@ -513,7 +513,16 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
               </div>
             </div>
 
-            @if (errorProyeccion()) {
+            @if (!configuracionCompleta()) {
+              <div
+                class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-medium text-amber-900"
+                data-testid="bodega-proyeccion-incompleta"
+              >
+                La configuración de referencias está incompleta: las referencias activas deben tener
+                tipo, rendimiento, participación y sumar 100 %. Corrige la tabla para habilitar la
+                proyección.
+              </div>
+            } @else if (errorProyeccion()) {
               <div
                 class="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-medium text-rose-800"
                 data-testid="bodega-proyeccion-error"
@@ -744,13 +753,16 @@ export class BodegaReferenciasPage {
     }
   }
 
-  private cargar(proyectarDespues = false): void {
+  private cargar(): void {
     this.cargando.set(true);
     this.bodega.listar(false, true).subscribe({
       next: (referencias) => {
         this.referencias.set(referencias);
         this.cargando.set(false);
-        if (proyectarDespues && this.hornoSeleccionadoId()) {
+        // Si los hornos llegaron antes que las referencias, ahora que la
+        // configuracion ya se conoce se puede proyectar. El guard de
+        // `proyectar` evita llamar a la API si sigue incompleta.
+        if (this.hornoSeleccionadoId()) {
           this.proyectar();
         }
       },
@@ -791,8 +803,15 @@ export class BodegaReferenciasPage {
   protected proyectar(): void {
     const hornoId = this.hornoSeleccionadoId();
     if (!hornoId) return;
-    this.cargandoProyeccion.set(true);
     this.errorProyeccion.set(null);
+    // La API tambien lo valida, pero no tiene sentido provocar un 400 (y un
+    // aviso global) cuando la propia pantalla ya sabe que falta configurar.
+    if (!this.configuracionCompleta()) {
+      this.proyeccion.set(null);
+      this.cargandoProyeccion.set(false);
+      return;
+    }
+    this.cargandoProyeccion.set(true);
     this.bodega.proyectar(hornoId, this.horas()).subscribe({
       next: (proyeccion) => {
         this.proyeccion.set(proyeccion);
@@ -873,7 +892,7 @@ export class BodegaReferenciasPage {
         this.enviando.set(false);
         this.avisos.exito(editando ? 'Referencia actualizada.' : 'Referencia registrada.');
         this.cancelarEdicion();
-        this.cargar(true);
+        this.cargar();
       },
       error: () => this.enviando.set(false),
     });
@@ -888,7 +907,7 @@ export class BodegaReferenciasPage {
 
     this.bodega.eliminar(referencia.id).subscribe(() => {
       this.avisos.exito(`"${referencia.nombre}" eliminada.`);
-      this.cargar(true);
+      this.cargar();
     });
   }
 }
