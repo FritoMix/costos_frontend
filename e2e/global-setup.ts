@@ -20,6 +20,7 @@ const PASSWORD = process.env['E2E_ADMIN_PASS'] || '';
 const CATEGORIA = process.env['E2E_CATEGORIA'] || 'Papa Hojuela';
 const PRODUCTO = 'Producto E2E';
 const SABOR = 'Sabor E2E';
+const REFERENCIA_PAPA = 'Papa E2E';
 
 interface Catalogo {
   id: number;
@@ -36,6 +37,13 @@ interface Producto {
 
 interface Horno extends Catalogo {
   categorias: Catalogo[];
+}
+
+interface ReferenciaPapa {
+  id: number;
+  nombre: string;
+  peso_promedio_bulto_kg: number;
+  activo: boolean;
 }
 
 type OpcionesFetch = NonNullable<Parameters<APIRequestContext['fetch']>[1]>;
@@ -139,6 +147,29 @@ async function asegurarSabor(ctx: APIRequestContext): Promise<void> {
   });
 }
 
+async function asegurarReferenciaPapa(ctx: APIRequestContext): Promise<ReferenciaPapa> {
+  const referencias = await api<ReferenciaPapa[]>(
+    ctx,
+    '/bodega/referencias-papa?solo_activas=false',
+  );
+  const existente = referencias.find((r) => r.nombre === REFERENCIA_PAPA);
+
+  if (existente) {
+    if (existente.activo && Number(existente.peso_promedio_bulto_kg) === 50) {
+      return existente;
+    }
+    return api<ReferenciaPapa>(ctx, `/bodega/referencias-papa/${existente.id}`, {
+      method: 'PUT',
+      data: { nombre: REFERENCIA_PAPA, peso_promedio_bulto_kg: 50, activo: true },
+    });
+  }
+
+  return api<ReferenciaPapa>(ctx, '/bodega/referencias-papa', {
+    method: 'POST',
+    data: { nombre: REFERENCIA_PAPA, peso_promedio_bulto_kg: 50, activo: true },
+  });
+}
+
 async function asegurarConfiguracion(ctx: APIRequestContext): Promise<void> {
   const config = await api<{ peso_estandar_bulto_kg: number | null }>(
     ctx,
@@ -185,11 +216,13 @@ export default async function globalSetup(): Promise<void> {
     await asegurarConfiguracion(ctx);
     await asegurarSabor(ctx);
     await asegurarProducto(ctx, categoria);
+    const referencia = await asegurarReferenciaPapa(ctx);
     const limpiadas = await limpiarOrdenesAnteriores(ctx);
 
     console.log(
       `E2E seed OK: categoría "${CATEGORIA}", horno "${hornoCompatible.nombre}", ` +
-        `producto "${PRODUCTO}", órdenes E2E limpiadas: ${limpiadas}.`,
+        `producto "${PRODUCTO}", referencia "${referencia.nombre}", ` +
+        `órdenes E2E limpiadas: ${limpiadas}.`,
     );
   } finally {
     await ctx.dispose();

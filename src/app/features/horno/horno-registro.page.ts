@@ -4,9 +4,11 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
+import type { ReferenciaPapa } from '../../core/modelos/bodega.model';
 import type { ItemCatalogo } from '../../core/modelos/catalogos.model';
 import type { DetalleOrden, RegistroHornoGuardar } from '../../core/modelos/produccion.model';
 import { AuthService } from '../../core/servicios/auth.service';
+import { BodegaService } from '../../core/servicios/bodega.service';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
 import { OrdenesService } from '../../core/servicios/ordenes.service';
@@ -63,6 +65,18 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                 <label class="etiqueta" for="hora_fin">Hora de Fin</label>
                 <input id="hora_fin" type="time" class="campo" formControlName="hora_fin" />
                 <p class="ayuda">Si cruza medianoche, el sistema calcula la duración automáticamente.</p>
+              </div>
+
+              <div>
+                <label class="etiqueta" for="referencia_papa">Referencia de Papa</label>
+                <select id="referencia_papa" class="campo" formControlName="referencia_papa_id">
+                  <option [ngValue]="null" disabled>Selecciona…</option>
+                  @for (referencia of referenciasPapa(); track referencia.id) {
+                    <option [ngValue]="referencia.id">
+                      {{ referencia.nombre }} · {{ referencia.peso_promedio_bulto_kg | number: '1.2-2' }} kg/bulto
+                    </option>
+                  }
+                </select>
               </div>
 
               <div>
@@ -265,6 +279,7 @@ export class HornoRegistroPage {
   private readonly fb = inject(FormBuilder);
   private readonly ordenes = inject(OrdenesService);
   private readonly catalogos = inject(CatalogosService);
+  private readonly bodega = inject(BodegaService);
   private readonly avisos = inject(NotificacionesService);
   private readonly auth = inject(AuthService);
 
@@ -272,11 +287,13 @@ export class HornoRegistroPage {
   protected readonly enviando = signal(false);
   protected readonly detalle = signal<DetalleOrden | null>(null);
   protected readonly tiposDesperdicio = signal<ItemCatalogo[]>([]);
+  protected readonly referenciasPapa = signal<ReferenciaPapa[]>([]);
   protected readonly editandoId = signal<number | null>(null);
 
   protected readonly formulario = this.fb.group({
     hora_inicio: this.fb.nonNullable.control('', Validators.required),
     hora_fin: this.fb.nonNullable.control('', Validators.required),
+    referencia_papa_id: this.fb.control<number | null>(null, Validators.required),
     cantidad_bultos: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
     operarios_seleccion: this.fb.control<number | null>(0, [Validators.required, Validators.min(0)]),
     operarios_horno: this.fb.control<number | null>(0, [Validators.required, Validators.min(0)]),
@@ -305,10 +322,15 @@ export class HornoRegistroPage {
     forkJoin({
       detalle: this.ordenes.detalle(Number(this.id())),
       tipos: this.catalogos.listarTiposDesperdicio(true),
+      referencias: this.bodega.listar(true, true),
     }).subscribe({
-      next: ({ detalle, tipos }) => {
+      next: ({ detalle, tipos, referencias }) => {
         this.detalle.set(detalle);
         this.tiposDesperdicio.set(tipos);
+        this.referenciasPapa.set(referencias);
+        if (referencias.length === 1) {
+          this.formulario.patchValue({ referencia_papa_id: referencias[0].id });
+        }
         this.cargando.set(false);
       },
       error: () => this.cargando.set(false),
@@ -330,6 +352,7 @@ export class HornoRegistroPage {
     this.formulario.patchValue({
       hora_inicio: this.soloHora(registro.hora_inicio),
       hora_fin: this.soloHora(registro.hora_fin),
+      referencia_papa_id: registro.referencia_papa?.id ?? null,
       cantidad_bultos: Number(registro.cantidad_bultos),
       operarios_seleccion: registro.operarios_seleccion,
       operarios_horno: registro.operarios_horno,
@@ -360,6 +383,7 @@ export class HornoRegistroPage {
     const datos: RegistroHornoGuardar = {
       hora_inicio: valores.hora_inicio,
       hora_fin: valores.hora_fin,
+      referencia_papa_id: valores.referencia_papa_id!,
       cantidad_bultos: Number(valores.cantidad_bultos),
       operarios_seleccion: Number(valores.operarios_seleccion),
       operarios_horno: Number(valores.operarios_horno),

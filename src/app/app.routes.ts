@@ -78,6 +78,15 @@ export const rutas: Routes = [
         ],
       },
 
+      // --- Bodega de papa (Bodeguero y Administrador) ---
+      {
+        path: 'bodega',
+        title: 'Bodega de Papa - DATACONTROL',
+        canActivate: [rolGuard(['admin', 'bodeguero'])],
+        loadComponent: () =>
+          import('./features/bodega/bodega-referencias.page').then((m) => m.BodegaReferenciasPage),
+      },
+
       // --- Registro de horno (Operario de Horno) ---
       {
         path: 'horno',

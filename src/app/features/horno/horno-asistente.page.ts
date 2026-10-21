@@ -3,8 +3,10 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal } f
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
+import type { ReferenciaPapa } from '../../core/modelos/bodega.model';
 import type { ItemCatalogo } from '../../core/modelos/catalogos.model';
 import type { DetalleOrden, RegistroHornoGuardar } from '../../core/modelos/produccion.model';
+import { BodegaService } from '../../core/servicios/bodega.service';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
 import { OrdenesService } from '../../core/servicios/ordenes.service';
@@ -14,6 +16,7 @@ import { TecladoNumericoComponent } from '../../ui/teclado-numerico.component';
 
 type PasoTanda =
   | 'horario'
+  | 'referencia_papa'
   | 'bultos'
   | 'temperatura'
   | 'personal_zona_humeda'
@@ -139,7 +142,45 @@ type PasoTanda =
                   </div>
                 }
 
-                <!-- 2. Bultos -->
+                <!-- 2. Referencia de papa -->
+                @case ('referencia_papa') {
+                  <div class="anim-entrada mx-auto max-w-md">
+                    @if (referenciasPapa().length === 0) {
+                      <div class="rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/70 px-5 py-6 text-center">
+                        <p class="text-sm font-bold text-amber-900">No hay referencias de papa activas.</p>
+                        <p class="mt-1 text-xs font-medium text-amber-800">
+                          Pide al bodeguero que registre una referencia y su peso promedio por bulto.
+                        </p>
+                      </div>
+                    } @else {
+                      <div class="space-y-3">
+                        @for (referencia of referenciasPapa(); track referencia.id) {
+                          <button
+                            type="button"
+                            [attr.data-testid]="'referencia-papa-' + referencia.id"
+                            (click)="referenciaPapaId.set(referencia.id)"
+                            [class]="claseFila(referenciaPapaId() === referencia.id)"
+                          >
+                            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-lime-100 text-xl">🥔</span>
+                            <span class="min-w-0 flex-1 text-left">
+                              <span class="block font-bold text-slate-900">{{ referencia.nombre }}</span>
+                              <span class="block text-xs font-semibold text-slate-500">
+                                {{ referencia.peso_promedio_bulto_kg | number: '1.2-2' }} kg por bulto
+                              </span>
+                            </span>
+                            @if (referenciaPapaId() === referencia.id) {
+                              <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-marca-600 text-xs font-black text-white">✓</span>
+                            } @else {
+                              <span class="block h-6 w-6 shrink-0 rounded-full border-2 border-slate-300"></span>
+                            }
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- 3. Bultos -->
                 @case ('bultos') {
                   <div class="anim-entrada">
                     @if (tecladoBultosAbierto()) {
@@ -374,6 +415,12 @@ type PasoTanda =
                         </dd>
                       </div>
                       <div class="flex items-center justify-between gap-4 px-5 py-3">
+                        <dt class="text-sm font-semibold text-slate-500">Referencia de papa</dt>
+                        <dd class="text-sm font-extrabold text-slate-900">
+                          {{ referenciaSeleccionada()?.nombre ?? '—' }}
+                        </dd>
+                      </div>
+                      <div class="flex items-center justify-between gap-4 px-5 py-3">
                         <dt class="text-sm font-semibold text-slate-500">Papa cruda</dt>
                         <dd class="text-sm font-extrabold text-slate-900">
                           {{ numero(bultos()) | number: '1.0-2' }} bultos
@@ -468,8 +515,11 @@ type PasoTanda =
             <ul class="mt-2 space-y-1">
               @for (registro of datos.registros_horno; track registro.id) {
                 <li class="flex items-center justify-between gap-3 text-sm">
-                  <span class="font-semibold text-slate-700">
+                  <span class="min-w-0 truncate font-semibold text-slate-700">
                     {{ registro.cantidad_bultos | number: '1.0-2' }} bultos
+                    @if (registro.referencia_papa; as referencia) {
+                      <span class="font-medium text-slate-500">· {{ referencia.nombre }}</span>
+                    }
                   </span>
                   <span class="font-medium text-slate-500">
                     {{ registro.kg_crudos_calculados | number: '1.0-0' }} kg crudos
@@ -488,6 +538,7 @@ export class HornoAsistentePage {
 
   private readonly ordenes = inject(OrdenesService);
   private readonly catalogos = inject(CatalogosService);
+  private readonly bodega = inject(BodegaService);
   private readonly avisos = inject(NotificacionesService);
   private readonly router = inject(Router);
 
@@ -495,8 +546,16 @@ export class HornoAsistentePage {
   protected readonly enviando = signal(false);
   protected readonly detalle = signal<DetalleOrden | null>(null);
   protected readonly tiposDesperdicio = signal<ItemCatalogo[]>([]);
-  /** Peso estándar del bulto, para mostrar el equivalente en kg. */
-  protected readonly pesoBulto = signal(0);
+  protected readonly referenciasPapa = signal<ReferenciaPapa[]>([]);
+  protected readonly referenciaPapaId = signal<number | null>(null);
+
+  protected readonly referenciaSeleccionada = computed(
+    () => this.referenciasPapa().find((r) => r.id === this.referenciaPapaId()) ?? null,
+  );
+  /** Peso promedio de la referencia elegida, para mostrar el equivalente en kg. */
+  protected readonly pesoBulto = computed(() =>
+    Number(this.referenciaSeleccionada()?.peso_promedio_bulto_kg ?? 0),
+  );
 
   // --- Datos de la tanda ---------------------------------------------------
 
@@ -537,6 +596,7 @@ export class HornoAsistentePage {
 
   private readonly pasos: PasoTanda[] = [
     'horario',
+    'referencia_papa',
     'bultos',
     'temperatura',
     'personal_zona_humeda',
@@ -556,6 +616,11 @@ export class HornoAsistentePage {
       etiqueta: 'Horario',
       titulo: 'Esta es la hora de tu tanda',
       sub: 'Se toma automáticamente. Cada tanda dura una hora.',
+    },
+    referencia_papa: {
+      etiqueta: 'Materia prima',
+      titulo: '¿Qué papa entró al horno?',
+      sub: 'Elige la referencia que despachó Bodega para esta tanda.',
     },
     bultos: { etiqueta: 'Materia prima', titulo: '¿Cuántos bultos entraron?', sub: 'Papa cruda que alimentó el horno.' },
     temperatura: { etiqueta: 'Proceso', titulo: '¿A qué temperatura está el aceite?', sub: '' },
@@ -603,6 +668,8 @@ export class HornoAsistentePage {
     switch (this.pasoActual()) {
       case 'horario':
         return true;
+      case 'referencia_papa':
+        return this.referenciaPapaId() !== null;
       case 'bultos':
         return this.numero(this.bultos()) > 0;
       case 'temperatura':
@@ -636,12 +703,17 @@ export class HornoAsistentePage {
     forkJoin({
       detalle: this.ordenes.detalle(Number(this.id())),
       tipos: this.catalogos.listarTiposDesperdicio(true),
-      configuracion: this.catalogos.verConfiguracion(),
+      referencias: this.bodega.listar(true, true),
     }).subscribe({
-      next: ({ detalle, tipos, configuracion }) => {
+      next: ({ detalle, tipos, referencias }) => {
         this.detalle.set(detalle);
         this.tiposDesperdicio.set(tipos);
-        this.pesoBulto.set(Number(configuracion.peso_estandar_bulto_kg ?? 0));
+        this.referenciasPapa.set(referencias);
+        // Si solo hay una referencia activa, se deja elegida para ahorrar
+        // un toque; el operario igual la ve en el resumen antes de guardar.
+        if (referencias.length === 1) {
+          this.referenciaPapaId.set(referencias[0].id);
+        }
         // El reloj de la tanda arranca al abrir el registro.
         this.inicio.set(new Date());
         this.cargando.set(false);
@@ -773,6 +845,7 @@ export class HornoAsistentePage {
     const datos: RegistroHornoGuardar = {
       hora_inicio: this.horaInicio(),
       hora_fin: this.horaFin(),
+      referencia_papa_id: this.referenciaPapaId()!,
       cantidad_bultos: this.numero(this.bultos()),
       operarios_seleccion: this.operariosSeleccion(),
       operarios_horno: this.operariosZonaHumeda(),

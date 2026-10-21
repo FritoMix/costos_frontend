@@ -35,6 +35,7 @@ export class AuthService {
   readonly esSupervisor = computed(() => this.rol() === 'supervisor');
   readonly esOperarioHorno = computed(() => this.rol() === 'operario_horno');
   readonly esOperarioSaborizado = computed(() => this.rol() === 'operario_saborizado');
+  readonly esBodeguero = computed(() => this.rol() === 'bodeguero');
 
   constructor() {
     // Limpieza para navegadores que usaron la versión anterior (cuando el
@@ -114,6 +115,8 @@ export class AuthService {
         return '/saborizado';
       case 'supervisor':
         return '/ordenes';
+      case 'bodeguero':
+        return '/bodega';
       default:
         return '/inicio';
     }

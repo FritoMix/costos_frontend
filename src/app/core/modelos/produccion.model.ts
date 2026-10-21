@@ -19,6 +19,12 @@ export interface UsuarioRef {
   nombre_completo: string;
 }
 
+export interface ReferenciaPapaRef {
+  id: number;
+  nombre: string;
+  peso_promedio_bulto_kg: number;
+}
+
 export interface Orden {
   id: number;
   numero_orden: string;
@@ -66,6 +72,7 @@ export interface RegistroHorno {
   orden_id: number;
   hora_inicio: string;
   hora_fin: string;
+  referencia_papa: ReferenciaPapaRef | null;
   cantidad_bultos: number;
   peso_estandar_bulto_kg: number;
   kg_crudos_calculados: number;
@@ -88,6 +95,7 @@ export interface RegistroHorno {
 export interface RegistroHornoGuardar {
   hora_inicio: string;
   hora_fin: string;
+  referencia_papa_id: number;
   cantidad_bultos: number;
   operarios_seleccion: number;
   operarios_horno: number;
