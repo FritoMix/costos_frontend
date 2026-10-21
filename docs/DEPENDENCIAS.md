@@ -10,10 +10,11 @@ npm audit --audit-level=critical          # crítica en cualquier dependencia
 Estado al cerrar Sprint 3:
 
 - Dependencias de producción: **0 vulnerabilidades**.
-- Dependencias de desarrollo: queda `braces` (GHSA-vfj7-8cjw-p6xm), alta,
-  usada solo por el watcher de Karma en desarrollo. No se publica en la
-  imagen de producción y no procesa patrones de usuarios. No hay versión
-  corregida disponible; se revisa en cada actualización de Angular/Karma.
+- Dependencias de desarrollo: 6 paquetes marcados como altos, todos por la
+  cadena de `braces` (GHSA-vfj7-8cjw-p6xm / CVE-2026-93687, afecta a
+  `<=3.0.3` y no tiene parche publicado). Se usa solo en el watcher de Karma
+  durante desarrollo; no se publica en la imagen de producción ni procesa
+  patrones de usuarios. Se revisa en cada actualización de Angular/Karma.
 - `@modelcontextprotocol/sdk` y `vite` se fuerzan a versiones corregidas
   con `overrides` en `package.json`, para no esperar a un cambio mayor de
   Angular CLI.
