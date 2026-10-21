@@ -482,7 +482,9 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                   (change)="cambiarHorno($any($event.target).value)"
                 >
                   @for (horno of hornos(); track horno.id) {
-                    <option [value]="horno.id">{{ horno.nombre }}</option>
+                    <option [value]="horno.id">
+                      {{ horno.nombre }}{{ sinCapacidad(horno) ? ' (sin capacidad)' : '' }}
+                    </option>
                   }
                 </select>
               </div>
@@ -505,7 +507,9 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                 <button
                   type="button"
                   class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-50"
-                  [disabled]="cargandoProyeccion() || !configuracionCompleta()"
+                  [disabled]="
+                    cargandoProyeccion() || !configuracionCompleta() || hornoSinCapacidad()
+                  "
                   (click)="proyectar()"
                 >
                   {{ cargandoProyeccion() ? 'Calculando…' : 'Actualizar proyección' }}
@@ -521,6 +525,20 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                 La configuración de referencias está incompleta: las referencias activas deben tener
                 tipo, rendimiento, participación y sumar 100 %. Corrige la tabla para habilitar la
                 proyección.
+              </div>
+            } @else if (hornoSinCapacidad()) {
+              <div
+                class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-medium text-amber-900"
+                data-testid="bodega-proyeccion-sin-capacidad"
+              >
+                <span class="font-bold">{{ hornoSeleccionado()?.nombre }}</span> no tiene capacidad
+                de bultos por hora configurada. Configúrala en
+                <a
+                  [routerLink]="rutaConfigHornos()"
+                  class="font-bold underline decoration-amber-400 underline-offset-2 hover:text-amber-950"
+                  >Hornos</a
+                >
+                antes de proyectar.
               </div>
             } @else if (errorProyeccion()) {
               <div
@@ -712,6 +730,10 @@ export class BodegaReferenciasPage {
   protected readonly hornoSeleccionado = computed(
     () => this.hornos().find((h) => h.id === this.hornoSeleccionadoId()) ?? null,
   );
+  protected readonly hornoSinCapacidad = computed(() => {
+    const horno = this.hornoSeleccionado();
+    return !!horno && this.sinCapacidad(horno);
+  });
   protected readonly totalParticipacion = computed(() => sumarParticipacion(this.referencias()));
   protected readonly configuracionCompleta = computed(() => {
     const activas = this.referencias().filter((r) => r.activo);
@@ -786,6 +808,10 @@ export class BodegaReferenciasPage {
     });
   }
 
+  protected sinCapacidad(horno: Horno): boolean {
+    return horno.capacidad_bultos_hora === null || horno.capacidad_bultos_hora <= 0;
+  }
+
   protected cambiarHorno(valor: string): void {
     const id = Number(valor);
     if (!Number.isFinite(id) || id <= 0) return;
@@ -806,7 +832,7 @@ export class BodegaReferenciasPage {
     this.errorProyeccion.set(null);
     // La API tambien lo valida, pero no tiene sentido provocar un 400 (y un
     // aviso global) cuando la propia pantalla ya sabe que falta configurar.
-    if (!this.configuracionCompleta()) {
+    if (!this.configuracionCompleta() || this.hornoSinCapacidad()) {
       this.proyeccion.set(null);
       this.cargandoProyeccion.set(false);
       return;
