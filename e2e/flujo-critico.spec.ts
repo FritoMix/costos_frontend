@@ -84,6 +84,7 @@ test.describe('Flujo crítico de planta', () => {
     });
 
     await test.step('consultar la bodega de papa', async () => {
+      await expect(page.getByRole('link', { name: 'Bodega de Papa' }).first()).toBeVisible();
       await page.goto('/bodega');
       await expect(page.getByRole('heading', { name: /Bodega de Papa/ })).toBeVisible();
       await expect(page.getByText(REFERENCIA_PAPA).first()).toBeVisible();
