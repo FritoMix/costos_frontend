@@ -20,6 +20,7 @@ const PASSWORD = process.env['E2E_ADMIN_PASS'] || '';
 const CATEGORIA = process.env['E2E_CATEGORIA'] || 'Papa Hojuela';
 const PRODUCTO = 'Producto E2E';
 const SABOR = 'Sabor E2E';
+const REFERENCIA_PAPA = 'Papa E2E';
 
 interface Catalogo {
   id: number;
@@ -36,6 +37,17 @@ interface Producto {
 
 interface Horno extends Catalogo {
   categorias: Catalogo[];
+  capacidad_bultos_hora: number | null;
+}
+
+interface ReferenciaPapa {
+  id: number;
+  nombre: string;
+  tipo: string | null;
+  peso_promedio_bulto_kg: number;
+  rendimiento_fritura_pct: number | null;
+  porcentaje_produccion_pct: number | null;
+  activo: boolean;
 }
 
 type OpcionesFetch = NonNullable<Parameters<APIRequestContext['fetch']>[1]>;
@@ -139,6 +151,54 @@ async function asegurarSabor(ctx: APIRequestContext): Promise<void> {
   });
 }
 
+async function asegurarReferenciaPapa(ctx: APIRequestContext): Promise<ReferenciaPapa> {
+  const referencias = await api<ReferenciaPapa[]>(
+    ctx,
+    '/bodega/referencias-papa?solo_activas=false',
+  );
+  const existente = referencias.find((r) => r.nombre === REFERENCIA_PAPA);
+
+  const datos = {
+    nombre: REFERENCIA_PAPA,
+    tipo: 'Papa pareja',
+    peso_promedio_bulto_kg: 50,
+    rendimiento_fritura_pct: 25,
+    porcentaje_produccion_pct: 100,
+    activo: true,
+  };
+
+  if (existente) {
+    if (
+      existente.activo &&
+      existente.tipo === datos.tipo &&
+      Number(existente.peso_promedio_bulto_kg) === 50 &&
+      Number(existente.rendimiento_fritura_pct) === 25 &&
+      Number(existente.porcentaje_produccion_pct) === 100
+    ) {
+      return existente;
+    }
+    return api<ReferenciaPapa>(ctx, `/bodega/referencias-papa/${existente.id}`, {
+      method: 'PUT',
+      data: datos,
+    });
+  }
+
+  return api<ReferenciaPapa>(ctx, '/bodega/referencias-papa', {
+    method: 'POST',
+    data: datos,
+  });
+}
+
+async function asegurarCapacidadHorno(ctx: APIRequestContext, horno: Horno): Promise<void> {
+  if (Number(horno.capacidad_bultos_hora) === 50) {
+    return;
+  }
+  await api<Horno>(ctx, `/catalogos/hornos/${horno.id}/capacidad`, {
+    method: 'PATCH',
+    data: { capacidad_bultos_hora: 50 },
+  });
+}
+
 async function asegurarConfiguracion(ctx: APIRequestContext): Promise<void> {
   const config = await api<{ peso_estandar_bulto_kg: number | null }>(
     ctx,
@@ -185,11 +245,14 @@ export default async function globalSetup(): Promise<void> {
     await asegurarConfiguracion(ctx);
     await asegurarSabor(ctx);
     await asegurarProducto(ctx, categoria);
+    await asegurarCapacidadHorno(ctx, hornoCompatible);
+    const referencia = await asegurarReferenciaPapa(ctx);
     const limpiadas = await limpiarOrdenesAnteriores(ctx);
 
     console.log(
       `E2E seed OK: categoría "${CATEGORIA}", horno "${hornoCompatible.nombre}", ` +
-        `producto "${PRODUCTO}", órdenes E2E limpiadas: ${limpiadas}.`,
+        `producto "${PRODUCTO}", referencia "${referencia.nombre}", ` +
+        `órdenes E2E limpiadas: ${limpiadas}.`,
     );
   } finally {
     await ctx.dispose();

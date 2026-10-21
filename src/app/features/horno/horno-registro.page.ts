@@ -4,12 +4,18 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
+import type { ReferenciaPapa } from '../../core/modelos/bodega.model';
 import type { ItemCatalogo } from '../../core/modelos/catalogos.model';
 import type { DetalleOrden, RegistroHornoGuardar } from '../../core/modelos/produccion.model';
 import { AuthService } from '../../core/servicios/auth.service';
+import { BodegaService } from '../../core/servicios/bodega.service';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
 import { OrdenesService } from '../../core/servicios/ordenes.service';
+import {
+  calcularKgCrudosPreview,
+  calcularKgFritosPreview,
+} from '../../core/utilidades/calculos-produccion';
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 import { TarjetaComponent } from '../../ui/tarjeta.component';
@@ -39,15 +45,32 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
     } @else if (detalle(); as datos) {
       <div class="mx-auto max-w-3xl space-y-6">
         <header>
-          <a routerLink="/horno" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
+          <a
+            routerLink="/horno"
+            class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition"
+          >
+            <svg
+              class="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+              />
+            </svg>
             Volver a órdenes de horno
           </a>
           <h1 class="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
             {{ editandoId() ? 'Corregir Tanda de Horno' : 'Registro de Tanda de Fritura' }}
           </h1>
           <p class="mt-1 text-sm font-semibold text-slate-600">
-            Orden <span class="font-mono text-slate-900">#{{ datos.orden.numero_orden }}</span> · {{ datos.orden.producto.nombre_comercial }} · <span class="text-marca-700 font-bold">{{ datos.orden.horno.nombre }}</span>
+            Orden <span class="font-mono text-slate-900">#{{ datos.orden.numero_orden }}</span> ·
+            {{ datos.orden.producto.nombre_comercial }} ·
+            <span class="text-marca-700 font-bold">{{ datos.orden.horno.nombre }}</span>
           </p>
         </header>
 
@@ -62,7 +85,26 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
               <div>
                 <label class="etiqueta" for="hora_fin">Hora de Fin</label>
                 <input id="hora_fin" type="time" class="campo" formControlName="hora_fin" />
-                <p class="ayuda">Si cruza medianoche, el sistema calcula la duración automáticamente.</p>
+                <p class="ayuda">
+                  Si cruza medianoche, el sistema calcula la duración automáticamente.
+                </p>
+              </div>
+
+              <div>
+                <label class="etiqueta" for="referencia_papa">Referencia de Papa</label>
+                <select id="referencia_papa" class="campo" formControlName="referencia_papa_id">
+                  <option [ngValue]="null" disabled>Selecciona…</option>
+                  @for (referencia of referenciasDisponibles(); track referencia.id) {
+                    <option [ngValue]="referencia.id">
+                      {{ referencia.nombre }} · {{ referencia.tipo }} ·
+                      {{ referencia.peso_promedio_bulto_kg | number: '1.2-2' }} kg/bulto ·
+                      {{ referencia.rendimiento_fritura_pct | number: '1.2-2' }} % rend.
+                      @if (!referencia.activo) {
+                        (inactiva)
+                      }
+                    </option>
+                  }
+                </select>
               </div>
 
               <div>
@@ -148,6 +190,53 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
               </div>
             </div>
 
+            @if (referenciaSeleccionada(); as ref) {
+              <div
+                class="rounded-2xl border border-sky-200/80 bg-sky-50/60 p-5"
+                data-testid="horno-preview"
+              >
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-sky-900">
+                      Vista previa de la tanda
+                    </h3>
+                    <p class="mt-0.5 text-xs font-medium text-sky-800">
+                      {{ ref.nombre }} · {{ ref.tipo }} ·
+                      {{ ref.peso_promedio_bulto_kg | number: '1.2-2' }} kg/bulto · rendimiento
+                      {{ ref.rendimiento_fritura_pct | number: '1.2-2' }} %
+                    </p>
+                  </div>
+                  <span
+                    class="rounded-full border border-sky-300 bg-white/80 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-800"
+                  >
+                    Cálculo preliminar
+                  </span>
+                </div>
+                <div class="mt-3 grid grid-cols-2 gap-3">
+                  <div class="rounded-xl border border-lime-200 bg-white/80 px-4 py-2.5">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-lime-700"
+                      >Kg crudos</span
+                    >
+                    <p class="font-mono text-lg font-black text-lime-900">
+                      {{ kgCrudos() | number: '1.0-2' }}
+                    </p>
+                  </div>
+                  <div class="rounded-xl border border-amber-200 bg-white/80 px-4 py-2.5">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-amber-700"
+                      >Kg fritos estimados</span
+                    >
+                    <p class="font-mono text-lg font-black text-amber-900">
+                      {{ kgFritos() | number: '1.0-2' }}
+                    </p>
+                  </div>
+                </div>
+                <p class="mt-2 text-[11px] font-medium text-sky-800">
+                  El backend calcula y congela estos valores con Decimal al guardar. No se envían
+                  desde el navegador.
+                </p>
+              </div>
+            }
+
             <!-- Desperdicio -->
             <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 space-y-4">
               <div class="flex items-center justify-between">
@@ -170,7 +259,9 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                   </select>
                 </div>
                 <div>
-                  <label class="etiqueta" for="cantidad_desperdicio">Cantidad Desperdicio (kg)</label>
+                  <label class="etiqueta" for="cantidad_desperdicio"
+                    >Cantidad Desperdicio (kg)</label
+                  >
                   <input
                     id="cantidad_desperdicio"
                     type="number"
@@ -183,7 +274,9 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                   />
                 </div>
                 <div class="sm:col-span-2">
-                  <label class="etiqueta" for="obs_desperdicio">Motivo u Observación del Desperdicio</label>
+                  <label class="etiqueta" for="obs_desperdicio"
+                    >Motivo u Observación del Desperdicio</label
+                  >
                   <input
                     id="obs_desperdicio"
                     type="text"
@@ -196,7 +289,9 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
             </div>
 
             <div>
-              <label class="etiqueta" for="observaciones">Observaciones Generales de la Tanda</label>
+              <label class="etiqueta" for="observaciones"
+                >Observaciones Generales de la Tanda</label
+              >
               <textarea
                 id="observaciones"
                 rows="2"
@@ -221,24 +316,47 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
 
         <app-tarjeta titulo="Tandas Registradas en esta Orden" [sinRelleno]="true">
           @if (datos.registros_horno.length === 0) {
-            <p class="px-5 py-8 text-center text-sm text-slate-400">Todavía no hay tandas registradas.</p>
+            <p class="px-5 py-8 text-center text-sm text-slate-400">
+              Todavía no hay tandas registradas.
+            </p>
           } @else {
             <ul class="divide-y divide-slate-100">
               @for (registro of datos.registros_horno; track registro.id) {
-                <li class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 hover:bg-slate-50/70 transition">
+                <li
+                  class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 hover:bg-slate-50/70 transition"
+                >
                   <div>
                     <div class="flex items-center gap-2">
                       <span class="font-mono text-xs font-bold text-slate-700">
-                        {{ registro.hora_inicio | date: 'HH:mm' }} – {{ registro.hora_fin | date: 'HH:mm' }}
+                        {{ registro.hora_inicio | date: 'HH:mm' }} –
+                        {{ registro.hora_fin | date: 'HH:mm' }}
                       </span>
-                      <span class="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-800 border border-amber-200/60 font-mono">
+                      <span
+                        class="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-800 border border-amber-200/60 font-mono"
+                      >
                         {{ registro.cantidad_bultos | number: '1.0-2' }} bultos
                       </span>
                     </div>
                     <p class="mt-1 text-xs text-slate-500 font-medium">
-                      <span class="font-bold text-slate-800">{{ registro.kg_crudos_calculados | number: '1.0-2' }} kg crudos</span> ·
+                      <span class="font-bold text-slate-800"
+                        >{{ registro.kg_crudos_calculados | number: '1.0-2' }} kg crudos</span
+                      >
+                      @if (registro.rendimiento_fritura_pct !== null) {
+                        <span class="text-slate-500"
+                          >· {{ registro.rendimiento_fritura_pct | number: '1.2-2' }} % rend.</span
+                        >
+                      }
+                      @if (registro.kg_fritos_estimados !== null) {
+                        <span class="font-semibold text-amber-800"
+                          >· {{ registro.kg_fritos_estimados | number: '1.0-2' }} kg fritos
+                          est.</span
+                        >
+                      }
+                      ·
                       @if (registro.kg_aceite_consumido !== null) {
-                        <span class="font-mono text-slate-700 font-bold">{{ registro.kg_aceite_consumido | number: '1.0-2' }} kg aceite</span>
+                        <span class="font-mono text-slate-700 font-bold"
+                          >{{ registro.kg_aceite_consumido | number: '1.0-2' }} kg aceite</span
+                        >
                       } @else {
                         <span class="text-slate-400">Aceite sin calcular</span>
                       }
@@ -265,6 +383,7 @@ export class HornoRegistroPage {
   private readonly fb = inject(FormBuilder);
   private readonly ordenes = inject(OrdenesService);
   private readonly catalogos = inject(CatalogosService);
+  private readonly bodega = inject(BodegaService);
   private readonly avisos = inject(NotificacionesService);
   private readonly auth = inject(AuthService);
 
@@ -272,13 +391,21 @@ export class HornoRegistroPage {
   protected readonly enviando = signal(false);
   protected readonly detalle = signal<DetalleOrden | null>(null);
   protected readonly tiposDesperdicio = signal<ItemCatalogo[]>([]);
+  protected readonly referenciasPapa = signal<ReferenciaPapa[]>([]);
   protected readonly editandoId = signal<number | null>(null);
 
   protected readonly formulario = this.fb.group({
     hora_inicio: this.fb.nonNullable.control('', Validators.required),
     hora_fin: this.fb.nonNullable.control('', Validators.required),
-    cantidad_bultos: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
-    operarios_seleccion: this.fb.control<number | null>(0, [Validators.required, Validators.min(0)]),
+    referencia_papa_id: this.fb.control<number | null>(null, Validators.required),
+    cantidad_bultos: this.fb.control<number | null>(null, [
+      Validators.required,
+      Validators.min(0.01),
+    ]),
+    operarios_seleccion: this.fb.control<number | null>(0, [
+      Validators.required,
+      Validators.min(0),
+    ]),
     operarios_horno: this.fb.control<number | null>(0, [Validators.required, Validators.min(0)]),
     nivel_aceite_inicial_cm: this.fb.control<number | null>(null, Validators.required),
     nivel_aceite_final_cm: this.fb.control<number | null>(null, Validators.required),
@@ -290,6 +417,36 @@ export class HornoRegistroPage {
   });
 
   private readonly valores = signal(this.formulario.getRawValue());
+
+  protected readonly referenciasDisponibles = computed(() => {
+    const actualId = this.valores().referencia_papa_id;
+    return this.referenciasPapa().filter(
+      (r) =>
+        (r.activo &&
+          r.tipo !== null &&
+          r.rendimiento_fritura_pct !== null &&
+          r.porcentaje_produccion_pct !== null) ||
+        r.id === actualId,
+    );
+  });
+
+  protected readonly referenciaSeleccionada = computed(
+    () => this.referenciasPapa().find((r) => r.id === this.valores().referencia_papa_id) ?? null,
+  );
+
+  protected readonly kgCrudos = computed(() =>
+    calcularKgCrudosPreview(
+      Number(this.valores().cantidad_bultos ?? 0),
+      Number(this.referenciaSeleccionada()?.peso_promedio_bulto_kg ?? 0),
+    ),
+  );
+
+  protected readonly kgFritos = computed(() =>
+    calcularKgFritosPreview(
+      this.kgCrudos(),
+      this.referenciaSeleccionada()?.rendimiento_fritura_pct,
+    ),
+  );
 
   protected readonly diferenciaAceite = computed(() => {
     const { nivel_aceite_inicial_cm, nivel_aceite_final_cm } = this.valores();
@@ -305,10 +462,19 @@ export class HornoRegistroPage {
     forkJoin({
       detalle: this.ordenes.detalle(Number(this.id())),
       tipos: this.catalogos.listarTiposDesperdicio(true),
+      // Incluye inactivas para poder corregir una tanda historica. El
+      // selector solo habilita las activas configuradas (o la ya elegida).
+      referencias: this.bodega.listar(false, true),
     }).subscribe({
-      next: ({ detalle, tipos }) => {
+      next: ({ detalle, tipos, referencias }) => {
         this.detalle.set(detalle);
         this.tiposDesperdicio.set(tipos);
+        this.referenciasPapa.set(referencias);
+        if (!this.editandoId() && this.referenciasDisponibles().length === 1) {
+          this.formulario.patchValue({
+            referencia_papa_id: this.referenciasDisponibles()[0].id,
+          });
+        }
         this.cargando.set(false);
       },
       error: () => this.cargando.set(false),
@@ -330,12 +496,15 @@ export class HornoRegistroPage {
     this.formulario.patchValue({
       hora_inicio: this.soloHora(registro.hora_inicio),
       hora_fin: this.soloHora(registro.hora_fin),
+      referencia_papa_id: registro.referencia_papa?.id ?? null,
       cantidad_bultos: Number(registro.cantidad_bultos),
       operarios_seleccion: registro.operarios_seleccion,
       operarios_horno: registro.operarios_horno,
       nivel_aceite_inicial_cm: Number(registro.nivel_aceite_inicial_cm),
       nivel_aceite_final_cm: Number(registro.nivel_aceite_final_cm),
-      temperatura_aceite_c: registro.temperatura_aceite_c ? Number(registro.temperatura_aceite_c) : null,
+      temperatura_aceite_c: registro.temperatura_aceite_c
+        ? Number(registro.temperatura_aceite_c)
+        : null,
       observaciones: registro.observaciones,
       tipo_desperdicio_id: desperdicio?.tipo_desperdicio_id ?? null,
       cantidad_desperdicio_kg: desperdicio ? Number(desperdicio.cantidad_kg) : null,
@@ -360,6 +529,7 @@ export class HornoRegistroPage {
     const datos: RegistroHornoGuardar = {
       hora_inicio: valores.hora_inicio,
       hora_fin: valores.hora_fin,
+      referencia_papa_id: valores.referencia_papa_id!,
       cantidad_bultos: Number(valores.cantidad_bultos),
       operarios_seleccion: Number(valores.operarios_seleccion),
       operarios_horno: Number(valores.operarios_horno),

@@ -9,6 +9,7 @@ import type {
   ConfiguracionPlanta,
   DensidadVigente,
   Horno,
+  HornoCapacidadGuardar,
   HornoGuardar,
   ItemCatalogo,
   MuestraDensidad,
@@ -214,6 +215,15 @@ export class CatalogosService {
   actualizarHorno(id: number, datos: HornoGuardar): Observable<Horno> {
     return this.http
       .put<Horno>(`${this.base}/hornos/${id}`, datos)
+      .pipe(tap(() => (this.cacheHornos$ = null)));
+  }
+
+  actualizarCapacidadHorno(
+    id: number,
+    datos: HornoCapacidadGuardar,
+  ): Observable<Horno> {
+    return this.http
+      .patch<Horno>(`${this.base}/hornos/${id}/capacidad`, datos)
       .pipe(tap(() => (this.cacheHornos$ = null)));
   }
 

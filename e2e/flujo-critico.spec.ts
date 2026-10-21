@@ -16,6 +16,7 @@ const USUARIO = process.env['E2E_ADMIN_USER'] || 'admin';
 const PASSWORD = process.env['E2E_ADMIN_PASS'] || '';
 const CATEGORIA = process.env['E2E_CATEGORIA'] || 'Papa Hojuela';
 const PRODUCTO = 'Producto E2E';
+const REFERENCIA_PAPA = 'Papa E2E';
 
 let ordenId: number | null = null;
 let numeroOrden = '';
@@ -82,6 +83,14 @@ test.describe('Flujo crítico de planta', () => {
       await sinViolacionesCriticas(page, 'inicio');
     });
 
+    await test.step('consultar la bodega de papa', async () => {
+      await expect(page.getByRole('link', { name: 'Bodega de Papa' }).first()).toBeVisible();
+      await page.goto('/bodega');
+      await expect(page.getByRole('heading', { name: /Bodega de Papa/ })).toBeVisible();
+      await expect(page.getByText(REFERENCIA_PAPA).first()).toBeVisible();
+      await sinViolacionesCriticas(page, 'bodega de papa');
+    });
+
     await test.step('crear una orden con el asistente', async () => {
       await page.goto('/ordenes/nueva');
       await esperarPaso(page, 'destino');
@@ -142,8 +151,18 @@ test.describe('Flujo crítico de planta', () => {
       await esperarPaso(page, 'horario');
       await continuar(page, 'continuar-horno');
 
+      await esperarPaso(page, 'referencia_papa');
+      await page
+        .getByTestId('paso-referencia_papa')
+        .getByRole('button', { name: new RegExp(REFERENCIA_PAPA, 'i') })
+        .click();
+      await continuar(page, 'continuar-horno');
+
       await esperarPaso(page, 'bultos');
       await page.getByTestId('bultos-40').click();
+      await expect(page.getByTestId('horno-preview')).toBeVisible();
+      await expect(page.getByTestId('horno-kg-crudos')).toContainText('2.000');
+      await expect(page.getByTestId('horno-kg-fritos')).toContainText('500');
       await continuar(page, 'continuar-horno');
 
       await esperarPaso(page, 'temperatura');
@@ -176,6 +195,10 @@ test.describe('Flujo crítico de planta', () => {
       await esperarPaso(page, 'resumen');
       await page.getByTestId('guardar-tanda').click();
       await expect(page).toHaveURL(/\/horno$/);
+
+      // La tanda ya guardada muestra la referencia de papa elegida.
+      await page.goto(`/horno/${ordenId}`);
+      await expect(page.getByText(REFERENCIA_PAPA).first()).toBeVisible();
 
       await page.goto(`/ordenes/${ordenId}`);
       await page.getByTestId('tab-horno').click();

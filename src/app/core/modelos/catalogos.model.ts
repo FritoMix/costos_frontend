@@ -37,6 +37,7 @@ export interface Horno {
   litros_por_cm_manual: number | null;
   /** Calculado por la API: lo que realmente se usa para pasar de cm a litros. */
   litros_por_cm: number | null;
+  capacidad_bultos_hora: number | null;
   categorias: ItemCatalogo[];
 }
 
@@ -47,7 +48,12 @@ export interface HornoGuardar {
   apto_exportacion: boolean;
   tanque_diametro_cm: number | null;
   litros_por_cm_manual: number | null;
+  capacidad_bultos_hora: number | null;
   categoria_ids: number[];
+}
+
+export interface HornoCapacidadGuardar {
+  capacidad_bultos_hora: number;
 }
 
 export interface Producto {

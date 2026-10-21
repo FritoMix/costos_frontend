@@ -100,6 +100,7 @@ describe('OrdenesService', () => {
     const datos: RegistroHornoGuardar = {
       hora_inicio: '06:00',
       hora_fin: '07:00',
+      referencia_papa_id: 1,
       cantidad_bultos: 40,
       operarios_seleccion: 5,
       operarios_horno: 5,

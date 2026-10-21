@@ -162,6 +162,8 @@ export class UsuariosListaPage {
         return 'bg-amber-50 text-amber-900 border border-amber-200/70';
       case 'operario_saborizado':
         return 'bg-emerald-50 text-emerald-800 border border-emerald-200/70';
+      case 'bodeguero':
+        return 'bg-lime-50 text-lime-800 border border-lime-200/70';
       default:
         return 'bg-slate-100 text-slate-700 border border-slate-200';
     }

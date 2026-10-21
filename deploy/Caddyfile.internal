@@ -1,0 +1,20 @@
+# DATACONTROL - HTTPS para una red interna sin dominio publico.
+#
+# Caddy genera una CA local y un certificado para DATACONTROL_DOMAIN.
+# Instalar la CA raiz en los equipos de la planta (ver deploy/README.md).
+{
+	admin off
+}
+
+{$DATACONTROL_DOMAIN:datacontrol.local} {
+	tls internal
+
+	encode gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy front:80
+}

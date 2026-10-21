@@ -4,7 +4,12 @@
  * TypeScript avisa aqui.
  */
 
-export type CodigoRol = 'admin' | 'supervisor' | 'operario_horno' | 'operario_saborizado';
+export type CodigoRol =
+  | 'admin'
+  | 'supervisor'
+  | 'operario_horno'
+  | 'operario_saborizado'
+  | 'bodeguero';
 
 export interface Rol {
   id: number;
@@ -47,4 +52,5 @@ export const ETIQUETAS_ROL: Record<CodigoRol, string> = {
   supervisor: 'Supervisor',
   operario_horno: 'Operario de Horno',
   operario_saborizado: 'Operario de Saborizado',
+  bodeguero: 'Bodeguero',
 };

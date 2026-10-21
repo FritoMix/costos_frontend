@@ -75,6 +75,26 @@ describe('CatalogosService', () => {
     trasLimpiar.flush([]);
   });
 
+  it('actualiza solo la capacidad de un horno con PATCH', () => {
+    servicio.actualizarCapacidadHorno(4, { capacidad_bultos_hora: 50 }).subscribe();
+
+    const peticion = http.expectOne('/api/v1/catalogos/hornos/4/capacidad');
+    expect(peticion.request.method).toBe('PATCH');
+    expect(peticion.request.body).toEqual({ capacidad_bultos_hora: 50 });
+    peticion.flush({
+      id: 4,
+      nombre: 'Horno 1',
+      activo: true,
+      tipo_aceite: null,
+      apto_exportacion: false,
+      tanque_diametro_cm: null,
+      litros_por_cm_manual: null,
+      litros_por_cm: null,
+      capacidad_bultos_hora: 50,
+      categorias: [],
+    });
+  });
+
   it('consulta la configuración de planta una sola vez', () => {
     servicio.verConfiguracion().subscribe();
     servicio.verConfiguracion().subscribe();

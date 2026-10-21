@@ -78,6 +78,25 @@ export const rutas: Routes = [
         ],
       },
 
+      // --- Bodega de papa (Bodeguero, Supervisor y Administrador) ---
+      {
+        path: 'bodega',
+        title: 'Bodega de Papa - DATACONTROL',
+        canActivate: [rolGuard(['admin', 'supervisor', 'bodeguero'])],
+        loadComponent: () =>
+          import('./features/bodega/bodega-referencias.page').then((m) => m.BodegaReferenciasPage),
+      },
+
+      // --- Capacidad de hornos (Administrador y Supervisor) ---
+      // Reutiliza la misma pantalla de Hornos. El Supervisor solo ve el
+      // formulario de capacidad; el Administrador conserva la edición completa.
+      {
+        path: 'hornos',
+        title: 'Hornos - DATACONTROL',
+        canActivate: [rolGuard(['admin', 'supervisor'])],
+        loadComponent: () => import('./features/catalogos/hornos.page').then((m) => m.HornosPage),
+      },
+
       // --- Registro de horno (Operario de Horno) ---
       {
         path: 'horno',

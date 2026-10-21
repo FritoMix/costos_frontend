@@ -81,6 +81,7 @@ describe('AuthService', () => {
       ['supervisor', '/ordenes'],
       ['operario_horno', '/horno'],
       ['operario_saborizado', '/saborizado'],
+      ['bodeguero', '/bodega'],
     ];
 
     for (const [codigo, ruta] of casos) {

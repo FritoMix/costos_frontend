@@ -19,6 +19,15 @@ export interface UsuarioRef {
   nombre_completo: string;
 }
 
+export interface ReferenciaPapaRef {
+  id: number;
+  nombre: string;
+  tipo: string | null;
+  peso_promedio_bulto_kg: number;
+  rendimiento_fritura_pct: number | null;
+  porcentaje_produccion_pct: number | null;
+}
+
 export interface Orden {
   id: number;
   numero_orden: string;
@@ -66,9 +75,13 @@ export interface RegistroHorno {
   orden_id: number;
   hora_inicio: string;
   hora_fin: string;
+  referencia_papa: ReferenciaPapaRef | null;
   cantidad_bultos: number;
   peso_estandar_bulto_kg: number;
+  rendimiento_fritura_pct: number | null;
+  porcentaje_produccion_pct: number | null;
   kg_crudos_calculados: number;
+  kg_fritos_estimados: number | null;
   operarios_seleccion: number;
   operarios_horno: number;
   nivel_aceite_inicial_cm: number;
@@ -88,6 +101,7 @@ export interface RegistroHorno {
 export interface RegistroHornoGuardar {
   hora_inicio: string;
   hora_fin: string;
+  referencia_papa_id: number;
   cantidad_bultos: number;
   operarios_seleccion: number;
   operarios_horno: number;
@@ -130,6 +144,7 @@ export interface RecepcionGuardar {
 export interface TotalesOrden {
   kg_crudos: number;
   cantidad_bultos: number;
+  kg_fritos_estimados: number;
   kg_papa_frita: number;
   kg_aceite: number;
   kg_desperdicio: number;

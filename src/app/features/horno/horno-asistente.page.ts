@@ -3,10 +3,16 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal } f
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
+import type { ReferenciaPapa } from '../../core/modelos/bodega.model';
 import type { ItemCatalogo } from '../../core/modelos/catalogos.model';
 import type { DetalleOrden, RegistroHornoGuardar } from '../../core/modelos/produccion.model';
+import { BodegaService } from '../../core/servicios/bodega.service';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
+import {
+  calcularKgCrudosPreview,
+  calcularKgFritosPreview,
+} from '../../core/utilidades/calculos-produccion';
 import { OrdenesService } from '../../core/servicios/ordenes.service';
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
@@ -14,6 +20,7 @@ import { TecladoNumericoComponent } from '../../ui/teclado-numerico.component';
 
 type PasoTanda =
   | 'horario'
+  | 'referencia_papa'
   | 'bultos'
   | 'temperatura'
   | 'personal_zona_humeda'
@@ -44,7 +51,9 @@ type PasoTanda =
       @if (cargando()) {
         <app-cargando texto="Preparando el registro…" />
       } @else if (detalle(); as datos) {
-        <div class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-300/30">
+        <div
+          class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-300/30"
+        >
           <!-- Cabecera: progreso -->
           <header class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 sm:px-7">
             <a
@@ -52,7 +61,13 @@ type PasoTanda =
               class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-95"
               aria-label="Salir del registro"
             >
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <svg
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2.5"
+              >
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </a>
@@ -82,11 +97,15 @@ type PasoTanda =
               <span class="text-[11px] font-extrabold uppercase tracking-widest text-marca-500">
                 {{ etiquetaPaso() }} · Paso {{ indicePaso() + 1 }}
               </span>
-              <h2 class="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 text-balance sm:text-[26px]">
+              <h2
+                class="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 text-balance sm:text-[26px]"
+              >
                 {{ tituloPaso() }}
               </h2>
               @if (subtituloPaso()) {
-                <p class="mx-auto mt-2 max-w-sm text-sm font-medium text-slate-500">{{ subtituloPaso() }}</p>
+                <p class="mx-auto mt-2 max-w-sm text-sm font-medium text-slate-500">
+                  {{ subtituloPaso() }}
+                </p>
               }
             </div>
 
@@ -98,15 +117,37 @@ type PasoTanda =
                     <div class="rounded-3xl border-2 border-marca-300 bg-marca-50/60 px-6 py-7">
                       <div class="flex items-center justify-center gap-5">
                         <div class="text-center">
-                          <p class="text-[11px] font-extrabold uppercase tracking-widest text-slate-500">Inicio</p>
-                          <p class="mt-1 text-3xl font-extrabold text-slate-900 tabular-nums">{{ horaInicio() }}</p>
+                          <p
+                            class="text-[11px] font-extrabold uppercase tracking-widest text-slate-500"
+                          >
+                            Inicio
+                          </p>
+                          <p class="mt-1 text-3xl font-extrabold text-slate-900 tabular-nums">
+                            {{ horaInicio() }}
+                          </p>
                         </div>
-                        <svg class="h-6 w-6 shrink-0 text-marca-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                        <svg
+                          class="h-6 w-6 shrink-0 text-marca-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          stroke-width="2.5"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                          />
                         </svg>
                         <div class="text-center">
-                          <p class="text-[11px] font-extrabold uppercase tracking-widest text-slate-500">Fin</p>
-                          <p class="mt-1 text-3xl font-extrabold text-slate-900 tabular-nums">{{ horaFin() }}</p>
+                          <p
+                            class="text-[11px] font-extrabold uppercase tracking-widest text-slate-500"
+                          >
+                            Fin
+                          </p>
+                          <p class="mt-1 text-3xl font-extrabold text-slate-900 tabular-nums">
+                            {{ horaFin() }}
+                          </p>
                         </div>
                       </div>
                       <p class="mt-4 text-center text-xs font-semibold text-marca-700">
@@ -139,7 +180,67 @@ type PasoTanda =
                   </div>
                 }
 
-                <!-- 2. Bultos -->
+                <!-- 2. Referencia de papa -->
+                @case ('referencia_papa') {
+                  <div class="anim-entrada mx-auto max-w-md">
+                    @if (referenciasDisponibles().length === 0) {
+                      <div
+                        class="rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/70 px-5 py-6 text-center"
+                      >
+                        <p class="text-sm font-bold text-amber-900">
+                          No hay referencias configuradas para producir.
+                        </p>
+                        <p class="mt-1 text-xs font-medium text-amber-800">
+                          Bodega debe registrar el tipo, el peso por bulto, el rendimiento de
+                          fritura y la participación de al menos una referencia activa.
+                        </p>
+                      </div>
+                    } @else {
+                      <div class="space-y-3">
+                        @for (referencia of referenciasDisponibles(); track referencia.id) {
+                          <button
+                            type="button"
+                            [attr.data-testid]="'referencia-papa-' + referencia.id"
+                            (click)="referenciaPapaId.set(referencia.id)"
+                            [class]="claseFila(referenciaPapaId() === referencia.id)"
+                          >
+                            <span
+                              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-lime-100 text-xl"
+                              >🥔</span
+                            >
+                            <span class="min-w-0 flex-1 text-left">
+                              <span class="block font-bold text-slate-900">{{
+                                referencia.nombre
+                              }}</span>
+                              <span class="block text-xs font-semibold text-slate-500">
+                                {{ referencia.tipo }} ·
+                                {{ referencia.peso_promedio_bulto_kg | number: '1.2-2' }} kg/bulto
+                              </span>
+                              <span class="block text-[11px] font-semibold text-amber-700">
+                                Rendimiento
+                                {{ referencia.rendimiento_fritura_pct | number: '1.2-2' }} % ·
+                                Participación
+                                {{ referencia.porcentaje_produccion_pct | number: '1.2-2' }} %
+                              </span>
+                            </span>
+                            @if (referenciaPapaId() === referencia.id) {
+                              <span
+                                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-marca-600 text-xs font-black text-white"
+                                >✓</span
+                              >
+                            } @else {
+                              <span
+                                class="block h-6 w-6 shrink-0 rounded-full border-2 border-slate-300"
+                              ></span>
+                            }
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- 3. Bultos -->
                 @case ('bultos') {
                   <div class="anim-entrada">
                     @if (tecladoBultosAbierto()) {
@@ -149,8 +250,12 @@ type PasoTanda =
                       <div
                         class="mx-auto max-w-md rounded-3xl border border-slate-200 bg-slate-50/70 px-5 py-6 text-center"
                       >
-                        <p class="text-6xl font-extrabold text-slate-900 tabular-nums">{{ bultos() || '0' }}</p>
-                        <span class="mt-1 block text-xs font-extrabold uppercase tracking-widest text-slate-400">
+                        <p class="text-6xl font-extrabold text-slate-900 tabular-nums">
+                          {{ bultos() || '0' }}
+                        </p>
+                        <span
+                          class="mt-1 block text-xs font-extrabold uppercase tracking-widest text-slate-400"
+                        >
                           bultos de papa cruda
                         </span>
                       </div>
@@ -180,10 +285,53 @@ type PasoTanda =
                       </button>
                     </div>
 
-                    @if (pesoBulto() > 0 && numero(bultos()) > 0) {
-                      <p class="mt-2 text-center text-xs font-semibold text-slate-500">
-                        Equivale a {{ numero(bultos()) * pesoBulto() | number: '1.0-2' }} kg de papa cruda
-                      </p>
+                    @if (referenciaSeleccionada(); as ref) {
+                      @if (numero(bultos()) > 0) {
+                        <div
+                          class="mx-auto mt-4 grid max-w-md grid-cols-2 gap-3"
+                          data-testid="horno-preview"
+                        >
+                          <div
+                            class="rounded-2xl border border-lime-200 bg-lime-50/80 px-4 py-3 text-center"
+                          >
+                            <span
+                              class="block text-[10px] font-extrabold uppercase tracking-wider text-lime-700"
+                              >Kg crudos</span
+                            >
+                            <span
+                              class="mt-0.5 block font-mono text-lg font-black text-lime-900"
+                              data-testid="horno-kg-crudos"
+                            >
+                              {{ kgCrudos() | number: '1.0-2' }}
+                            </span>
+                            <span class="block text-[10px] font-semibold text-lime-700">
+                              {{ numero(bultos()) | number: '1.0-0' }} ×
+                              {{ ref.peso_promedio_bulto_kg | number: '1.2-2' }} kg
+                            </span>
+                          </div>
+                          <div
+                            class="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-center"
+                          >
+                            <span
+                              class="block text-[10px] font-extrabold uppercase tracking-wider text-amber-700"
+                              >Kg fritos est.</span
+                            >
+                            <span
+                              class="mt-0.5 block font-mono text-lg font-black text-amber-900"
+                              data-testid="horno-kg-fritos"
+                            >
+                              {{ kgFritos() | number: '1.0-2' }}
+                            </span>
+                            <span class="block text-[10px] font-semibold text-amber-700">
+                              Rendimiento {{ ref.rendimiento_fritura_pct | number: '1.2-2' }} %
+                            </span>
+                          </div>
+                        </div>
+                        <p class="mt-2 text-center text-[11px] font-medium text-slate-400">
+                          Vista previa. El sistema guarda el cálculo definitivo al confirmar la
+                          tanda.
+                        </p>
+                      }
                     }
                   </div>
                 }
@@ -197,8 +345,12 @@ type PasoTanda =
                       <div
                         class="mx-auto max-w-md rounded-3xl border border-slate-200 bg-slate-50/70 px-5 py-6 text-center"
                       >
-                        <p class="text-6xl font-extrabold text-slate-900 tabular-nums">{{ temperatura() || '0' }}</p>
-                        <span class="mt-1 block text-xs font-extrabold uppercase tracking-widest text-slate-400">
+                        <p class="text-6xl font-extrabold text-slate-900 tabular-nums">
+                          {{ temperatura() || '0' }}
+                        </p>
+                        <span
+                          class="mt-1 block text-xs font-extrabold uppercase tracking-widest text-slate-400"
+                        >
                           grados centígrados
                         </span>
                       </div>
@@ -224,7 +376,11 @@ type PasoTanda =
                         (click)="alternarTecladoTemperatura()"
                         class="rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-500 transition hover:bg-slate-100 hover:text-marca-700"
                       >
-                        {{ tecladoTemperaturaAbierto() ? 'Ver temperaturas habituales' : 'Otra temperatura' }}
+                        {{
+                          tecladoTemperaturaAbierto()
+                            ? 'Ver temperaturas habituales'
+                            : 'Otra temperatura'
+                        }}
                       </button>
                     </div>
                   </div>
@@ -247,8 +403,8 @@ type PasoTanda =
                     </div>
                     @if (operariosZonaHumeda() > 0) {
                       <p class="mt-5 text-center text-xs font-semibold text-slate-500">
-                        {{ operariosZonaHumeda() }} {{ operariosZonaHumeda() === 1 ? 'persona' : 'personas' }} en zona
-                        húmeda
+                        {{ operariosZonaHumeda() }}
+                        {{ operariosZonaHumeda() === 1 ? 'persona' : 'personas' }} en zona húmeda
                       </p>
                     }
                   </div>
@@ -271,8 +427,8 @@ type PasoTanda =
                     </div>
                     @if (operariosSeleccion() > 0) {
                       <p class="mt-5 text-center text-xs font-semibold text-slate-500">
-                        {{ operariosSeleccion() }} {{ operariosSeleccion() === 1 ? 'persona' : 'personas' }} en
-                        selección
+                        {{ operariosSeleccion() }}
+                        {{ operariosSeleccion() === 1 ? 'persona' : 'personas' }} en selección
                       </p>
                     }
                   </div>
@@ -313,8 +469,13 @@ type PasoTanda =
                           (click)="continuar()"
                           [class]="claseTarjetaGrande(false)"
                         >
-                          <span class="mb-1 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-2xl">✅</span>
-                          <span class="text-base font-extrabold text-slate-900">Sin desperdicio</span>
+                          <span
+                            class="mb-1 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-2xl"
+                            >✅</span
+                          >
+                          <span class="text-base font-extrabold text-slate-900"
+                            >Sin desperdicio</span
+                          >
                           <span class="text-xs font-medium text-slate-500">Tanda limpia</span>
                         </button>
                         <button
@@ -323,7 +484,10 @@ type PasoTanda =
                           (click)="hayDesperdicio.set(true)"
                           [class]="claseTarjetaGrande(false)"
                         >
-                          <span class="mb-1 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-2xl">⚠️</span>
+                          <span
+                            class="mb-1 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-2xl"
+                            >⚠️</span
+                          >
                           <span class="text-base font-extrabold text-slate-900">Sí hubo</span>
                           <span class="text-xs font-medium text-slate-500">Registrar merma</span>
                         </button>
@@ -331,23 +495,39 @@ type PasoTanda =
                     } @else {
                       <div class="space-y-3">
                         @for (tipo of tiposDesperdicio(); track tipo.id) {
-                          <button type="button" (click)="tipoDesperdicioId.set(tipo.id)" [class]="claseFila(tipoDesperdicioId() === tipo.id)">
-                            <span class="min-w-0 flex-1 text-left font-bold text-slate-900">{{ tipo.nombre }}</span>
+                          <button
+                            type="button"
+                            (click)="tipoDesperdicioId.set(tipo.id)"
+                            [class]="claseFila(tipoDesperdicioId() === tipo.id)"
+                          >
+                            <span class="min-w-0 flex-1 text-left font-bold text-slate-900">{{
+                              tipo.nombre
+                            }}</span>
                             @if (tipoDesperdicioId() === tipo.id) {
-                              <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-marca-600 text-xs font-black text-white">✓</span>
+                              <span
+                                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-marca-600 text-xs font-black text-white"
+                                >✓</span
+                              >
                             } @else {
-                              <span class="block h-6 w-6 shrink-0 rounded-full border-2 border-slate-300"></span>
+                              <span
+                                class="block h-6 w-6 shrink-0 rounded-full border-2 border-slate-300"
+                              ></span>
                             }
                           </button>
                         } @empty {
-                          <p class="rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/60 px-5 py-6 text-center text-sm font-semibold text-amber-800">
+                          <p
+                            class="rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/60 px-5 py-6 text-center text-sm font-semibold text-amber-800"
+                          >
                             No hay tipos de desperdicio configurados.
                           </p>
                         }
 
                         @if (tipoDesperdicioId()) {
                           <div class="pt-2">
-                            <app-teclado-numerico [(valor)]="cantidadDesperdicio" unidad="kg de desperdicio" />
+                            <app-teclado-numerico
+                              [(valor)]="cantidadDesperdicio"
+                              unidad="kg de desperdicio"
+                            />
                           </div>
                         }
 
@@ -366,7 +546,9 @@ type PasoTanda =
                 <!-- 8. Resumen -->
                 @case ('resumen') {
                   <div class="anim-entrada">
-                    <dl class="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200">
+                    <dl
+                      class="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200"
+                    >
                       <div class="flex items-center justify-between gap-4 px-5 py-3">
                         <dt class="text-sm font-semibold text-slate-500">Horario</dt>
                         <dd class="text-sm font-extrabold text-slate-900 tabular-nums">
@@ -374,44 +556,76 @@ type PasoTanda =
                         </dd>
                       </div>
                       <div class="flex items-center justify-between gap-4 px-5 py-3">
+                        <dt class="text-sm font-semibold text-slate-500">Referencia de papa</dt>
+                        <dd class="text-sm font-extrabold text-slate-900">
+                          {{ referenciaSeleccionada()?.nombre ?? '—' }}
+                        </dd>
+                      </div>
+                      <div class="flex items-center justify-between gap-4 px-5 py-3">
+                        <dt class="text-sm font-semibold text-slate-500">Tipo de papa</dt>
+                        <dd class="text-sm font-extrabold text-slate-900">
+                          {{ referenciaSeleccionada()?.tipo ?? '—' }}
+                        </dd>
+                      </div>
+                      <div class="flex items-center justify-between gap-4 px-5 py-3">
                         <dt class="text-sm font-semibold text-slate-500">Papa cruda</dt>
                         <dd class="text-sm font-extrabold text-slate-900">
                           {{ numero(bultos()) | number: '1.0-2' }} bultos
-                          @if (pesoBulto() > 0) {
-                            <span class="font-medium text-slate-500">
-                              ({{ numero(bultos()) * pesoBulto() | number: '1.0-0' }} kg)
-                            </span>
-                          }
+                          <span class="font-medium text-slate-500"
+                            >({{ kgCrudos() | number: '1.0-2' }} kg)</span
+                          >
+                        </dd>
+                      </div>
+                      <div class="flex items-center justify-between gap-4 px-5 py-3">
+                        <dt class="text-sm font-semibold text-slate-500">Rendimiento de fritura</dt>
+                        <dd class="text-sm font-extrabold text-slate-900">
+                          {{ referenciaSeleccionada()?.rendimiento_fritura_pct | number: '1.2-2' }}
+                          %
+                        </dd>
+                      </div>
+                      <div class="flex items-center justify-between gap-4 px-5 py-3">
+                        <dt class="text-sm font-semibold text-slate-500">Kg fritos estimados</dt>
+                        <dd class="text-sm font-extrabold text-amber-800">
+                          {{ kgFritos() | number: '1.0-2' }} kg
                         </dd>
                       </div>
                       <div class="flex items-center justify-between gap-4 px-5 py-3">
                         <dt class="text-sm font-semibold text-slate-500">Temperatura</dt>
-                        <dd class="text-sm font-extrabold text-slate-900">{{ numero(temperatura()) }} °C</dd>
+                        <dd class="text-sm font-extrabold text-slate-900">
+                          {{ numero(temperatura()) }} °C
+                        </dd>
                       </div>
                       <div class="flex items-center justify-between gap-4 px-5 py-3">
                         <dt class="text-sm font-semibold text-slate-500">Zona húmeda</dt>
                         <dd class="text-sm font-extrabold text-slate-900">
-                          {{ operariosZonaHumeda() }} {{ operariosZonaHumeda() === 1 ? 'persona' : 'personas' }}
+                          {{ operariosZonaHumeda() }}
+                          {{ operariosZonaHumeda() === 1 ? 'persona' : 'personas' }}
                         </dd>
                       </div>
                       <div class="flex items-center justify-between gap-4 px-5 py-3">
-                        <dt class="text-sm font-semibold text-slate-500">Selección de papa freída</dt>
+                        <dt class="text-sm font-semibold text-slate-500">
+                          Selección de papa freída
+                        </dt>
                         <dd class="text-sm font-extrabold text-slate-900">
-                          {{ operariosSeleccion() }} {{ operariosSeleccion() === 1 ? 'persona' : 'personas' }}
+                          {{ operariosSeleccion() }}
+                          {{ operariosSeleccion() === 1 ? 'persona' : 'personas' }}
                         </dd>
                       </div>
                       <div class="flex items-center justify-between gap-4 px-5 py-3">
                         <dt class="text-sm font-semibold text-slate-500">Aceite</dt>
                         <dd class="text-sm font-extrabold text-slate-900">
                           {{ numero(aceiteInicial()) }} → {{ numero(aceiteFinal()) }} cm
-                          <span class="font-medium text-slate-500">({{ consumoCm() | number: '1.0-2' }} cm)</span>
+                          <span class="font-medium text-slate-500"
+                            >({{ consumoCm() | number: '1.0-2' }} cm)</span
+                          >
                         </dd>
                       </div>
                       <div class="flex items-center justify-between gap-4 bg-slate-50/70 px-5 py-3">
                         <dt class="text-sm font-semibold text-slate-500">Desperdicio</dt>
                         <dd class="text-sm font-extrabold text-slate-900">
                           @if (tipoDesperdicioId() && numero(cantidadDesperdicio()) > 0) {
-                            {{ nombreDesperdicio() }} · {{ numero(cantidadDesperdicio()) | number: '1.0-2' }} kg
+                            {{ nombreDesperdicio() }} ·
+                            {{ numero(cantidadDesperdicio()) | number: '1.0-2' }} kg
                           } @else {
                             <span class="text-emerald-700">Sin desperdicio</span>
                           }
@@ -425,7 +639,9 @@ type PasoTanda =
           </div>
 
           <!-- Navegación -->
-          <footer class="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-5 py-4 sm:px-7">
+          <footer
+            class="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-5 py-4 sm:px-7"
+          >
             <app-boton
               variante="secundario"
               (click)="atras()"
@@ -468,8 +684,11 @@ type PasoTanda =
             <ul class="mt-2 space-y-1">
               @for (registro of datos.registros_horno; track registro.id) {
                 <li class="flex items-center justify-between gap-3 text-sm">
-                  <span class="font-semibold text-slate-700">
+                  <span class="min-w-0 truncate font-semibold text-slate-700">
                     {{ registro.cantidad_bultos | number: '1.0-2' }} bultos
+                    @if (registro.referencia_papa; as referencia) {
+                      <span class="font-medium text-slate-500">· {{ referencia.nombre }}</span>
+                    }
                   </span>
                   <span class="font-medium text-slate-500">
                     {{ registro.kg_crudos_calculados | number: '1.0-0' }} kg crudos
@@ -488,6 +707,7 @@ export class HornoAsistentePage {
 
   private readonly ordenes = inject(OrdenesService);
   private readonly catalogos = inject(CatalogosService);
+  private readonly bodega = inject(BodegaService);
   private readonly avisos = inject(NotificacionesService);
   private readonly router = inject(Router);
 
@@ -495,8 +715,34 @@ export class HornoAsistentePage {
   protected readonly enviando = signal(false);
   protected readonly detalle = signal<DetalleOrden | null>(null);
   protected readonly tiposDesperdicio = signal<ItemCatalogo[]>([]);
-  /** Peso estándar del bulto, para mostrar el equivalente en kg. */
-  protected readonly pesoBulto = signal(0);
+  protected readonly referenciasPapa = signal<ReferenciaPapa[]>([]);
+  protected readonly referenciaPapaId = signal<number | null>(null);
+
+  protected readonly referenciasDisponibles = computed(() =>
+    this.referenciasPapa().filter(
+      (r) =>
+        r.activo &&
+        r.tipo !== null &&
+        r.rendimiento_fritura_pct !== null &&
+        r.porcentaje_produccion_pct !== null,
+    ),
+  );
+  protected readonly referenciaSeleccionada = computed(
+    () => this.referenciasPapa().find((r) => r.id === this.referenciaPapaId()) ?? null,
+  );
+  /** Peso promedio de la referencia elegida, para mostrar el equivalente en kg. */
+  protected readonly pesoBulto = computed(() =>
+    Number(this.referenciaSeleccionada()?.peso_promedio_bulto_kg ?? 0),
+  );
+  protected readonly kgCrudos = computed(() =>
+    calcularKgCrudosPreview(this.numero(this.bultos()), this.pesoBulto()),
+  );
+  protected readonly kgFritos = computed(() =>
+    calcularKgFritosPreview(
+      this.kgCrudos(),
+      this.referenciaSeleccionada()?.rendimiento_fritura_pct,
+    ),
+  );
 
   // --- Datos de la tanda ---------------------------------------------------
 
@@ -537,6 +783,7 @@ export class HornoAsistentePage {
 
   private readonly pasos: PasoTanda[] = [
     'horario',
+    'referencia_papa',
     'bultos',
     'temperatura',
     'personal_zona_humeda',
@@ -557,7 +804,16 @@ export class HornoAsistentePage {
       titulo: 'Esta es la hora de tu tanda',
       sub: 'Se toma automáticamente. Cada tanda dura una hora.',
     },
-    bultos: { etiqueta: 'Materia prima', titulo: '¿Cuántos bultos entraron?', sub: 'Papa cruda que alimentó el horno.' },
+    referencia_papa: {
+      etiqueta: 'Materia prima',
+      titulo: '¿Qué papa entró al horno?',
+      sub: 'Elige la referencia que despachó Bodega para esta tanda.',
+    },
+    bultos: {
+      etiqueta: 'Materia prima',
+      titulo: '¿Cuántos bultos entraron?',
+      sub: 'Papa cruda que alimentó el horno.',
+    },
     temperatura: { etiqueta: 'Proceso', titulo: '¿A qué temperatura está el aceite?', sub: '' },
     personal_zona_humeda: {
       etiqueta: 'Personal',
@@ -569,10 +825,22 @@ export class HornoAsistentePage {
       titulo: '¿Cuántos operarios en selección?',
       sub: 'Personas seleccionando la papa ya freída.',
     },
-    aceite_inicial: { etiqueta: 'Aceite', titulo: '¿Nivel inicial del aceite?', sub: 'Medida en centímetros antes de la tanda.' },
-    aceite_final: { etiqueta: 'Aceite', titulo: '¿Nivel final del aceite?', sub: 'Medida en centímetros al terminar.' },
+    aceite_inicial: {
+      etiqueta: 'Aceite',
+      titulo: '¿Nivel inicial del aceite?',
+      sub: 'Medida en centímetros antes de la tanda.',
+    },
+    aceite_final: {
+      etiqueta: 'Aceite',
+      titulo: '¿Nivel final del aceite?',
+      sub: 'Medida en centímetros al terminar.',
+    },
     desperdicio: { etiqueta: 'Desperdicio', titulo: '¿Hubo desperdicio?', sub: '' },
-    resumen: { etiqueta: 'Confirmación', titulo: 'Revisa y guarda', sub: 'Verifica antes de registrar la tanda.' },
+    resumen: {
+      etiqueta: 'Confirmación',
+      titulo: 'Revisa y guarda',
+      sub: 'Verifica antes de registrar la tanda.',
+    },
   };
 
   protected readonly etiquetaPaso = computed(() => this.textos[this.pasoActual()].etiqueta);
@@ -603,6 +871,8 @@ export class HornoAsistentePage {
     switch (this.pasoActual()) {
       case 'horario':
         return true;
+      case 'referencia_papa':
+        return this.referenciaPapaId() !== null;
       case 'bultos':
         return this.numero(this.bultos()) > 0;
       case 'temperatura':
@@ -636,12 +906,17 @@ export class HornoAsistentePage {
     forkJoin({
       detalle: this.ordenes.detalle(Number(this.id())),
       tipos: this.catalogos.listarTiposDesperdicio(true),
-      configuracion: this.catalogos.verConfiguracion(),
+      referencias: this.bodega.listar(true, true),
     }).subscribe({
-      next: ({ detalle, tipos, configuracion }) => {
+      next: ({ detalle, tipos, referencias }) => {
         this.detalle.set(detalle);
         this.tiposDesperdicio.set(tipos);
-        this.pesoBulto.set(Number(configuracion.peso_estandar_bulto_kg ?? 0));
+        this.referenciasPapa.set(referencias);
+        // Si solo hay una referencia activa, se deja elegida para ahorrar
+        // un toque; el operario igual la ve en el resumen antes de guardar.
+        if (this.referenciasDisponibles().length === 1) {
+          this.referenciaPapaId.set(this.referenciasDisponibles()[0].id);
+        }
         // El reloj de la tanda arranca al abrir el registro.
         this.inicio.set(new Date());
         this.cargando.set(false);
@@ -729,7 +1004,6 @@ export class HornoAsistentePage {
       : 'border-slate-200 bg-white text-slate-700 hover:border-marca-400 hover:bg-marca-50 hover:text-marca-800';
   }
 
-
   protected claseTarjetaGrande(seleccionada: boolean): string {
     const base =
       'relative flex flex-col items-center gap-1.5 rounded-3xl border-2 px-4 py-7 text-center transition-all ' +
@@ -773,6 +1047,7 @@ export class HornoAsistentePage {
     const datos: RegistroHornoGuardar = {
       hora_inicio: this.horaInicio(),
       hora_fin: this.horaFin(),
+      referencia_papa_id: this.referenciaPapaId()!,
       cantidad_bultos: this.numero(this.bultos()),
       operarios_seleccion: this.operariosSeleccion(),
       operarios_horno: this.operariosZonaHumeda(),
@@ -789,9 +1064,7 @@ export class HornoAsistentePage {
     this.ordenes.crearRegistroHorno(Number(this.id()), datos).subscribe({
       next: (registro) => {
         this.enviando.set(false);
-        this.avisos.exito(
-          `Tanda registrada: ${registro.kg_crudos_calculados} kg de papa cruda.`,
-        );
+        this.avisos.exito(`Tanda registrada: ${registro.kg_crudos_calculados} kg de papa cruda.`);
         void this.router.navigate(['/horno']);
       },
       error: () => this.enviando.set(false),
