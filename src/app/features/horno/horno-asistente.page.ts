@@ -13,6 +13,10 @@ import {
   calcularKgCrudosPreview,
   calcularKgFritosPreview,
 } from '../../core/utilidades/calculos-produccion';
+import {
+  formatearMinutos,
+  minutosDisponibles as calcularMinutosDisponibles,
+} from '../../core/utilidades/limites-produccion';
 import { OrdenesService } from '../../core/servicios/ordenes.service';
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
@@ -51,9 +55,49 @@ type PasoTanda =
       @if (cargando()) {
         <app-cargando texto="Preparando el registro…" />
       } @else if (detalle(); as datos) {
-        <div
-          class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-300/30"
-        >
+        @if (ordenCompleta()) {
+          <div
+            class="rounded-3xl border border-emerald-200 bg-white p-8 text-center shadow-xl shadow-emerald-200/20"
+            data-testid="horno-orden-completa"
+          >
+            <div
+              class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-2xl font-black text-emerald-700"
+            >
+              ✓
+            </div>
+            <h2 class="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">
+              Producción de horno completa
+            </h2>
+            <p class="mx-auto mt-2 max-w-md text-sm font-medium text-slate-500">
+              @if (minutosDisponibles() === 0) {
+                Esta orden ya tiene registradas sus
+                {{ datos.orden.horas_produccion }}
+                {{ datos.orden.horas_produccion === 1 ? 'hora' : 'horas' }}
+                de producción en horno. No se pueden agregar más tandas.
+              } @else {
+                Solo quedan {{ textoMinutosDisponibles() }} de producción y cada tanda dura una
+                hora. No se puede agregar otra tanda.
+              }
+            </p>
+            <div class="mt-6 flex flex-wrap justify-center gap-3">
+              <a
+                routerLink="/horno"
+                class="inline-flex items-center justify-center rounded-xl bg-marca-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-marca-700 active:scale-95"
+              >
+                Volver a órdenes
+              </a>
+              <a
+                [routerLink]="['/ordenes', datos.orden.id]"
+                class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-marca-300 hover:text-marca-800 active:scale-95"
+              >
+                Ver orden
+              </a>
+            </div>
+          </div>
+        } @else {
+          <div
+            class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-300/30"
+          >
           <!-- Cabecera: progreso -->
           <header class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 sm:px-7">
             <a
@@ -89,6 +133,12 @@ type PasoTanda =
               <span class="text-marca-700">{{ datos.orden.horno.nombre }}</span> ·
               <span class="font-mono">#{{ datos.orden.numero_orden }}</span>
             </p>
+            @if (minutosDisponibles() !== null) {
+              <p class="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Producción: {{ datos.orden.horas_produccion }} h · disponibles:
+                {{ textoMinutosDisponibles() }}
+              </p>
+            }
           </div>
 
           <!-- Cuerpo -->
@@ -579,7 +629,7 @@ type PasoTanda =
                       <div class="flex items-center justify-between gap-4 px-5 py-3">
                         <dt class="text-sm font-semibold text-slate-500">Rendimiento de fritura</dt>
                         <dd class="text-sm font-extrabold text-slate-900">
-                          {{ referenciaSeleccionada()?.rendimiento_fritura_pct | number: '1.2-2' }}
+                          {{ referenciaSeleccionada()!.rendimiento_fritura_pct | number: '1.2-2' }}
                           %
                         </dd>
                       </div>
@@ -673,7 +723,8 @@ type PasoTanda =
               </app-boton>
             }
           </footer>
-        </div>
+          </div>
+        }
 
         <!-- Tandas ya registradas en esta orden -->
         @if (datos.registros_horno.length > 0) {
@@ -743,6 +794,22 @@ export class HornoAsistentePage {
       this.referenciaSeleccionada()?.rendimiento_fritura_pct,
     ),
   );
+
+  /** Minutos que le quedan a la orden para registrar tandas de una hora. */
+  protected readonly minutosDisponibles = computed(() => {
+    const datos = this.detalle();
+    return datos
+      ? calcularMinutosDisponibles(datos.orden.horas_produccion, datos.registros_horno)
+      : null;
+  });
+  protected readonly textoMinutosDisponibles = computed(() => {
+    const minutos = this.minutosDisponibles();
+    return minutos === null ? null : formatearMinutos(minutos);
+  });
+  protected readonly ordenCompleta = computed(() => {
+    const minutos = this.minutosDisponibles();
+    return minutos !== null && minutos < 60;
+  });
 
   // --- Datos de la tanda ---------------------------------------------------
 
@@ -1041,6 +1108,14 @@ export class HornoAsistentePage {
   }
 
   protected guardar(): void {
+    if (this.enviando()) {
+      return;
+    }
+    if (this.ordenCompleta()) {
+      this.avisos.error('No queda tiempo suficiente para otra tanda de una hora.');
+      return;
+    }
+
     const conDesperdicio =
       this.tipoDesperdicioId() !== null && this.numero(this.cantidadDesperdicio()) > 0;
 

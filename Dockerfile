@@ -8,7 +8,7 @@
 # herramientas de desarrollo en el servidor de la fabrica.
 
 # --- Etapa 1: construir ----------------------------------------------------
-FROM node:22-alpine AS construccion
+FROM node:24-alpine AS construccion
 
 WORKDIR /app
 

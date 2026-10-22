@@ -77,7 +77,10 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                   class="campo"
                   formControlName="horas_produccion"
                 />
-                <p class="ayuda">Solo horas completas. Mínimo 1.</p>
+                <p class="ayuda">
+                  Solo horas completas. Mínimo 1. Limita las tandas de horno y las recepciones de
+                  saborizado.
+                </p>
               </div>
 
               <div>
