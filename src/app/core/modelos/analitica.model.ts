@@ -14,6 +14,8 @@ export interface FiltrosAnalisis {
 export interface Desglose {
   etiqueta: string;
   valor: number;
+  /** Kg programados (meta). Presente en por_horno y por_turno. */
+  meta?: number | null;
 }
 
 export interface Indicadores {

@@ -200,16 +200,25 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
             <div class="rounded-2xl bg-white p-5 border border-slate-200/80 shadow-xs space-y-2">
               <div class="flex items-center justify-between text-xs font-bold text-slate-700">
                 <span class="flex items-center gap-2">
-                  <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                  <span
+                    class="h-2 w-2 rounded-full"
+                    [class]="datos.totales.avance_porcentaje >= 100 ? 'bg-emerald-500' : 'bg-red-500'"
+                  ></span>
                   Cumplimiento del Pedido
                 </span>
-                <span class="font-mono text-emerald-700 text-sm">
+                <span
+                  class="font-mono text-sm font-bold"
+                  [class]="datos.totales.avance_porcentaje >= 100 ? 'text-emerald-700' : 'text-red-600'"
+                >
                   {{ datos.totales.kg_papa_frita | number: '1.0-2' }} / {{ datos.orden.cantidad_programada | number: '1.0-2' }} kg ({{ datos.totales.avance_porcentaje | number: '1.0-1' }}%)
                 </span>
               </div>
               <div class="h-3 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-200/60 p-0.5">
                 <div
-                  class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500"
+                  class="h-full rounded-full transition-all duration-500"
+                  [class]="datos.totales.avance_porcentaje >= 100
+                    ? 'bg-gradient-to-r from-emerald-500 to-green-500'
+                    : 'bg-gradient-to-r from-red-400 to-rose-500'"
                   [style.width.%]="porcentajeBarra(datos.totales.avance_porcentaje)"
                 ></div>
               </div>
