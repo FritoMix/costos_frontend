@@ -196,9 +196,11 @@ test.describe('Flujo crítico de planta', () => {
       await page.getByTestId('guardar-tanda').click();
       await expect(page).toHaveURL(/\/horno$/);
 
-      // La tanda ya guardada muestra la referencia de papa elegida.
+      // La orden de una hora ya no permite otra tanda de horno.
       await page.goto(`/horno/${ordenId}`);
+      await expect(page.getByTestId('horno-orden-completa')).toBeVisible();
       await expect(page.getByText(REFERENCIA_PAPA).first()).toBeVisible();
+      await expect(page.getByTestId('guardar-tanda')).toHaveCount(0);
 
       await page.goto(`/ordenes/${ordenId}`);
       await page.getByTestId('tab-horno').click();
@@ -230,6 +232,8 @@ test.describe('Flujo crítico de planta', () => {
       await esperarPaso(page, 'resumen');
       await page.getByTestId('registrar-recepcion').click();
       await expect(page.getByText(/Recepciones ya registradas \(1\)/)).toBeVisible();
+      await expect(page.getByTestId('saborizado-orden-completa')).toBeVisible();
+      await expect(page.getByTestId('registrar-recepcion')).toHaveCount(0);
 
       await page.goto(`/ordenes/${ordenId}`);
       await page.getByTestId('tab-saborizado').click();

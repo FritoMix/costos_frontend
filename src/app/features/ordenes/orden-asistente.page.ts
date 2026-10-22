@@ -518,7 +518,7 @@ export class OrdenAsistentePage {
     horas: {
       etiqueta: 'Duración',
       titulo: '¿Cuántas horas va a producción?',
-      sub: 'Solo horas completas. Mínimo 1 hora.',
+      sub: 'Solo horas completas. Define el tiempo máximo que se puede registrar en horno y saborizado.',
     },
     horno: { etiqueta: 'Horno', titulo: '¿En qué horno se produce?', sub: '' },
     turno: { etiqueta: 'Turno', titulo: '¿En qué turno?', sub: 'Selecciona el turno operativo.' },

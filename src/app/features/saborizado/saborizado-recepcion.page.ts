@@ -9,6 +9,10 @@ import { AuthService } from '../../core/servicios/auth.service';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
 import { OrdenesService } from '../../core/servicios/ordenes.service';
+import {
+  formatearMinutos,
+  minutosDisponibles as calcularMinutosDisponibles,
+} from '../../core/utilidades/limites-produccion';
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 import { TecladoNumericoComponent } from '../../ui/teclado-numerico.component';
@@ -44,7 +48,44 @@ type PasoRecepcion =
       @if (cargando()) {
         <app-cargando texto="Preparando estación de saborizado…" />
       } @else if (detalle(); as datos) {
-        <div class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-300/30">
+        @if (bloqueada()) {
+          <div
+            class="rounded-3xl border border-emerald-200 bg-white p-8 text-center shadow-xl shadow-emerald-200/20"
+            data-testid="saborizado-orden-completa"
+          >
+            <div
+              class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-2xl font-black text-emerald-700"
+            >
+              ✓
+            </div>
+            <h2 class="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">
+              Recepciones de saborizado completas
+            </h2>
+            <p class="mx-auto mt-2 max-w-md text-sm font-medium text-slate-500">
+              Esta orden ya tiene registradas sus
+              {{ datos.orden.horas_produccion }}
+              {{ datos.orden.horas_produccion === 1 ? 'hora' : 'horas' }}
+              de recepción en saborizado. No se pueden agregar más recepciones.
+            </p>
+            <div class="mt-6 flex flex-wrap justify-center gap-3">
+              <a
+                routerLink="/saborizado"
+                class="inline-flex items-center justify-center rounded-xl bg-marca-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-marca-700 active:scale-95"
+              >
+                Volver a órdenes
+              </a>
+              <a
+                [routerLink]="['/ordenes', datos.orden.id]"
+                class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-marca-300 hover:text-marca-800 active:scale-95"
+              >
+                Ver orden
+              </a>
+            </div>
+          </div>
+        } @else {
+          <div
+            class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-300/30"
+          >
           <!-- Cabecera: progreso -->
           <header class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 sm:px-7">
             <a
@@ -74,6 +115,12 @@ type PasoRecepcion =
               <span class="text-marca-700">{{ datos.orden.horno.nombre }}</span> ·
               <span class="font-mono">#{{ datos.orden.numero_orden }}</span>
             </p>
+            @if (minutosDisponibles() !== null) {
+              <p class="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Producción: {{ datos.orden.horas_produccion }} h · disponibles:
+                {{ textoMinutosDisponibles() }}
+              </p>
+            }
           </div>
 
           <!-- Cuerpo -->
@@ -122,12 +169,18 @@ type PasoRecepcion =
                           <button
                             type="button"
                             (click)="fijarDuracion(min)"
-                            class="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-bold text-slate-600 shadow-2xs transition hover:border-marca-400 hover:bg-marca-50 hover:text-marca-800 active:scale-95"
+                            [disabled]="!duracionPermitida(min)"
+                            class="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-bold text-slate-600 shadow-2xs transition hover:border-marca-400 hover:bg-marca-50 hover:text-marca-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-600"
                           >
                             {{ min }} min
                           </button>
                         }
                       </div>
+                      @if (textoMinutosDisponibles(); as disponible) {
+                        <p class="mt-2 text-center text-xs font-medium text-slate-500">
+                          Tiempo disponible en la orden: {{ disponible }}
+                        </p>
+                      }
                     </div>
                   </div>
                 }
@@ -307,7 +360,8 @@ type PasoRecepcion =
               </app-boton>
             }
           </footer>
-        </div>
+          </div>
+        }
 
         <!-- Recepciones ya registradas en esta orden -->
         @if (datos.recepciones.length > 0) {
@@ -442,6 +496,30 @@ export class SaborizadoRecepcionPage {
     () => Math.round(this.duracionMin() / 5) * 5,
   );
 
+  /** Minutos que le quedan a la orden para esta recepcion. */
+  protected readonly minutosDisponibles = computed(() => {
+    const datos = this.detalle();
+    return datos
+      ? calcularMinutosDisponibles(
+          datos.orden.horas_produccion,
+          datos.recepciones,
+          this.editandoId(),
+        )
+      : null;
+  });
+  protected readonly textoMinutosDisponibles = computed(() => {
+    const minutos = this.minutosDisponibles();
+    return minutos === null ? null : formatearMinutos(minutos);
+  });
+  protected readonly bloqueada = computed(() => {
+    const minutos = this.minutosDisponibles();
+    return this.editandoId() === null && minutos !== null && minutos <= 0;
+  });
+  protected readonly duracionExcede = computed(() => {
+    const minutos = this.minutosDisponibles();
+    return minutos !== null && this.duracionMin() > minutos;
+  });
+
   protected readonly totalKg = computed(() =>
     Math.round(this.canastillas().reduce((suma, p) => suma + p, 0) * 100) / 100,
   );
@@ -458,7 +536,7 @@ export class SaborizadoRecepcionPage {
   protected readonly pasoValido = computed(() => {
     switch (this.pasoActual()) {
       case 'horario':
-        return this.duracionMin() > 0;
+        return this.duracionMin() > 0 && !this.duracionExcede();
       case 'sabor':
         return this.saborId() !== null;
       case 'cantidad_sabor':
@@ -484,6 +562,7 @@ export class SaborizadoRecepcionPage {
         this.detalle.set(detalle);
         this.sabores.set(sabores);
         this.inicio.set(new Date());
+        this.ajustarDuracionDisponible();
         this.cargando.set(false);
       },
       error: () => this.cargando.set(false),
@@ -493,7 +572,19 @@ export class SaborizadoRecepcionPage {
   // --- Interacciones ---------------------------------------------------------
 
   protected fijarDuracion(min: number): void {
-    this.duracionMin.set(min);
+    if (this.duracionPermitida(min)) {
+      this.duracionMin.set(min);
+    }
+  }
+
+  protected duracionPermitida(min: number): boolean {
+    const minutos = this.minutosDisponibles();
+    return minutos === null || min <= minutos;
+  }
+
+  private ajustarDuracionDisponible(): void {
+    const minutos = this.minutosDisponibles();
+    this.duracionMin.set(minutos === null ? 60 : Math.min(60, Math.max(0, minutos)));
   }
 
   protected agregarCanastilla(): void {
@@ -536,12 +627,25 @@ export class SaborizadoRecepcionPage {
     this.canastillas.set([]);
     this.saborId.set(null);
     this.cantidadSabor.set('0');
-    this.duracionMin.set(60);
     this.inicio.set(new Date());
+    this.ajustarDuracionDisponible();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   protected guardar(): void {
+    if (this.enviando()) {
+      return;
+    }
+    if (this.bloqueada()) {
+      this.avisos.error('La orden ya cumplió sus horas de recepción en saborizado.');
+      return;
+    }
+    if (this.duracionExcede()) {
+      this.avisos.error(
+        `La recepción dura ${formatearMinutos(this.duracionMin())} y solo quedan ${this.textoMinutosDisponibles()} en la orden.`,
+      );
+      return;
+    }
     if (!this.pasoValidoTotal()) {
       this.avisos.error('Faltan datos: revisa el sabor, las horas y el peso de las canastillas.');
       return;
@@ -578,6 +682,7 @@ export class SaborizadoRecepcionPage {
   private pasoValidoTotal(): boolean {
     return (
       this.duracionMin() > 0 &&
+      !this.duracionExcede() &&
       this.saborId() !== null &&
       this.numero(this.cantidadSabor()) > 0 &&
       this.canastillas().length > 0

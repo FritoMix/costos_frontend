@@ -135,6 +135,12 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                     </span>
                   </div>
                 </div>
+                @if (orden.horas_produccion) {
+                  <p class="mt-2 text-[11px] font-semibold text-slate-400">
+                    Tope de registro: {{ orden.horas_produccion }}
+                    {{ orden.horas_produccion === 1 ? 'hora' : 'horas' }} en saborizado
+                  </p>
+                }
               </div>
 
               <!-- Action Button -->
