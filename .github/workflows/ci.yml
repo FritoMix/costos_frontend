@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Descargar codigo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Configurar Node 22
         uses: actions/setup-node@v7
@@ -56,13 +56,13 @@ jobs:
 
     steps:
       - name: Descargar frontend
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # El E2E vive en el repo del frontend pero necesita la API real.
       # Si el repo del backend es privado, define BACKEND_REPO_TOKEN con
       # permiso de lectura; si es público alcanza con el token del job.
       - name: Descargar backend
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: FritoMix/costos_Backend
           path: backdata
