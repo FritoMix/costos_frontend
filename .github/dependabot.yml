@@ -14,6 +14,16 @@ updates:
       angular:
         patterns:
           - "@angular/*"
+      # Un solo PR para el resto de actualizaciones menores/parche evita
+      # merges secuenciales que dejan package-lock.json desincronizado.
+      npm-menores:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@angular/*"
+        update-types:
+          - "minor"
+          - "patch"
     ignore:
       # Angular fija la version de TypeScript que soporta; un salto mayor
       # aislado (por ejemplo TS 7 con Angular 22) rompe npm ci.
