@@ -629,7 +629,7 @@ type PasoTanda =
                       <div class="flex items-center justify-between gap-4 px-5 py-3">
                         <dt class="text-sm font-semibold text-slate-500">Rendimiento de fritura</dt>
                         <dd class="text-sm font-extrabold text-slate-900">
-                          {{ referenciaSeleccionada()?.rendimiento_fritura_pct | number: '1.2-2' }}
+                          {{ referenciaSeleccionada()!.rendimiento_fritura_pct | number: '1.2-2' }}
                           %
                         </dd>
                       </div>
