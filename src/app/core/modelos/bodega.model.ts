@@ -1,5 +1,8 @@
 /** Tipos del modulo Bodega de papa. */
 
+import type { Formula } from './formula.model';
+import type { Orden } from './produccion.model';
+
 export interface ReferenciaPapa {
   id: number;
   nombre: string;
@@ -43,4 +46,29 @@ export interface ProyeccionProduccion {
   total_kg_crudos: number;
   total_kg_fritos_estimados: number;
   referencias: ProyeccionReferencia[];
+}
+
+/** Fila de la bandeja de órdenes de Bodega, con el avance de su fórmula. */
+export interface OrdenBodega extends Orden {
+  formula_notas: string | null;
+  total_bultos_planificados: number | null;
+  total_bultos_producidos: number | null;
+  tandas_registradas: number;
+  tandas_programadas: number | null;
+  avance_bultos_porcentaje: number | null;
+}
+
+export interface OrdenBodegaDetalle {
+  orden: OrdenBodega;
+  formula: Formula;
+}
+
+/** Filtros de la bandeja de órdenes de Bodega. */
+export interface FiltrosOrdenesBodega {
+  fecha_desde?: string;
+  fecha_hasta?: string;
+  estado?: string;
+  producto_id?: number;
+  destino?: string;
+  solo_sin_formula?: boolean;
 }

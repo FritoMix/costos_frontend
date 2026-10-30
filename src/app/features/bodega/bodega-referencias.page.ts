@@ -78,6 +78,9 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
             referencia. El operario solo consulta estos valores al registrar la tanda.
           </p>
         </div>
+        <a routerLink="/formula-produccion" class="shrink-0">
+          <app-boton variante="primario">Ir a Fórmula de producción</app-boton>
+        </a>
       </header>
 
       <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
@@ -188,7 +191,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
 
                 <div>
                   <label class="etiqueta text-xs font-bold text-slate-700" for="participacion">
-                    Participación (%)
+                    Participación sugerida (proyección)
                   </label>
                   <div class="relative">
                     <input
@@ -414,6 +417,9 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
           >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <p class="font-bold">Participación de referencias activas</p>
+              <p class="mt-0.5 text-xs font-medium text-slate-500">
+                La mezcla real de cada orden se define en Fórmula de producción.
+              </p>
               <span class="font-mono text-sm font-black" data-testid="bodega-total-participacion">
                 {{ totalParticipacion() | number: '1.2-4' }} %
               </span>

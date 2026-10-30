@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import type {
+  OrdenBodegaDetalle,
   ProyeccionProduccion,
   ReferenciaPapa,
   ReferenciaPapaGuardar,
@@ -83,6 +84,28 @@ describe('BodegaService', () => {
     servicio.listar().subscribe((datos) => (listado = datos));
     http.expectOne((req) => req.url.endsWith('/bodega/referencias-papa')).flush([]);
     expect(listado).toEqual([]);
+  });
+
+  it('lista la bandeja de órdenes solo con los filtros informados', () => {
+    servicio
+      .listarOrdenes({ solo_sin_formula: true, estado: 'pendiente', fecha_desde: '' })
+      .subscribe((ordenes) => expect(ordenes).toEqual([]));
+
+    const peticion = http.expectOne((req) => req.url.endsWith('/bodega/ordenes'));
+    expect(peticion.request.params.get('solo_sin_formula')).toBe('true');
+    expect(peticion.request.params.get('estado')).toBe('pendiente');
+    expect(peticion.request.params.has('fecha_desde')).toBe(false);
+    peticion.flush([]);
+  });
+
+  it('obtiene el detalle de una orden de Bodega', () => {
+    const detalle = { orden: { id: 7 }, formula: { orden_id: 7 } } as unknown as OrdenBodegaDetalle;
+
+    servicio.obtenerOrden(7).subscribe((datos) => expect(datos).toEqual(detalle));
+
+    const peticion = http.expectOne('/api/v1/bodega/ordenes/7');
+    expect(peticion.request.method).toBe('GET');
+    peticion.flush(detalle);
   });
 
   it('proyecta con el horno y las horas indicadas', () => {

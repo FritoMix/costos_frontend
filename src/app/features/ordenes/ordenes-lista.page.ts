@@ -128,7 +128,28 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                       }
                     </td>
                     <td class="whitespace-nowrap">
-                      <app-etiqueta-estado [estado]="orden.estado" [texto]="orden.estado_etiqueta" />
+                      <div class="flex flex-col items-start gap-1">
+                        <app-etiqueta-estado [estado]="orden.estado" [texto]="orden.estado_etiqueta" />
+                        @if (orden.formula_obligatoria) {
+                          @switch (orden.formula_estado) {
+                            @case ('sin_formula') {
+                              <span class="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 ring-1 ring-inset ring-amber-500/20">
+                                Fórmula por definir
+                              </span>
+                            }
+                            @case ('lista') {
+                              <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 ring-1 ring-inset ring-emerald-500/20">
+                                Fórmula lista
+                              </span>
+                            }
+                            @default {
+                              <span class="rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-800 ring-1 ring-inset ring-sky-500/20">
+                                Fórmula congelada
+                              </span>
+                            }
+                          }
+                        }
+                      </div>
                     </td>
                     <td class="text-right whitespace-nowrap">
                       <a

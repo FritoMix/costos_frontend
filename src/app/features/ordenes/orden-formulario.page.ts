@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import type { Horno, ItemCatalogo, Producto, Turno } from '../../core/modelos/catalogos.model';
+import type { Formula } from '../../core/modelos/formula.model';
 import type { OrdenGuardar } from '../../core/modelos/produccion.model';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
@@ -11,6 +12,7 @@ import { OrdenesService } from '../../core/servicios/ordenes.service';
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 import { TarjetaComponent } from '../../ui/tarjeta.component';
+import { FormulaResumenComponent } from '../formulas/formula-resumen.component';
 
 /**
  * Crear o corregir una orden.
@@ -23,7 +25,14 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
 @Component({
   selector: 'app-orden-formulario',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, TarjetaComponent, BotonComponent, CargandoComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    TarjetaComponent,
+    BotonComponent,
+    CargandoComponent,
+    FormulaResumenComponent,
+  ],
   template: `
     <div class="mx-auto max-w-3xl space-y-6">
       <header>
@@ -42,6 +51,25 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
       @if (cargando()) {
         <app-cargando texto="Cargando catálogos y líneas de producción…" />
       } @else {
+        @if (formula()?.referencias?.length) {
+          <app-tarjeta
+            titulo="Fórmula de producción vigente"
+            subtitulo="La define Bodega. El cambio de horas, horno o cantidad debe seguir cabiendo en la mezcla."
+          >
+            <app-formula-resumen [formula]="formula()!" modo="completo" />
+            @if (formula()!.estado !== 'lista') {
+              <p class="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-900">
+                La fórmula quedó congelada porque la producción ya inició. No se edita desde aquí.
+              </p>
+            } @else {
+              <p class="mt-3 rounded-2xl bg-sky-50 px-4 py-3 text-xs font-semibold text-sky-900">
+                Al guardar, el backend revalida que la fórmula siga cabiendo con las horas, el
+                horno y la cantidad nuevos.
+              </p>
+            }
+          </app-tarjeta>
+        }
+
         <app-tarjeta>
           <form [formGroup]="formulario" (ngSubmit)="guardar()" class="space-y-6">
             <div class="grid gap-5 sm:grid-cols-2">
@@ -207,6 +235,7 @@ export class OrdenFormularioPage {
 
   protected readonly cargando = signal(true);
   protected readonly enviando = signal(false);
+  protected readonly formula = signal<Formula | null>(null);
 
   protected readonly turnos = signal<Turno[]>([]);
   protected readonly categorias = signal<ItemCatalogo[]>([]);
@@ -284,7 +313,8 @@ export class OrdenFormularioPage {
 
   private cargarOrden(id: number): void {
     this.ordenes.detalle(id).subscribe({
-      next: ({ orden }) => {
+      next: ({ orden, formula }) => {
+        this.formula.set(formula);
         this.formulario.patchValue({
           destino: orden.destino,
           turno_id: orden.turno.id,

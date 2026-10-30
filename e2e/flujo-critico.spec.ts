@@ -20,6 +20,7 @@ const REFERENCIA_PAPA = 'Papa E2E';
 
 let ordenId: number | null = null;
 let numeroOrden = '';
+let referenciaPapaId: number | null = null;
 
 async function iniciarSesion(page: Page): Promise<void> {
   await page.goto('/entrar');
@@ -138,9 +139,37 @@ test.describe('Flujo crítico de planta', () => {
       expect(numeroOrden).toMatch(/^[A-Z0-9-]+$/);
       await expect(page.getByText('Pendiente', { exact: true }).first()).toBeVisible();
       await sinViolacionesCriticas(page, 'detalle de orden');
+
+      // La orden nueva no puede iniciar hasta que Bodega defina la fórmula.
+      await expect(page.getByTestId('iniciar-orden')).toBeDisabled();
+    });
+
+    await test.step('definir la fórmula de la orden como Bodega', async () => {
+      const respuesta = await page.request.get(
+        '/api/v1/bodega/referencias-papa?solo_activas=true',
+      );
+      const referencias = (await respuesta.json()) as { id: number; nombre: string }[];
+      referenciaPapaId = referencias.find((r) => r.nombre === REFERENCIA_PAPA)?.id ?? null;
+      expect(referenciaPapaId).toBeGreaterThan(0);
+
+      await page.goto(`/formula-produccion/ordenes/${ordenId}`);
+      await expect(page.getByTestId('formula-orden')).toBeVisible();
+
+      await page.getByTestId('formula-referencia-0').selectOption({ label: REFERENCIA_PAPA });
+      const bultos = page.getByTestId(/^formula-bultos-/).first();
+      await bultos.fill('40');
+      await expect(page.getByTestId('formula-total-tanda')).toContainText('40');
+      await sinViolacionesCriticas(page, 'fórmula de la orden');
+
+      // El guardado pide confirmación y espera la proyección en vuelo.
+      await expect(page.getByTestId('formula-guardar')).toBeEnabled();
+      page.once('dialog', (dialogo) => dialogo.accept());
+      await page.getByTestId('formula-guardar').click();
+      await expect(page.getByText('Fórmula lista', { exact: false })).toBeVisible();
     });
 
     await test.step('iniciar la producción', async () => {
+      await page.goto(`/ordenes/${ordenId}`);
       await page.getByTestId('iniciar-orden').click();
       await expect(page.getByTestId('finalizar-orden')).toBeVisible();
       await expect(page.getByText(/En producción/i).first()).toBeVisible();
@@ -151,18 +180,10 @@ test.describe('Flujo crítico de planta', () => {
       await esperarPaso(page, 'horario');
       await continuar(page, 'continuar-horno');
 
-      await esperarPaso(page, 'referencia_papa');
-      await page
-        .getByTestId('paso-referencia_papa')
-        .getByRole('button', { name: new RegExp(REFERENCIA_PAPA, 'i') })
-        .click();
-      await continuar(page, 'continuar-horno');
-
-      await esperarPaso(page, 'bultos');
-      await page.getByTestId('bultos-40').click();
-      await expect(page.getByTestId('horno-preview')).toBeVisible();
-      await expect(page.getByTestId('horno-kg-crudos')).toContainText('2.000');
-      await expect(page.getByTestId('horno-kg-fritos')).toContainText('500');
+      // Con fórmula, la mezcla se precarga con el plan de cada referencia.
+      await esperarPaso(page, 'mezcla');
+      await expect(page.getByTestId('horno-total-tanda')).toContainText('40');
+      await expect(page.getByTestId('horno-mezcla-' + referenciaPapaId)).toBeVisible();
       await continuar(page, 'continuar-horno');
 
       await esperarPaso(page, 'temperatura');
