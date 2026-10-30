@@ -391,6 +391,7 @@ type PasoTanda =
                               (ngModelChange)="fijarBultos(indice, $any($event))"
                               [disabled]="fila.restante <= 0"
                               class="h-11 w-24 rounded-xl border border-slate-200 bg-white text-center font-mono text-lg font-extrabold text-slate-900 disabled:bg-slate-100"
+                              [attr.aria-label]="'Bultos de ' + fila.nombre + ' en la tanda'"
                               [attr.data-testid]="'horno-mezcla-' + fila.referencia_id"
                             />
                             <button

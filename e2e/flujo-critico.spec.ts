@@ -166,6 +166,15 @@ test.describe('Flujo crítico de planta', () => {
       page.once('dialog', (dialogo) => dialogo.accept());
       await page.getByTestId('formula-guardar').click();
       await expect(page.getByText('Fórmula lista', { exact: false })).toBeVisible();
+
+      // La bandeja de Bodega muestra la orden con su fórmula y los filtros.
+      await page.goto('/formula-produccion');
+      await expect(page.getByTestId('bodega-orden-' + ordenId).first()).toBeVisible();
+      await expect(page.getByText('Pendientes de fórmula').first()).toBeVisible();
+      await page.getByRole('button', { name: 'Con fórmula' }).click();
+      await expect(page).toHaveURL(/vista=con_formula/);
+      await expect(page.getByTestId('bodega-orden-' + ordenId).first()).toBeVisible();
+      await sinViolacionesCriticas(page, 'bandeja de fórmula');
     });
 
     await test.step('iniciar la producción', async () => {
@@ -184,6 +193,7 @@ test.describe('Flujo crítico de planta', () => {
       await esperarPaso(page, 'mezcla');
       await expect(page.getByTestId('horno-total-tanda')).toContainText('40');
       await expect(page.getByTestId('horno-mezcla-' + referenciaPapaId)).toBeVisible();
+      await sinViolacionesCriticas(page, 'mezcla de horno');
       await continuar(page, 'continuar-horno');
 
       await esperarPaso(page, 'temperatura');

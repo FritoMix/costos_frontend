@@ -1,7 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { HttpErrorResponse } from '@angular/common/http';
 
 import type { EstadoFormula } from '../../core/modelos/formula.model';
@@ -334,6 +334,7 @@ export class FormulaProduccionPage {
   private readonly bodega = inject(BodegaService);
   private readonly catalogos = inject(CatalogosService);
   private readonly router = inject(Router);
+  private readonly ruta = inject(ActivatedRoute);
 
   protected readonly cargando = signal(true);
   protected readonly error = signal<string | null>(null);
@@ -384,6 +385,16 @@ export class FormulaProduccionPage {
   });
 
   constructor() {
+    // Los filtros se reflejan en la URL para poder volver a la misma vista.
+    const parametros = this.ruta.snapshot.queryParamMap;
+    this.filtroFechaDesde = parametros.get('fecha_desde') ?? '';
+    this.filtroFechaHasta = parametros.get('fecha_hasta') ?? '';
+    this.filtroEstado = parametros.get('estado') ?? '';
+    this.filtroProductoId = parametros.get('producto_id') ?? '';
+    this.filtroDestino = parametros.get('destino') ?? '';
+    this.filtroSoloSinFormula = parametros.get('solo_sin_formula') === 'true';
+    this.filtroActivo.set(parametros.get('vista') ?? this.vistaPorDefecto());
+
     this.catalogos.listarProductos().subscribe({
       next: (productos) => this.productos.set(productos),
       error: () => this.productos.set([]),
@@ -391,9 +402,38 @@ export class FormulaProduccionPage {
     this.cargar();
   }
 
+  /** Vista activa cuando la URL no la trae: se deduce de los filtros. */
+  private vistaPorDefecto(): string {
+    if (this.filtroSoloSinFormula) {
+      return 'sin_formula';
+    }
+    if (this.filtroEstado === 'en_produccion') {
+      return 'en_produccion';
+    }
+    return 'todas';
+  }
+
+  /** Guarda los filtros en la URL sin recargar la pantalla. */
+  private sincronizarUrl(): void {
+    void this.router.navigate([], {
+      relativeTo: this.ruta,
+      replaceUrl: true,
+      queryParams: {
+        fecha_desde: this.filtroFechaDesde || null,
+        fecha_hasta: this.filtroFechaHasta || null,
+        estado: this.filtroEstado || null,
+        producto_id: this.filtroProductoId || null,
+        destino: this.filtroDestino || null,
+        solo_sin_formula: this.filtroSoloSinFormula ? 'true' : null,
+        vista: this.filtroActivo() === 'todas' ? null : this.filtroActivo(),
+      },
+    });
+  }
+
   protected cargar(): void {
     this.cargando.set(true);
     this.error.set(null);
+    this.sincronizarUrl();
 
     const filtros = {
       fecha_desde: this.filtroFechaDesde || undefined,
