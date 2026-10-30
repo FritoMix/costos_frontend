@@ -187,6 +187,7 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
                             [(ngModel)]="fila.referencia_papa_id"
                             (ngModelChange)="programarProyeccion()"
                             class="w-full min-w-52 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700"
+                            aria-label="Referencia de papa de la mezcla"
                             [attr.data-testid]="'formula-referencia-' + (fila.referencia_papa_id ?? indice)"
                           >
                             <option [ngValue]="null">Elige una referencia…</option>
@@ -212,6 +213,7 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
                             [(ngModel)]="fila.bultos_por_tanda"
                             (ngModelChange)="programarProyeccion()"
                             class="w-28 rounded-xl border border-slate-200 px-3 py-2 text-right font-mono text-sm font-bold text-slate-800"
+                            aria-label="Bultos por tanda de la referencia"
                             [attr.data-testid]="'formula-bultos-' + (fila.referencia_papa_id ?? indice)"
                           />
                         </td>
