@@ -3,7 +3,11 @@ import { Injectable, inject } from '@angular/core';
 import type { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import type { FormulaPapa, FormulaPapaGuardar } from '../modelos/formula-papa.model';
+import type {
+  FormulaPapa,
+  FormulaPapaGuardar,
+  FormulaPapaSugerencia,
+} from '../modelos/formula-papa.model';
 
 /**
  * Fórmulas de papa reutilizables por producto.
@@ -39,6 +43,16 @@ export class FormulasPapaService {
       params['horas'] = String(horas);
     }
     return this.http.get<FormulaPapa | null>(`${this.base}/activa`, { params });
+  }
+
+  /**
+   * Reparte la capacidad del horno entre las referencias según su
+   * participación de Bodega. La suma siempre da la capacidad exacta.
+   */
+  sugerir(referenciaIds: number[]): Observable<FormulaPapaSugerencia> {
+    return this.http.post<FormulaPapaSugerencia>(`${this.base}/sugerir`, null, {
+      params: { referencia_ids: referenciaIds.map(String) },
+    });
   }
 
   crear(datos: FormulaPapaGuardar): Observable<FormulaPapa> {

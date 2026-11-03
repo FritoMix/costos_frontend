@@ -6,7 +6,7 @@ import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import type { ReferenciaPapa } from '../../core/modelos/bodega.model';
-import type { Producto } from '../../core/modelos/catalogos.model';
+import type { Horno, Producto } from '../../core/modelos/catalogos.model';
 import type { FormulaPapa, FormulaPapaGuardar } from '../../core/modelos/formula-papa.model';
 import { BodegaService } from '../../core/servicios/bodega.service';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
@@ -205,7 +205,53 @@ interface FilaPlantilla {
               <app-boton variante="secundario" tamano="pequeno" (click)="agregarFila()">
                 + Agregar referencia
               </app-boton>
+              <app-boton
+                variante="acento"
+                tamano="pequeno"
+                [deshabilitado]="!puedeRepartir()"
+                [cargando]="repartiendo()"
+                testId="formula-papa-repartir"
+                (click)="repartir()"
+              >
+                @if (capacidadHorno(); as capacidad) {
+                  Repartir {{ capacidad }} bultos entre las referencias
+                } @else {
+                  Repartir la capacidad del horno
+                }
+              </app-boton>
             </div>
+
+            @if (capacidadHorno(); as capacidad) {
+              <div class="rounded-2xl bg-slate-50 p-4" data-testid="formula-papa-capacidad">
+                <div class="flex items-center justify-between text-sm font-bold text-slate-800">
+                  <span>Total por tanda</span>
+                  <span class="font-mono">
+                    {{ totalBultos() }} / {{ capacidad }} bultos del horno
+                  </span>
+                </div>
+                <div class="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
+                  <div
+                    class="h-full rounded-full transition-all duration-300"
+                    [class]="barraCapacidad().clase"
+                    [style.width.%]="barraCapacidad().porcentaje"
+                  ></div>
+                </div>
+                @if (excedeCapacidad()) {
+                  <p class="mt-2 text-xs font-bold text-rose-700">
+                    La mezcla supera los {{ capacidad }} bultos que procesa el horno. Reparte la
+                    capacidad o ajusta los bultos antes de guardar.
+                  </p>
+                } @else if (totalBultos() === capacidad) {
+                  <p class="mt-2 text-xs font-semibold text-emerald-700">
+                    La tanda va llena: {{ capacidad }} bultos en total.
+                  </p>
+                } @else {
+                  <p class="mt-2 text-xs font-semibold text-slate-500">
+                    El horno admite hasta {{ capacidad }} bultos por tanda.
+                  </p>
+                }
+              </div>
+            }
 
             <div class="grid gap-4 rounded-2xl bg-slate-50 p-4 sm:grid-cols-3">
               <div>
@@ -353,7 +399,9 @@ export class FormulaPapaFormPage {
   protected readonly advertencias = signal<string[]>([]);
   protected readonly productos = signal<Producto[]>([]);
   protected readonly referencias = signal<ReferenciaPapa[]>([]);
+  protected readonly hornos = signal<Horno[]>([]);
   protected readonly formula = signal<FormulaPapa | null>(null);
+  protected readonly repartiendo = signal(false);
 
   protected nombre = '';
   protected productoId: number | null = null;
@@ -365,6 +413,38 @@ export class FormulaPapaFormPage {
   protected readonly totalBultos = computed(() =>
     this.filas().reduce((acc, fila) => acc + (Number(fila.bultos_por_tanda) || 0), 0),
   );
+
+  /** Bultos por hora que procesan los hornos activos (hoy 50). */
+  protected readonly capacidadHorno = computed(() => {
+    const capacidades = this.hornos()
+      .map((horno) => Number(horno.capacidad_bultos_hora ?? 0))
+      .filter((capacidad) => capacidad > 0);
+    return capacidades.length > 0 ? Math.max(...capacidades) : null;
+  });
+
+  protected readonly excedeCapacidad = computed(() => {
+    const capacidad = this.capacidadHorno();
+    return capacidad !== null && this.totalBultos() > capacidad;
+  });
+
+  protected readonly barraCapacidad = computed(() => {
+    const capacidad = this.capacidadHorno();
+    if (!capacidad) {
+      return { porcentaje: 0, clase: 'bg-emerald-400' };
+    }
+    if (this.totalBultos() > capacidad) {
+      return { porcentaje: 100, clase: 'bg-rose-500' };
+    }
+    const porcentaje = Math.min(100, (this.totalBultos() / capacidad) * 100);
+    return { porcentaje, clase: porcentaje >= 90 ? 'bg-amber-400' : 'bg-emerald-400' };
+  });
+
+  protected readonly puedeRepartir = computed(() => {
+    const ids = this.filas()
+      .map((fila) => fila.referencia_papa_id)
+      .filter((id): id is number => id !== null);
+    return ids.length > 0 && new Set(ids).size === ids.length && !this.repartiendo();
+  });
   protected readonly totalKgCrudos = computed(() =>
     this.filas().reduce((acc, fila) => acc + this.kgCrudosFila(fila), 0),
   );
@@ -390,6 +470,10 @@ export class FormulaPapaFormPage {
     ) {
       return false;
     }
+    // La mezcla de una tanda no puede superar lo que procesa el horno.
+    if (this.excedeCapacidad()) {
+      return false;
+    }
     const ids = filas.map((fila) => fila.referencia_papa_id);
     if (new Set(ids).size !== ids.length) {
       return false;
@@ -408,10 +492,12 @@ export class FormulaPapaFormPage {
     forkJoin({
       productos: this.catalogos.listarProductos(true, true),
       referencias: this.bodega.listar(true, true),
+      hornos: this.catalogos.listarHornos(true),
     }).subscribe({
-      next: ({ productos, referencias }) => {
+      next: ({ productos, referencias, hornos }) => {
         this.productos.set(productos);
         this.referencias.set(referencias);
+        this.hornos.set(hornos);
         const id = Number(this.id());
         if (!id) {
           this.cargando.set(false);
@@ -509,6 +595,37 @@ export class FormulaPapaFormPage {
 
   protected quitarFila(indice: number): void {
     this.filas.update((filas) => filas.filter((_, posicion) => posicion !== indice));
+  }
+
+  /** Reparte la capacidad del horno entre las referencias elegidas. */
+  protected repartir(): void {
+    if (!this.puedeRepartir()) {
+      return;
+    }
+    const ids = this.filas()
+      .map((fila) => fila.referencia_papa_id)
+      .filter((id): id is number => id !== null);
+    this.repartiendo.set(true);
+    this.advertencias.set([]);
+    this.formulas.sugerir(ids).subscribe({
+      next: (sugerencia) => {
+        this.repartiendo.set(false);
+        const distribucion = new Map(
+          sugerencia.referencias.map((fila) => [fila.referencia_papa_id, fila.bultos_por_tanda]),
+        );
+        this.filas.update((filas) =>
+          filas.map((fila) =>
+            fila.referencia_papa_id && distribucion.has(fila.referencia_papa_id)
+              ? { ...fila, bultos_por_tanda: distribucion.get(fila.referencia_papa_id) as number }
+              : fila,
+          ),
+        );
+      },
+      error: (respuesta: HttpErrorResponse) => {
+        this.repartiendo.set(false);
+        this.advertencias.set([this.mensajeError(respuesta, 'No se pudo repartir la mezcla.')]);
+      },
+    });
   }
 
   protected guardar(): void {

@@ -39,3 +39,8 @@ export interface FormulaPapaGuardar {
   referencias: { referencia_papa_id: number; bultos_por_tanda: number }[];
   notas: string | null;
 }
+
+export interface FormulaPapaSugerencia {
+  capacidad_bultos_hora: number;
+  referencias: { referencia_papa_id: number; bultos_por_tanda: number }[];
+}

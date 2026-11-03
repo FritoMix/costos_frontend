@@ -171,7 +171,15 @@ test.describe('Flujo crítico de planta', () => {
       await expect(tarjeta.first()).toContainText('Activa');
       await sinViolacionesCriticas(page, 'fórmulas de producto');
 
+      // Editor: la capacidad del horno (50) y el reparto entre referencias.
+      await tarjeta.first().getByText('Editar').click();
+      await expect(page.getByTestId('formula-papa-capacidad')).toContainText('/ 50 bultos');
+      await page.getByTestId('formula-papa-repartir').click();
+      await expect(page.getByTestId('formula-papa-total')).toHaveText('50');
+      await sinViolacionesCriticas(page, 'editor de fórmula');
+
       // Bandeja de órdenes: la orden creada aparece con la fórmula lista.
+      await page.goto('/formula-produccion');
       await page.getByTestId('seccion-ordenes').click();
       await expect(page.getByTestId('bodega-orden-' + ordenId).first()).toBeVisible();
       await expect(page.getByText('Lista').first()).toBeVisible();

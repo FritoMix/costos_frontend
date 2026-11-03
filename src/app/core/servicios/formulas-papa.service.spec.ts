@@ -70,6 +70,23 @@ describe('FormulasPapaService', () => {
     peticion.flush(formula);
   });
 
+  it('reparte la capacidad del horno entre las referencias', () => {
+    const sugerencia = {
+      capacidad_bultos_hora: 50,
+      referencias: [
+        { referencia_papa_id: 1, bultos_por_tanda: 30 },
+        { referencia_papa_id: 2, bultos_por_tanda: 20 },
+      ],
+    };
+
+    servicio.sugerir([1, 2]).subscribe((datos) => expect(datos).toEqual(sugerencia));
+
+    const peticion = http.expectOne((req) => req.url.endsWith('/bodega/formulas-papa/sugerir'));
+    expect(peticion.request.method).toBe('POST');
+    expect(peticion.request.params.getAll('referencia_ids')).toEqual(['1', '2']);
+    peticion.flush(sugerencia);
+  });
+
   it('crea, activa y elimina fórmulas', () => {
     const datos: FormulaPapaGuardar = {
       nombre: 'Fórmula E2E',
