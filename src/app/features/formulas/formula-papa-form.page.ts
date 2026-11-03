@@ -98,7 +98,8 @@ interface FilaPlantilla {
               <input
                 type="text"
                 maxlength="150"
-                [(ngModel)]="nombre"
+                [ngModel]="nombre()"
+                (ngModelChange)="nombre.set($any($event))"
                 class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700"
                 placeholder="Ej. Mezcla estándar hojuela"
                 data-testid="formula-papa-nombre"
@@ -109,7 +110,8 @@ interface FilaPlantilla {
                 Producto
               </span>
               <select
-                [(ngModel)]="productoId"
+                [ngModel]="productoId()"
+                (ngModelChange)="productoId.set($any($event))"
                 class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700"
                 data-testid="formula-papa-producto"
               >
@@ -145,7 +147,8 @@ interface FilaPlantilla {
                     <tr>
                       <td class="py-2.5 pr-3">
                         <select
-                          [(ngModel)]="fila.referencia_papa_id"
+                          [ngModel]="fila.referencia_papa_id"
+                          (ngModelChange)="fijarReferencia(indice, $any($event))"
                           class="w-full min-w-52 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700"
                           aria-label="Referencia de papa de la mezcla"
                           [attr.data-testid]="'formula-papa-referencia-' + indice"
@@ -170,7 +173,8 @@ interface FilaPlantilla {
                           min="1"
                           step="1"
                           inputmode="numeric"
-                          [(ngModel)]="fila.bultos_por_tanda"
+                          [ngModel]="fila.bultos_por_tanda"
+                          (ngModelChange)="fijarBultos(indice, $any($event))"
                           class="w-28 rounded-xl border border-slate-200 px-3 py-2 text-right font-mono text-sm font-bold text-slate-800"
                           aria-label="Bultos por tanda de la referencia"
                           [attr.data-testid]="'formula-papa-bultos-' + indice"
@@ -285,7 +289,8 @@ interface FilaPlantilla {
                 Notas (opcional)
               </span>
               <textarea
-                [(ngModel)]="notas"
+                [ngModel]="notas()"
+                (ngModelChange)="notas.set($any($event))"
                 maxlength="500"
                 rows="2"
                 class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700"
@@ -403,9 +408,9 @@ export class FormulaPapaFormPage {
   protected readonly formula = signal<FormulaPapa | null>(null);
   protected readonly repartiendo = signal(false);
 
-  protected nombre = '';
-  protected productoId: number | null = null;
-  protected notas = '';
+  protected readonly nombre = signal('');
+  protected readonly productoId = signal<number | null>(null);
+  protected readonly notas = signal('');
   protected readonly filas = signal<FilaPlantilla[]>([
     { referencia_papa_id: null, bultos_por_tanda: 1 },
   ]);
@@ -453,7 +458,7 @@ export class FormulaPapaFormPage {
   );
 
   protected readonly puedeGuardar = computed(() => {
-    if (!this.nombre.trim() || !this.productoId || this.guardando()) {
+    if (!this.nombre().trim() || !this.productoId() || this.guardando()) {
       return false;
     }
     const filas = this.filas();
@@ -506,9 +511,9 @@ export class FormulaPapaFormPage {
         this.formulas.obtener(id).subscribe({
           next: (formula) => {
             this.formula.set(formula);
-            this.nombre = formula.nombre;
-            this.productoId = formula.producto.id;
-            this.notas = formula.notas ?? '';
+            this.nombre.set(formula.nombre);
+            this.productoId.set(formula.producto.id);
+            this.notas.set(formula.notas ?? '');
             this.filas.set(
               formula.referencias.map((fila) => ({
                 referencia_papa_id: fila.referencia_id,
@@ -589,6 +594,26 @@ export class FormulaPapaFormPage {
     return (Number(fila.bultos_por_tanda) / total) * 100;
   }
 
+  /** Actualiza una fila creando un array nuevo: los computed reaccionan. */
+  protected fijarReferencia(indice: number, referenciaId: number | null): void {
+    this.filas.update((filas) =>
+      filas.map((fila, posicion) =>
+        posicion === indice ? { ...fila, referencia_papa_id: referenciaId } : fila,
+      ),
+    );
+  }
+
+  protected fijarBultos(indice: number, bultos: number | string | null): void {
+    const valor = Number(bultos);
+    this.filas.update((filas) =>
+      filas.map((fila, posicion) =>
+        posicion === indice
+          ? { ...fila, bultos_por_tanda: Number.isFinite(valor) ? valor : 0 }
+          : fila,
+      ),
+    );
+  }
+
   protected agregarFila(): void {
     this.filas.update((filas) => [...filas, { referencia_papa_id: null, bultos_por_tanda: 1 }]);
   }
@@ -633,13 +658,13 @@ export class FormulaPapaFormPage {
       return;
     }
     const datos: FormulaPapaGuardar = {
-      nombre: this.nombre.trim(),
-      producto_id: this.productoId as number,
+      nombre: this.nombre().trim(),
+      producto_id: this.productoId() as number,
       referencias: this.filas().map((fila) => ({
         referencia_papa_id: fila.referencia_papa_id as number,
         bultos_por_tanda: Number(fila.bultos_por_tanda),
       })),
-      notas: this.notas.trim() || null,
+      notas: this.notas().trim() || null,
     };
 
     this.guardando.set(true);
@@ -715,7 +740,7 @@ export class FormulaPapaFormPage {
   }
 
   protected mensajeEliminar(): string {
-    return `Se eliminará "${this.nombre}" del catálogo. Las órdenes ya creadas conservan su mezcla.`;
+    return `Se eliminará "${this.nombre()}" del catálogo. Las órdenes ya creadas conservan su mezcla.`;
   }
 
   protected eliminar(): void {

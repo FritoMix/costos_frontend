@@ -22,6 +22,7 @@ const PRODUCTO = 'Producto E2E';
 const SABOR = 'Sabor E2E';
 const REFERENCIA_PAPA = 'Papa E2E';
 const FORMULA_PAPA = 'Fórmula E2E';
+const FORMULA_UI = 'Fórmula UI E2E';
 
 interface Catalogo {
   id: number;
@@ -235,6 +236,28 @@ async function asegurarFormulaPapa(
   return formula;
 }
 
+/**
+ * Borra la fórmula que el flujo crea por la UI. Si una corrida anterior falló
+ * antes de eliminarla, quedaría ocupando el nombre y el alta fallaría por
+ * duplicado; el seed la deja limpia para que el flujo sea repetible.
+ */
+async function limpiarFormulaUi(ctx: APIRequestContext, producto: Producto): Promise<void> {
+  const formulas = await api<FormulaPapa[]>(
+    ctx,
+    `/bodega/formulas-papa?producto_id=${producto.id}`,
+  );
+  const restos = formulas.filter((f) => f.nombre === FORMULA_UI);
+  for (const formula of restos) {
+    if (formula.activa) {
+      await api(ctx, `/bodega/formulas-papa/${formula.id}/desactivar`, {
+        method: 'POST',
+        data: {},
+      });
+    }
+    await api(ctx, `/bodega/formulas-papa/${formula.id}`, { method: 'DELETE' });
+  }
+}
+
 async function asegurarCapacidadHorno(ctx: APIRequestContext, horno: Horno): Promise<void> {
   if (Number(horno.capacidad_bultos_hora) === 50) {
     return;
@@ -294,6 +317,7 @@ export default async function globalSetup(): Promise<void> {
     await asegurarCapacidadHorno(ctx, hornoCompatible);
     const referencia = await asegurarReferenciaPapa(ctx);
     const formula = await asegurarFormulaPapa(ctx, producto, referencia);
+    await limpiarFormulaUi(ctx, producto);
     const limpiadas = await limpiarOrdenesAnteriores(ctx);
 
     console.log(

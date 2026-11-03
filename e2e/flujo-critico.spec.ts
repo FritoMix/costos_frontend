@@ -162,6 +162,24 @@ test.describe('Flujo crítico de planta', () => {
       referenciaPapaId = referencias.find((r) => r.nombre === REFERENCIA_PAPA)?.id ?? null;
       expect(referenciaPapaId).toBeGreaterThan(0);
 
+      // Crear una fórmula por la UI: regresión del botón que quedaba
+      // deshabilitado al llenar el formulario (reactividad de signals).
+      await page.goto('/formula-produccion');
+      await page.getByTestId('nueva-formula').click();
+      await expect(page.getByTestId('formula-papa-form')).toBeVisible();
+      await page.getByTestId('formula-papa-nombre').fill('Fórmula UI E2E');
+      await page.getByTestId('formula-papa-producto').selectOption({ label: PRODUCTO });
+      await page.getByTestId('formula-papa-referencia-0').selectOption({ label: REFERENCIA_PAPA });
+      await page.getByTestId('formula-papa-bultos-0').fill('10');
+      await expect(page.getByTestId('formula-papa-guardar')).toBeEnabled();
+      await page.getByTestId('formula-papa-guardar').click();
+      await expect(page).toHaveURL(/\/formula-produccion\/formulas\/\d+/);
+
+      // Se elimina (nace inactiva) para no dejar basura en la corrida.
+      await page.getByTestId('formula-papa-eliminar').click();
+      await page.getByRole('button', { name: 'Sí, eliminar' }).click();
+      await expect(page).toHaveURL(/\/formula-produccion/);
+
       // Catálogo de fórmulas: la activa del producto queda marcada.
       await page.goto('/formula-produccion');
       const tarjeta = page.locator('[data-testid^="formula-papa-"]').filter({
