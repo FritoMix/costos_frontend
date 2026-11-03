@@ -6,8 +6,10 @@ import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import type { Horno, ItemCatalogo, Producto, Turno } from '../../core/modelos/catalogos.model';
+import type { FormulaPapa } from '../../core/modelos/formula-papa.model';
 import type { DestinoOrden, OrdenGuardar, UnidadSolicitada } from '../../core/modelos/produccion.model';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
+import { FormulasPapaService } from '../../core/servicios/formulas-papa.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
 import { OrdenesService } from '../../core/servicios/ordenes.service';
 import { BotonComponent } from '../../ui/boton.component';
@@ -22,6 +24,7 @@ type ClavePaso =
   | 'turno'
   | 'unidad'
   | 'cantidad'
+  | 'formula'
   | 'resumen';
 
 /**
@@ -364,7 +367,75 @@ type ClavePaso =
                   </div>
                 }
 
-                <!-- 8. Resumen -->
+                <!-- 8. Formula activa (solo lectura) -->
+                @case ('formula') {
+                  <div class="anim-entrada mx-auto max-w-md space-y-3">
+                    @if (cargandoFormula()) {
+                      <app-cargando texto="Consultando la fórmula activa…" />
+                    } @else if (formulaActiva(); as activa) {
+                      <div
+                        class="rounded-2xl border-2 border-emerald-200 bg-emerald-50/60 px-5 py-4 text-left"
+                        data-testid="orden-formula-activa"
+                      >
+                        <p class="text-sm font-extrabold text-emerald-900">{{ activa.nombre }}</p>
+                        <p class="text-xs font-semibold text-emerald-800">
+                          Fórmula activa de {{ activa.producto.nombre_comercial }} ·
+                          {{ activa.total_bultos_por_tanda }} bultos por tanda
+                        </p>
+                      </div>
+
+                      <dl
+                        class="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 text-left"
+                      >
+                        @for (fila of activa.referencias; track fila.referencia_id) {
+                          <div class="flex items-center justify-between gap-3 px-4 py-2.5">
+                            <dt class="min-w-0 truncate text-sm font-semibold text-slate-700">
+                              {{ fila.nombre }}
+                              <span class="text-xs font-medium text-slate-400">
+                                ({{ fila.porcentaje_produccion_pct | number: '1.0-1' }} %)
+                              </span>
+                            </dt>
+                            <dd class="shrink-0 font-mono text-sm font-bold text-slate-900">
+                              {{ fila.bultos_por_tanda }} bts ·
+                              {{ fila.kg_fritos_por_tanda | number: '1.0-2' }} kg fritos
+                            </dd>
+                          </div>
+                        }
+                        @if (activa.total_bultos_planificados) {
+                          <div class="flex items-center justify-between gap-3 bg-slate-50/70 px-4 py-2.5">
+                            <dt class="text-sm font-bold text-slate-700">
+                              {{ activa.horas }} {{ activa.horas === 1 ? 'tanda' : 'tandas' }}
+                            </dt>
+                            <dd class="font-mono text-sm font-extrabold text-slate-900">
+                              {{ activa.total_bultos_planificados }} bultos ·
+                              {{ activa.total_kg_fritos_planificados | number: '1.0-2' }} kg fritos
+                            </dd>
+                          </div>
+                        }
+                      </dl>
+
+                      <p class="text-xs font-medium text-slate-500">
+                        Al crear la orden, esta mezcla se copia a la orden y horno podrá iniciar.
+                        Bodega puede ajustarla mientras la orden no arranque.
+                      </p>
+                    } @else {
+                      <div
+                        class="rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/70 px-5 py-6 text-center"
+                        data-testid="orden-formula-pendiente"
+                      >
+                        <p class="text-sm font-bold text-amber-900">
+                          Este producto no tiene fórmula activa.
+                        </p>
+                        <p class="mt-1 text-xs font-medium text-amber-800">
+                          La orden se creará y Bodega recibirá el aviso para definir la mezcla. La
+                          producción no podrá iniciar hasta que la fórmula esté lista.
+                        </p>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- 9. Resumen -->
                 @case ('resumen') {
                   <div class="anim-entrada">
                     <dl class="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200">
@@ -398,6 +469,12 @@ type ClavePaso =
                         <dt class="shrink-0 text-sm font-semibold text-slate-600">Cantidad</dt>
                         <dd class="text-base font-extrabold text-marca-700">
                           {{ cantidad() | number: '1.0-2' }} {{ unidad() === 'kg' ? 'kg' : 'canastillas' }}
+                        </dd>
+                      </div>
+                      <div class="flex items-center justify-between gap-4 px-5 py-3">
+                        <dt class="shrink-0 text-sm font-semibold text-slate-500">Fórmula</dt>
+                        <dd class="truncate text-right text-sm font-extrabold text-slate-900">
+                          {{ resumenFormula() }}
                         </dd>
                       </div>
                     </dl>
@@ -449,6 +526,7 @@ export class OrdenAsistentePage {
   private readonly catalogos = inject(CatalogosService);
   private readonly ordenes = inject(OrdenesService);
   private readonly avisos = inject(NotificacionesService);
+  private readonly formulasPapa = inject(FormulasPapaService);
   private readonly router = inject(Router);
 
   protected readonly cargando = signal(true);
@@ -501,6 +579,7 @@ export class OrdenAsistentePage {
     'turno',
     'unidad',
     'cantidad',
+    'formula',
     'resumen',
   ];
 
@@ -524,6 +603,11 @@ export class OrdenAsistentePage {
     turno: { etiqueta: 'Turno', titulo: '¿En qué turno?', sub: 'Selecciona el turno operativo.' },
     unidad: { etiqueta: 'Unidad', titulo: '¿Cómo te pidieron la cantidad?', sub: 'En kilos o en canastillas.' },
     cantidad: { etiqueta: 'Cantidad', titulo: '¿Cuánto se va a producir?', sub: 'Toca para sumar o escribe el valor exacto.' },
+    formula: {
+      etiqueta: 'Fórmula',
+      titulo: 'Fórmula activa del producto',
+      sub: 'Bodega define la mezcla; tú solo la revisas antes de crear la orden.',
+    },
     resumen: { etiqueta: 'Confirmación', titulo: 'Revisa y confirma', sub: 'Verifica antes de crear la orden.' },
   };
 
@@ -550,6 +634,19 @@ export class OrdenAsistentePage {
   });
 
   // Salto del stepper de cantidad (+/-) y botones rápidos, según la unidad.
+  protected readonly formulaActiva = signal<FormulaPapa | null>(null);
+  protected readonly cargandoFormula = signal(false);
+  private peticionFormula = 0;
+
+  /** Formula de resumen: la activa copiada o el aviso de que Bodega la definira. */
+  protected readonly resumenFormula = computed(() => {
+    const activa = this.formulaActiva();
+    if (activa) {
+      return `Se aplicará "${activa.nombre}" (${activa.total_bultos_por_tanda} bultos por tanda)`;
+    }
+    return 'Sin fórmula activa: Bodega la definirá después de crear la orden';
+  });
+
   protected readonly paso = computed(() => (this.unidad() === 'kg' ? 50 : 1));
   protected readonly saltosRapidos = computed(() =>
     this.unidad() === 'kg' ? [50, 100, 500, 1000] : [1, 5, 10, 20],
@@ -627,6 +724,34 @@ export class OrdenAsistentePage {
       if (this.hornoId() && !validos.some((h) => h.id === this.hornoId())) {
         this.hornoId.set(null);
       }
+    });
+
+    // La formula activa del producto se consulta sola: el supervisor solo la
+    // visualiza y la orden la copia al crearse (si cabe en el horno).
+    effect(() => {
+      const productoId = this.productoId();
+      const horas = this.horas();
+      const numero = ++this.peticionFormula;
+      if (!productoId) {
+        this.formulaActiva.set(null);
+        this.cargandoFormula.set(false);
+        return;
+      }
+      this.cargandoFormula.set(true);
+      this.formulasPapa.activa(productoId, horas).subscribe({
+        next: (formula) => {
+          if (numero === this.peticionFormula) {
+            this.formulaActiva.set(formula);
+            this.cargandoFormula.set(false);
+          }
+        },
+        error: () => {
+          if (numero === this.peticionFormula) {
+            this.formulaActiva.set(null);
+            this.cargandoFormula.set(false);
+          }
+        },
+      });
     });
 
     forkJoin({

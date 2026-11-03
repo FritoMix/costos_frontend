@@ -17,6 +17,7 @@ const PASSWORD = process.env['E2E_ADMIN_PASS'] || '';
 const CATEGORIA = process.env['E2E_CATEGORIA'] || 'Papa Hojuela';
 const PRODUCTO = 'Producto E2E';
 const REFERENCIA_PAPA = 'Papa E2E';
+const FORMULA_PAPA = 'Fórmula E2E';
 
 let ordenId: number | null = null;
 let numeroOrden = '';
@@ -126,6 +127,13 @@ test.describe('Flujo crítico de planta', () => {
       await expect(page.getByTestId('continuar-orden')).toBeEnabled();
       await page.getByTestId('continuar-orden').click();
 
+      // El supervisor ve la fórmula activa del producto en solo lectura.
+      await esperarPaso(page, 'formula');
+      await expect(page.getByTestId('orden-formula-activa')).toBeVisible();
+      await expect(page.getByText(FORMULA_PAPA).first()).toBeVisible();
+      await sinViolacionesCriticas(page, 'fórmula activa en el asistente');
+      await continuar(page, 'continuar-orden');
+
       await esperarPaso(page, 'resumen');
       await expect(page.getByText(PRODUCTO).first()).toBeVisible();
       await page.getByTestId('crear-orden').click();
@@ -140,11 +148,13 @@ test.describe('Flujo crítico de planta', () => {
       await expect(page.getByText('Pendiente', { exact: true }).first()).toBeVisible();
       await sinViolacionesCriticas(page, 'detalle de orden');
 
-      // La orden nueva no puede iniciar hasta que Bodega defina la fórmula.
-      await expect(page.getByTestId('iniciar-orden')).toBeDisabled();
+      // La orden nació con la fórmula activa: ya se puede iniciar y el
+      // detalle muestra el resumen de la mezcla.
+      await expect(page.getByTestId('iniciar-orden')).toBeEnabled();
+      await expect(page.getByTestId('formula-resumen').first()).toBeVisible();
     });
 
-    await test.step('definir la fórmula de la orden como Bodega', async () => {
+    await test.step('ver la fórmula activa en el módulo de Bodega', async () => {
       const respuesta = await page.request.get(
         '/api/v1/bodega/referencias-papa?solo_activas=true',
       );
@@ -152,25 +162,19 @@ test.describe('Flujo crítico de planta', () => {
       referenciaPapaId = referencias.find((r) => r.nombre === REFERENCIA_PAPA)?.id ?? null;
       expect(referenciaPapaId).toBeGreaterThan(0);
 
-      await page.goto(`/formula-produccion/ordenes/${ordenId}`);
-      await expect(page.getByTestId('formula-orden')).toBeVisible();
-
-      await page.getByTestId('formula-referencia-0').selectOption({ label: REFERENCIA_PAPA });
-      const bultos = page.getByTestId(/^formula-bultos-/).first();
-      await bultos.fill('40');
-      await expect(page.getByTestId('formula-total-tanda')).toContainText('40');
-      await sinViolacionesCriticas(page, 'fórmula de la orden');
-
-      // El guardado pide confirmación y espera la proyección en vuelo.
-      await expect(page.getByTestId('formula-guardar')).toBeEnabled();
-      page.once('dialog', (dialogo) => dialogo.accept());
-      await page.getByTestId('formula-guardar').click();
-      await expect(page.getByText('Fórmula lista', { exact: false })).toBeVisible();
-
-      // La bandeja de Bodega muestra la orden con su fórmula y los filtros.
+      // Catálogo de fórmulas: la activa del producto queda marcada.
       await page.goto('/formula-produccion');
+      const tarjeta = page.locator('[data-testid^="formula-papa-"]').filter({
+        hasText: FORMULA_PAPA,
+      });
+      await expect(tarjeta.first()).toBeVisible();
+      await expect(tarjeta.first()).toContainText('Activa');
+      await sinViolacionesCriticas(page, 'fórmulas de producto');
+
+      // Bandeja de órdenes: la orden creada aparece con la fórmula lista.
+      await page.getByTestId('seccion-ordenes').click();
       await expect(page.getByTestId('bodega-orden-' + ordenId).first()).toBeVisible();
-      await expect(page.getByText('Pendientes de fórmula').first()).toBeVisible();
+      await expect(page.getByText('Lista').first()).toBeVisible();
       await page.getByRole('button', { name: 'Con fórmula' }).click();
       await expect(page).toHaveURL(/vista=con_formula/);
       await expect(page.getByTestId('bodega-orden-' + ordenId).first()).toBeVisible();

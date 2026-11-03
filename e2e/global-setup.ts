@@ -21,6 +21,7 @@ const CATEGORIA = process.env['E2E_CATEGORIA'] || 'Papa Hojuela';
 const PRODUCTO = 'Producto E2E';
 const SABOR = 'Sabor E2E';
 const REFERENCIA_PAPA = 'Papa E2E';
+const FORMULA_PAPA = 'Fórmula E2E';
 
 interface Catalogo {
   id: number;
@@ -48,6 +49,14 @@ interface ReferenciaPapa {
   rendimiento_fritura_pct: number | null;
   porcentaje_produccion_pct: number | null;
   activo: boolean;
+}
+
+interface FormulaPapa {
+  id: number;
+  nombre: string;
+  activa: boolean;
+  producto: { id: number; nombre_comercial: string };
+  referencias: { referencia_id: number; bultos_por_tanda: number }[];
 }
 
 type OpcionesFetch = NonNullable<Parameters<APIRequestContext['fetch']>[1]>;
@@ -189,6 +198,43 @@ async function asegurarReferenciaPapa(ctx: APIRequestContext): Promise<Referenci
   });
 }
 
+async function asegurarFormulaPapa(
+  ctx: APIRequestContext,
+  producto: Producto,
+  referencia: ReferenciaPapa,
+): Promise<FormulaPapa> {
+  const formulas = await api<FormulaPapa[]>(
+    ctx,
+    `/bodega/formulas-papa?producto_id=${producto.id}`,
+  );
+  const existente = formulas.find((f) => f.nombre === FORMULA_PAPA);
+
+  const datos = {
+    nombre: FORMULA_PAPA,
+    producto_id: producto.id,
+    referencias: [{ referencia_papa_id: referencia.id, bultos_por_tanda: 40 }],
+    notas: 'Mezcla de prueba E2E',
+  };
+
+  const formula = existente
+    ? await api<FormulaPapa>(ctx, `/bodega/formulas-papa/${existente.id}`, {
+        method: 'PUT',
+        data: datos,
+      })
+    : await api<FormulaPapa>(ctx, '/bodega/formulas-papa', {
+        method: 'POST',
+        data: datos,
+      });
+
+  if (!formula.activa) {
+    return api<FormulaPapa>(ctx, `/bodega/formulas-papa/${formula.id}/activar`, {
+      method: 'POST',
+      data: {},
+    });
+  }
+  return formula;
+}
+
 async function asegurarCapacidadHorno(ctx: APIRequestContext, horno: Horno): Promise<void> {
   if (Number(horno.capacidad_bultos_hora) === 50) {
     return;
@@ -244,15 +290,16 @@ export default async function globalSetup(): Promise<void> {
 
     await asegurarConfiguracion(ctx);
     await asegurarSabor(ctx);
-    await asegurarProducto(ctx, categoria);
+    const producto = await asegurarProducto(ctx, categoria);
     await asegurarCapacidadHorno(ctx, hornoCompatible);
     const referencia = await asegurarReferenciaPapa(ctx);
+    const formula = await asegurarFormulaPapa(ctx, producto, referencia);
     const limpiadas = await limpiarOrdenesAnteriores(ctx);
 
     console.log(
       `E2E seed OK: categoría "${CATEGORIA}", horno "${hornoCompatible.nombre}", ` +
         `producto "${PRODUCTO}", referencia "${referencia.nombre}", ` +
-        `órdenes E2E limpiadas: ${limpiadas}.`,
+        `fórmula "${formula.nombre}" activa, órdenes E2E limpiadas: ${limpiadas}.`,
     );
   } finally {
     await ctx.dispose();

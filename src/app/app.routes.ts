@@ -108,6 +108,22 @@ export const rutas: Routes = [
             loadComponent: () =>
               import('./features/formulas/formula-orden.page').then((m) => m.FormulaOrdenPage),
           },
+          {
+            path: 'formulas/nueva',
+            title: 'Nueva fórmula - DATACONTROL',
+            loadComponent: () =>
+              import('./features/formulas/formula-papa-form.page').then(
+                (m) => m.FormulaPapaFormPage,
+              ),
+          },
+          {
+            path: 'formulas/:id',
+            title: 'Editar fórmula - DATACONTROL',
+            loadComponent: () =>
+              import('./features/formulas/formula-papa-form.page').then(
+                (m) => m.FormulaPapaFormPage,
+              ),
+          },
         ],
       },
 

@@ -5,12 +5,16 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { HttpErrorResponse } from '@angular/common/http';
 
 import type { EstadoFormula } from '../../core/modelos/formula.model';
+import type { FormulaPapa } from '../../core/modelos/formula-papa.model';
 import type { OrdenBodega } from '../../core/modelos/bodega.model';
 import type { Producto } from '../../core/modelos/catalogos.model';
 import { BodegaService } from '../../core/servicios/bodega.service';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
+import { FormulasPapaService } from '../../core/servicios/formulas-papa.service';
+import { NotificacionesService } from '../../core/servicios/notificaciones.service';
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
+import { ConfirmarComponent } from '../../ui/confirmar.component';
 import { EstadoVacioComponent } from '../../ui/estado-vacio.component';
 import { EtiquetaEstadoComponent } from '../../ui/etiqueta-estado.component';
 
@@ -44,6 +48,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
     DatePipe,
     BotonComponent,
     CargandoComponent,
+    ConfirmarComponent,
     EstadoVacioComponent,
     EtiquetaEstadoComponent,
   ],
@@ -55,7 +60,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
             Fórmula de producción
           </h1>
           <p class="mt-1 text-sm text-slate-500 font-medium">
-            Define la mezcla de papa de cada orden y sigue su avance.
+            Fórmulas activas por producto y mezcla de cada orden, con su avance.
           </p>
         </div>
         <div class="flex items-center gap-3">
@@ -64,11 +69,167 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
               Actualizado {{ ultimaActualizacion() | date: 'HH:mm:ss' }}
             </span>
           }
-          <app-boton variante="secundario" [cargando]="cargando()" (click)="cargar()">
+          <app-boton
+            variante="secundario"
+            [cargando]="seccion() === 'formulas' ? cargandoFormulas() : cargando()"
+            (click)="refrescar()"
+          >
             Actualizar
           </app-boton>
         </div>
       </header>
+
+      <!-- Secciones del módulo -->
+      <div
+        class="flex flex-wrap items-center gap-2 rounded-2xl border border-sky-100/90 bg-white p-1.5 shadow-2xs"
+      >
+        <button
+          type="button"
+          class="rounded-xl px-4 py-2 text-xs font-bold tracking-tight transition-all duration-150 sm:text-sm"
+          [class]="seccion() === 'formulas'
+            ? 'bg-gradient-to-r from-sky-500 to-marca-600 text-white shadow-sm'
+            : 'text-slate-600 hover:bg-sky-50 hover:text-sky-700'"
+          data-testid="seccion-formulas"
+          (click)="cambiarSeccion('formulas')"
+        >
+          Fórmulas de producto
+        </button>
+        <button
+          type="button"
+          class="rounded-xl px-4 py-2 text-xs font-bold tracking-tight transition-all duration-150 sm:text-sm"
+          [class]="seccion() === 'ordenes'
+            ? 'bg-gradient-to-r from-sky-500 to-marca-600 text-white shadow-sm'
+            : 'text-slate-600 hover:bg-sky-50 hover:text-sky-700'"
+          data-testid="seccion-ordenes"
+          (click)="cambiarSeccion('ordenes')"
+        >
+          Órdenes
+        </button>
+      </div>
+
+      @if (seccion() === 'formulas') {
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <p class="max-w-2xl text-sm font-medium text-slate-500">
+            Una fórmula activa por producto. Al crear una orden, el supervisor ve la activa y la
+            orden nace con esa mezcla.
+          </p>
+          <a
+            routerLink="/formula-produccion/formulas/nueva"
+            [queryParams]="{ seccion: 'formulas' }"
+          >
+            <app-boton variante="primario" testId="nueva-formula">+ Nueva fórmula</app-boton>
+          </a>
+        </div>
+
+        @if (cargandoFormulas()) {
+          <app-cargando texto="Consultando fórmulas…" />
+        } @else if (errorFormulas()) {
+          <div class="rounded-3xl border border-rose-200 bg-rose-50/60 p-6 text-center">
+            <p class="text-sm font-bold text-rose-800">{{ errorFormulas() }}</p>
+            <div class="mt-3 flex justify-center">
+              <app-boton variante="secundario" (click)="cargarFormulas()">Reintentar</app-boton>
+            </div>
+          </div>
+        } @else if (formulas().length === 0) {
+          <div class="rounded-3xl border border-sky-100/90 bg-white/85 shadow-xs">
+            <app-estado-vacio
+              titulo="Todavía no hay fórmulas"
+              descripcion="Crea la primera con las referencias de papa de Bodega y actívala para que las órdenes nuevas la apliquen solas."
+            />
+            <div class="flex justify-center pb-6">
+              <a
+                routerLink="/formula-produccion/formulas/nueva"
+                [queryParams]="{ seccion: 'formulas' }"
+              >
+                <app-boton variante="primario">+ Nueva fórmula</app-boton>
+              </a>
+            </div>
+          </div>
+        } @else {
+          <div class="grid gap-4 lg:grid-cols-2">
+            @for (formula of formulas(); track formula.id) {
+              <div
+                class="rounded-3xl border bg-white/90 p-5 shadow-xs transition-all duration-200"
+                [class]="formula.activa
+                  ? 'border-emerald-300 ring-2 ring-emerald-200/60'
+                  : 'border-sky-100/90'"
+                [attr.data-testid]="'formula-papa-' + formula.id"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-base font-extrabold text-slate-900">{{ formula.nombre }}</p>
+                    <p class="text-xs font-semibold text-slate-500">
+                      {{ formula.producto.nombre_comercial }}
+                    </p>
+                  </div>
+                  <span
+                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset"
+                    [class]="formula.activa
+                      ? 'bg-emerald-50 text-emerald-800 ring-emerald-500/20'
+                      : 'bg-calido-100 text-stone-600 ring-calido-300/30'"
+                  >
+                    <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
+                    {{ formula.activa ? 'Activa' : 'Inactiva' }}
+                  </span>
+                </div>
+
+                <div class="mt-3 flex flex-wrap gap-1.5">
+                  @for (fila of formula.referencias; track fila.referencia_id) {
+                    <span
+                      class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600"
+                    >
+                      {{ fila.nombre }} · {{ fila.bultos_por_tanda }} bts
+                    </span>
+                  }
+                </div>
+
+                <p class="mt-3 text-xs font-semibold text-slate-500">
+                  {{ formula.total_bultos_por_tanda }} bultos/tanda ·
+                  {{ formula.total_kg_crudos | number: '1.0-2' }} kg crudos ·
+                  {{ formula.total_kg_fritos_estimados | number: '1.0-2' }} kg fritos
+                </p>
+
+                <div class="mt-4 flex flex-wrap items-center gap-2">
+                  <a
+                    [routerLink]="['/formula-produccion', 'formulas', formula.id]"
+                    [queryParams]="{ seccion: 'formulas' }"
+                  >
+                    <app-boton variante="secundario" tamano="pequeno">Editar</app-boton>
+                  </a>
+                  @if (formula.activa) {
+                    <app-boton
+                      variante="secundario"
+                      tamano="pequeno"
+                      [cargando]="cambiandoEstado() === formula.id"
+                      [testId]="'formula-papa-desactivar-' + formula.id"
+                      (click)="desactivarFormula(formula)"
+                    >
+                      Desactivar
+                    </app-boton>
+                  } @else {
+                    <app-boton
+                      variante="acento"
+                      tamano="pequeno"
+                      [cargando]="cambiandoEstado() === formula.id"
+                      [testId]="'formula-papa-activar-' + formula.id"
+                      (click)="activarFormula(formula)"
+                    >
+                      Activar
+                    </app-boton>
+                    <app-boton
+                      variante="texto"
+                      tamano="pequeno"
+                      (click)="pedirEliminarFormula(formula)"
+                    >
+                      Eliminar
+                    </app-boton>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      } @else {
 
       <!-- Contadores clicables -->
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -327,12 +488,25 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
           }
         </div>
       }
+      }
     </div>
+
+    <app-confirmar
+      [abierto]="formulaEliminar() !== null"
+      titulo="Eliminar la fórmula"
+      [mensaje]="mensajeEliminar()"
+      textoConfirmar="Sí, eliminar"
+      [peligroso]="true"
+      (confirmado)="eliminarFormula()"
+      (cancelado)="formulaEliminar.set(null)"
+    />
   `,
 })
 export class FormulaProduccionPage {
   private readonly bodega = inject(BodegaService);
   private readonly catalogos = inject(CatalogosService);
+  private readonly formulasPapa = inject(FormulasPapaService);
+  private readonly avisos = inject(NotificacionesService);
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
 
@@ -342,6 +516,12 @@ export class FormulaProduccionPage {
   protected readonly productos = signal<Producto[]>([]);
   protected readonly ultimaActualizacion = signal<Date | null>(null);
   protected readonly filtroActivo = signal<string>('todas');
+  protected readonly seccion = signal<'formulas' | 'ordenes'>('formulas');
+  protected readonly formulas = signal<FormulaPapa[]>([]);
+  protected readonly cargandoFormulas = signal(true);
+  protected readonly errorFormulas = signal<string | null>(null);
+  protected readonly cambiandoEstado = signal<number | null>(null);
+  protected readonly formulaEliminar = signal<FormulaPapa | null>(null);
 
   protected filtroFechaDesde = '';
   protected filtroFechaHasta = '';
@@ -394,12 +574,106 @@ export class FormulaProduccionPage {
     this.filtroDestino = parametros.get('destino') ?? '';
     this.filtroSoloSinFormula = parametros.get('solo_sin_formula') === 'true';
     this.filtroActivo.set(parametros.get('vista') ?? this.vistaPorDefecto());
+    this.seccion.set(parametros.get('seccion') === 'ordenes' ? 'ordenes' : 'formulas');
 
     this.catalogos.listarProductos().subscribe({
       next: (productos) => this.productos.set(productos),
       error: () => this.productos.set([]),
     });
+    this.cargarFormulas();
     this.cargar();
+  }
+
+  protected refrescar(): void {
+    if (this.seccion() === 'formulas') {
+      this.cargarFormulas();
+    } else {
+      this.cargar();
+    }
+  }
+
+  protected cambiarSeccion(seccion: 'formulas' | 'ordenes'): void {
+    this.seccion.set(seccion);
+    void this.router.navigate([], {
+      relativeTo: this.ruta,
+      replaceUrl: true,
+      queryParams: { seccion: seccion === 'ordenes' ? 'ordenes' : null },
+      queryParamsHandling: 'merge',
+    });
+    if (seccion === 'formulas') {
+      this.cargarFormulas();
+    } else {
+      this.cargar();
+    }
+  }
+
+  protected cargarFormulas(): void {
+    this.cargandoFormulas.set(true);
+    this.errorFormulas.set(null);
+    this.formulasPapa.listar().subscribe({
+      next: (formulas) => {
+        this.formulas.set(formulas);
+        this.cargandoFormulas.set(false);
+      },
+      error: (respuesta: HttpErrorResponse) => {
+        this.cargandoFormulas.set(false);
+        this.errorFormulas.set(
+          respuesta.status === 403
+            ? 'No tienes permiso para ver las fórmulas de Bodega.'
+            : 'No se pudieron cargar las fórmulas. Revisa la conexión e intenta de nuevo.',
+        );
+      },
+    });
+  }
+
+  protected activarFormula(formula: FormulaPapa): void {
+    this.cambiandoEstado.set(formula.id);
+    this.formulasPapa.activar(formula.id).subscribe({
+      next: (activada) => {
+        this.cambiandoEstado.set(null);
+        this.avisos.exito(
+          `Fórmula activada para ${activada.producto.nombre_comercial}. Las órdenes nuevas la aplicarán.`,
+        );
+        this.cargarFormulas();
+      },
+      error: () => this.cambiandoEstado.set(null),
+    });
+  }
+
+  protected desactivarFormula(formula: FormulaPapa): void {
+    this.cambiandoEstado.set(formula.id);
+    this.formulasPapa.desactivar(formula.id).subscribe({
+      next: () => {
+        this.cambiandoEstado.set(null);
+        this.avisos.exito('Fórmula desactivada. Las órdenes nuevas pedirán a Bodega.');
+        this.cargarFormulas();
+      },
+      error: () => this.cambiandoEstado.set(null),
+    });
+  }
+
+  protected pedirEliminarFormula(formula: FormulaPapa): void {
+    this.formulaEliminar.set(formula);
+  }
+
+  protected eliminarFormula(): void {
+    const formula = this.formulaEliminar();
+    if (!formula) {
+      return;
+    }
+    this.formulasPapa.eliminar(formula.id).subscribe({
+      next: () => {
+        this.formulaEliminar.set(null);
+        this.avisos.exito('Fórmula eliminada del catálogo.');
+        this.cargarFormulas();
+      },
+      error: () => this.formulaEliminar.set(null),
+    });
+  }
+
+  protected mensajeEliminar(): string {
+    const nombre = this.formulaEliminar()?.nombre ?? '';
+    return `Se eliminará "${nombre}" del catálogo. Las órdenes ya creadas conservan su mezcla.`;
   }
 
   /** Vista activa cuando la URL no la trae: se deduce de los filtros. */
@@ -426,6 +700,7 @@ export class FormulaProduccionPage {
         destino: this.filtroDestino || null,
         solo_sin_formula: this.filtroSoloSinFormula ? 'true' : null,
         vista: this.filtroActivo() === 'todas' ? null : this.filtroActivo(),
+        seccion: this.seccion() === 'ordenes' ? 'ordenes' : null,
       },
     });
   }
