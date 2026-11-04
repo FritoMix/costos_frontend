@@ -396,8 +396,10 @@ type ClavePaso =
                               </span>
                             </dt>
                             <dd class="shrink-0 font-mono text-sm font-bold text-slate-900">
-                              {{ fila.bultos_por_tanda }} bts ·
-                              {{ fila.kg_fritos_por_tanda | number: '1.0-2' }} kg fritos
+                              {{ fila.bultos_por_tanda }} bts
+                              @if (fila.kg_fritos_por_tanda !== null) {
+                                · {{ fila.kg_fritos_por_tanda | number: '1.0-2' }} kg fritos
+                              }
                             </dd>
                           </div>
                         }
@@ -407,8 +409,10 @@ type ClavePaso =
                               {{ activa.horas }} {{ activa.horas === 1 ? 'tanda' : 'tandas' }}
                             </dt>
                             <dd class="font-mono text-sm font-extrabold text-slate-900">
-                              {{ activa.total_bultos_planificados }} bultos ·
-                              {{ activa.total_kg_fritos_planificados | number: '1.0-2' }} kg fritos
+                              {{ activa.total_bultos_planificados }} bultos
+                              @if (activa.total_kg_fritos_planificados !== null) {
+                                · {{ activa.total_kg_fritos_planificados | number: '1.0-2' }} kg fritos
+                              }
                             </dd>
                           </div>
                         }

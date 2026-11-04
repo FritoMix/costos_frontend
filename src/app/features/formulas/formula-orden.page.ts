@@ -283,12 +283,20 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
                     </p>
                     <p class="font-mono mt-0.5 text-sm font-extrabold text-slate-900">
                       {{ proy.total_kg_crudos | number: '1.0-2' }} kg crudos ·
-                      {{ proy.total_kg_fritos_estimados | number: '1.0-2' }} kg fritos
+                      @if (proy.total_kg_fritos_estimados !== null) {
+                        {{ proy.total_kg_fritos_estimados | number: '1.0-2' }} kg fritos
+                      } @else {
+                        kg fritos —
+                      }
                     </p>
                     <p class="mt-1 text-xs font-semibold" [class]="claseDiferencia()">
-                      Diferencia vs. pedido:
-                      {{ proy.diferencia_kg | number: '1.0-2' }} kg
-                      ({{ proy.diferencia_pct | number: '1.0-1' }} %)
+                      @if (proy.diferencia_kg !== null) {
+                        Diferencia vs. pedido:
+                        {{ proy.diferencia_kg | number: '1.0-2' }} kg
+                        ({{ proy.diferencia_pct | number: '1.0-1' }} %)
+                      } @else {
+                        Sin rendimiento configurado no se estiman kg fritos.
+                      }
                     </p>
                   </div>
                   <div>
@@ -519,23 +527,12 @@ export class FormulaOrdenPage {
   }
 
   protected referenciaCompleta(referencia: ReferenciaPapa): boolean {
-    return (
-      !!referencia.tipo &&
-      referencia.tipo.trim() !== '' &&
-      referencia.peso_promedio_bulto_kg > 0 &&
-      referencia.rendimiento_fritura_pct !== null &&
-      referencia.rendimiento_fritura_pct > 0
-    );
+    // Bodega solo captura nombre y peso: con peso > 0 la referencia sirve.
+    return referencia.peso_promedio_bulto_kg > 0;
   }
 
-  protected motivoIncompleta(referencia: ReferenciaPapa): string {
-    if (!referencia.tipo || referencia.tipo.trim() === '') {
-      return 'falta tipo';
-    }
-    if (!referencia.peso_promedio_bulto_kg || referencia.peso_promedio_bulto_kg <= 0) {
-      return 'falta peso por bulto';
-    }
-    return 'falta rendimiento';
+  protected motivoIncompleta(_referencia: ReferenciaPapa): string {
+    return 'falta peso por bulto';
   }
 
   protected datoProyeccion(referenciaId: number | null) {
@@ -650,7 +647,7 @@ export class FormulaOrdenPage {
 
   protected claseDiferencia(): string {
     const proy = this.proyeccion();
-    if (!proy) {
+    if (!proy || proy.diferencia_pct === null) {
       return 'text-slate-400';
     }
     return Math.abs(proy.diferencia_pct) <= 5 ? 'text-emerald-700' : 'text-amber-700';

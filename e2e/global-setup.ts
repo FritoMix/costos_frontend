@@ -23,6 +23,7 @@ const SABOR = 'Sabor E2E';
 const REFERENCIA_PAPA = 'Papa E2E';
 const FORMULA_PAPA = 'Fórmula E2E';
 const FORMULA_UI = 'Fórmula UI E2E';
+const REFERENCIA_UI = 'Papa UI E2E';
 
 interface Catalogo {
   id: number;
@@ -237,6 +238,23 @@ async function asegurarFormulaPapa(
 }
 
 /**
+ * Borra restos de la referencia que el flujo crea por la UI. Si una corrida
+ * anterior falló antes de eliminarla, quedaría ocupando el nombre y el alta
+ * fallaría por duplicado; el seed la deja limpia para que el flujo sea
+ * repetible.
+ */
+async function limpiarReferenciaUi(ctx: APIRequestContext): Promise<void> {
+  const referencia = await api<ReferenciaPapa[]>(
+    ctx,
+    '/bodega/referencias-papa?solo_activas=false',
+  );
+  const resto = referencia.find((r) => r.nombre === REFERENCIA_UI);
+  if (resto) {
+    await api(ctx, `/bodega/referencias-papa/${resto.id}`, { method: 'DELETE' });
+  }
+}
+
+/**
  * Borra la fórmula que el flujo crea por la UI. Si una corrida anterior falló
  * antes de eliminarla, quedaría ocupando el nombre y el alta fallaría por
  * duplicado; el seed la deja limpia para que el flujo sea repetible.
@@ -316,6 +334,7 @@ export default async function globalSetup(): Promise<void> {
     const producto = await asegurarProducto(ctx, categoria);
     await asegurarCapacidadHorno(ctx, hornoCompatible);
     const referencia = await asegurarReferenciaPapa(ctx);
+    await limpiarReferenciaUi(ctx);
     const formula = await asegurarFormulaPapa(ctx, producto, referencia);
     await limpiarFormulaUi(ctx, producto);
     const limpiadas = await limpiarOrdenesAnteriores(ctx);

@@ -90,7 +90,27 @@ test.describe('Flujo crítico de planta', () => {
       await page.goto('/bodega');
       await expect(page.getByRole('heading', { name: /Bodega de Papa/ })).toBeVisible();
       await expect(page.getByText(REFERENCIA_PAPA).first()).toBeVisible();
+
+      // Bodega ya no captura tipo, rendimiento ni participación.
+      await expect(page.getByTestId('bodega-tipo')).toHaveCount(0);
+      await expect(page.getByTestId('bodega-rendimiento')).toHaveCount(0);
+      await expect(page.getByTestId('bodega-participacion')).toHaveCount(0);
+
+      // Alta mínima: solo nombre y peso por bulto.
+      await page.getByTestId('bodega-nombre').fill('Papa UI E2E');
+      await page.getByTestId('bodega-peso').fill('48');
+      await page.getByTestId('guardar-referencia').click();
+      await expect(page.getByText('Papa UI E2E').first()).toBeVisible();
       await sinViolacionesCriticas(page, 'bodega de papa');
+
+      // Limpieza: se borra por la API para no chocar en la próxima corrida.
+      const lista = (await (
+        await page.request.get('/api/v1/bodega/referencias-papa?solo_activas=false')
+      ).json()) as { id: number; nombre: string }[];
+      const creada = lista.find((referencia) => referencia.nombre === 'Papa UI E2E');
+      if (creada) {
+        await page.request.delete(`/api/v1/bodega/referencias-papa/${creada.id}`);
+      }
     });
 
     await test.step('crear una orden con el asistente', async () => {

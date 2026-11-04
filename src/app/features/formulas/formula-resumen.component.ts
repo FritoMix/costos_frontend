@@ -105,7 +105,11 @@ const ETIQUETAS_ESTADO: Record<EstadoFormula, { texto: string; clases: string }>
                     {{ fila.kg_crudos_por_tanda | number: '1.0-2' }}
                   </td>
                   <td class="py-2.5 pl-3 text-right font-mono text-slate-600">
-                    {{ fila.kg_fritos_por_tanda | number: '1.0-2' }}
+                    @if (fila.kg_fritos_por_tanda !== null) {
+                      {{ fila.kg_fritos_por_tanda | number: '1.0-2' }}
+                    } @else {
+                      —
+                    }
                   </td>
                 </tr>
               }
@@ -130,7 +134,11 @@ const ETIQUETAS_ESTADO: Record<EstadoFormula, { texto: string; clases: string }>
                   {{ formula().total_kg_crudos | number: '1.0-2' }}
                 </td>
                 <td class="py-2.5 pl-3 text-right font-mono">
-                  {{ formula().total_kg_fritos_estimados | number: '1.0-2' }}
+                  @if (formula().total_kg_fritos_estimados !== null) {
+                    {{ formula().total_kg_fritos_estimados | number: '1.0-2' }}
+                  } @else {
+                    —
+                  }
                 </td>
               </tr>
             </tfoot>

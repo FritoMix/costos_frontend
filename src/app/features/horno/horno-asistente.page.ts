@@ -304,15 +304,17 @@ type PasoTanda =
                                 referencia.nombre
                               }}</span>
                               <span class="block text-xs font-semibold text-slate-500">
-                                {{ referencia.tipo }} ·
+                                @if (referencia.tipo) {
+                                  {{ referencia.tipo }} ·
+                                }
                                 {{ referencia.peso_promedio_bulto_kg | number: '1.2-2' }} kg/bulto
                               </span>
-                              <span class="block text-[11px] font-semibold text-amber-700">
-                                Rendimiento
-                                {{ referencia.rendimiento_fritura_pct | number: '1.2-2' }} % ·
-                                Participación
-                                {{ referencia.porcentaje_produccion_pct | number: '1.2-2' }} %
-                              </span>
+                              @if (referencia.rendimiento_fritura_pct !== null) {
+                                <span class="block text-[11px] font-semibold text-amber-700">
+                                  Rendimiento
+                                  {{ referencia.rendimiento_fritura_pct | number: '1.2-2' }} %
+                                </span>
+                              }
                             </span>
                             @if (referenciaPapaId() === referencia.id) {
                               <span
@@ -527,7 +529,11 @@ type PasoTanda =
                               {{ kgFritos() | number: '1.0-2' }}
                             </span>
                             <span class="block text-[10px] font-semibold text-amber-700">
-                              Rendimiento {{ ref.rendimiento_fritura_pct | number: '1.2-2' }} %
+                              @if (ref.rendimiento_fritura_pct !== null) {
+                                Rendimiento {{ ref.rendimiento_fritura_pct | number: '1.2-2' }} %
+                              } @else {
+                                Sin rendimiento configurado
+                              }
                             </span>
                           </div>
                         </div>
@@ -812,14 +818,21 @@ type PasoTanda =
                         <div class="flex items-center justify-between gap-4 px-5 py-3">
                           <dt class="text-sm font-semibold text-slate-500">Rendimiento de fritura</dt>
                           <dd class="text-sm font-extrabold text-slate-900">
-                            {{ referenciaSeleccionada()!.rendimiento_fritura_pct | number: '1.2-2' }}
-                            %
+                            @if (referenciaSeleccionada()!.rendimiento_fritura_pct !== null) {
+                              {{ referenciaSeleccionada()!.rendimiento_fritura_pct | number: '1.2-2' }} %
+                            } @else {
+                              —
+                            }
                           </dd>
                         </div>
                         <div class="flex items-center justify-between gap-4 px-5 py-3">
                           <dt class="text-sm font-semibold text-slate-500">Kg fritos estimados</dt>
                           <dd class="text-sm font-extrabold text-amber-800">
-                            {{ kgFritos() | number: '1.0-2' }} kg
+                            @if (referenciaSeleccionada()!.rendimiento_fritura_pct !== null) {
+                              {{ kgFritos() | number: '1.0-2' }} kg
+                            } @else {
+                              —
+                            }
                           </dd>
                         </div>
                       }
@@ -968,19 +981,13 @@ export class HornoAsistentePage {
       producido: number;
       restante: number;
       peso_promedio_bulto_kg: number;
-      rendimiento_fritura_pct: number;
+      rendimiento_fritura_pct: number | null;
       bultos: number;
     }[]
   >([]);
 
   protected readonly referenciasDisponibles = computed(() =>
-    this.referenciasPapa().filter(
-      (r) =>
-        r.activo &&
-        r.tipo !== null &&
-        r.rendimiento_fritura_pct !== null &&
-        r.porcentaje_produccion_pct !== null,
-    ),
+    this.referenciasPapa().filter((r) => r.activo),
   );
   protected readonly referenciaSeleccionada = computed(
     () => this.referenciasPapa().find((r) => r.id === this.referenciaPapaId()) ?? null,
@@ -1301,7 +1308,11 @@ export class HornoAsistentePage {
   }
 
   /** Kg fritos de una fila con el snapshot de la fórmula. */
-  protected kgFila(fila: { bultos: number; peso_promedio_bulto_kg: number; rendimiento_fritura_pct: number }): number {
+  protected kgFila(fila: {
+    bultos: number;
+    peso_promedio_bulto_kg: number;
+    rendimiento_fritura_pct: number | null;
+  }): number {
     return calcularKgFritosPreview(
       calcularKgCrudosPreview(fila.bultos, fila.peso_promedio_bulto_kg),
       fila.rendimiento_fritura_pct,

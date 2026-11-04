@@ -187,7 +187,11 @@ interface FilaPlantilla {
                         {{ kgCrudosFila(fila) | number: '1.0-2' }}
                       </td>
                       <td class="px-3 py-2.5 text-right font-mono text-slate-600">
-                        {{ kgFritosFila(fila) | number: '1.0-2' }}
+                        @if (referenciaDe(fila)?.rendimiento_fritura_pct !== null) {
+                          {{ kgFritosFila(fila) | number: '1.0-2' }}
+                        } @else {
+                          —
+                        }
                       </td>
                       <td class="py-2.5 pl-3 text-right">
                         <app-boton
@@ -279,7 +283,11 @@ interface FilaPlantilla {
                   Kg fritos por tanda
                 </p>
                 <p class="font-mono mt-0.5 text-sm font-extrabold text-amber-800">
-                  {{ totalKgFritos() | number: '1.0-2' }} kg
+                  @if (faltaRendimiento()) {
+                    —
+                  } @else {
+                    {{ totalKgFritos() | number: '1.0-2' }} kg
+                  }
                 </p>
               </div>
             </div>
@@ -457,6 +465,15 @@ export class FormulaPapaFormPage {
     this.filas().reduce((acc, fila) => acc + this.kgFritosFila(fila), 0),
   );
 
+  /** Sin rendimiento en alguna referencia no se pueden estimar kg fritos. */
+  protected readonly faltaRendimiento = computed(() =>
+    this.filas().some(
+      (fila) =>
+        fila.referencia_papa_id !== null &&
+        this.referenciaDe(fila)?.rendimiento_fritura_pct == null,
+    ),
+  );
+
   protected readonly puedeGuardar = computed(() => {
     if (!this.nombre().trim() || !this.productoId() || this.guardando()) {
       return false;
@@ -548,23 +565,12 @@ export class FormulaPapaFormPage {
   }
 
   protected referenciaCompleta(referencia: ReferenciaPapa): boolean {
-    return (
-      !!referencia.tipo &&
-      referencia.tipo.trim() !== '' &&
-      referencia.peso_promedio_bulto_kg > 0 &&
-      referencia.rendimiento_fritura_pct !== null &&
-      referencia.rendimiento_fritura_pct > 0
-    );
+    // Bodega solo captura nombre y peso: con peso > 0 la referencia sirve.
+    return referencia.peso_promedio_bulto_kg > 0;
   }
 
-  protected motivoIncompleta(referencia: ReferenciaPapa): string {
-    if (!referencia.tipo || referencia.tipo.trim() === '') {
-      return 'falta tipo';
-    }
-    if (!referencia.peso_promedio_bulto_kg || referencia.peso_promedio_bulto_kg <= 0) {
-      return 'falta peso por bulto';
-    }
-    return 'falta rendimiento';
+  protected motivoIncompleta(_referencia: ReferenciaPapa): string {
+    return 'falta peso por bulto';
   }
 
   protected kgCrudosFila(fila: FilaPlantilla): number {

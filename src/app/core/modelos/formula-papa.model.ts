@@ -9,9 +9,9 @@ export interface FormulaPapaReferencia {
   bultos_por_tanda: number;
   porcentaje_produccion_pct: number;
   peso_promedio_bulto_kg: number;
-  rendimiento_fritura_pct: number;
+  rendimiento_fritura_pct: number | null;
   kg_crudos_por_tanda: number;
-  kg_fritos_por_tanda: number;
+  kg_fritos_por_tanda: number | null;
 }
 
 export interface FormulaPapa {
@@ -23,7 +23,7 @@ export interface FormulaPapa {
   referencias: FormulaPapaReferencia[];
   total_bultos_por_tanda: number;
   total_kg_crudos: number;
-  total_kg_fritos_estimados: number;
+  total_kg_fritos_estimados: number | null;
   horas: number | null;
   total_bultos_planificados: number | null;
   total_kg_crudos_planificados: number | null;

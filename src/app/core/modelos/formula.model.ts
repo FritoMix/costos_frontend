@@ -18,11 +18,11 @@ export interface FormulaReferencia {
   bultos_planificados: number;
   porcentaje_produccion_pct: number;
   peso_promedio_bulto_kg: number;
-  rendimiento_fritura_pct: number;
+  rendimiento_fritura_pct: number | null;
   kg_crudos_por_tanda: number;
-  kg_fritos_por_tanda: number;
+  kg_fritos_por_tanda: number | null;
   kg_crudos_planificados: number;
-  kg_fritos_estimados: number;
+  kg_fritos_estimados: number | null;
   bultos_producidos: number;
   bultos_restantes: number;
 }
@@ -37,7 +37,7 @@ export interface Formula {
   total_bultos_por_tanda: number;
   total_bultos_planificados: number;
   total_kg_crudos: number;
-  total_kg_fritos_estimados: number;
+  total_kg_fritos_estimados: number | null;
   total_bultos_producidos: number;
   avance_bultos_porcentaje: number | null;
   tandas_registradas: number;
@@ -64,11 +64,11 @@ export interface FormulaProyeccionReferencia {
   bultos_por_tanda: number;
   porcentaje_produccion_pct: number;
   peso_promedio_bulto_kg: number;
-  rendimiento_fritura_pct: number;
+  rendimiento_fritura_pct: number | null;
   kg_crudos_por_tanda: number;
-  kg_fritos_por_tanda: number;
+  kg_fritos_por_tanda: number | null;
   kg_crudos_planificados: number;
-  kg_fritos_estimados: number;
+  kg_fritos_estimados: number | null;
 }
 
 export interface FormulaProyeccion {
@@ -79,10 +79,10 @@ export interface FormulaProyeccion {
   total_bultos_planificados: number;
   kg_fritos_por_bulto_promedio: number;
   total_kg_crudos: number;
-  total_kg_fritos_estimados: number;
+  total_kg_fritos_estimados: number | null;
   cantidad_programada: number;
-  diferencia_kg: number;
-  diferencia_pct: number;
+  diferencia_kg: number | null;
+  diferencia_pct: number | null;
   tandas_programadas: number;
   factible: boolean;
   mensaje: string | null;
