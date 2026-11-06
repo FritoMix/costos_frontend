@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import type { DetalleOrden } from '../../core/modelos/produccion.model';
@@ -11,6 +11,7 @@ import { CargandoComponent } from '../../ui/cargando.component';
 import { ConfirmarComponent } from '../../ui/confirmar.component';
 import { EtiquetaEstadoComponent } from '../../ui/etiqueta-estado.component';
 import { TarjetaComponent } from '../../ui/tarjeta.component';
+import { FormulaResumenComponent } from '../formulas/formula-resumen.component';
 
 type TabDetalle = 'resumen' | 'horno' | 'saborizado';
 
@@ -30,6 +31,7 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
     CargandoComponent,
     ConfirmarComponent,
     EtiquetaEstadoComponent,
+    FormulaResumenComponent,
   ],
   template: `
     @if (cargando()) {
@@ -82,10 +84,19 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
               <!-- Tomar la orden y arrancar: también lo hace el operario que
                    va a trabajarla, sin esperar al supervisor. -->
               @if (datos.orden.estado === 'pendiente' && puedeIniciar()) {
-                <app-boton variante="primario" (click)="iniciar()" testId="iniciar-orden">
+                <app-boton
+                  variante="primario"
+                  (click)="iniciar()"
+                  testId="iniciar-orden"
+                  [deshabilitado]="esperandoFormula()"
+                >
                   <span class="flex items-center gap-2">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" /></svg>
-                    {{ auth.esOperarioHorno() || auth.esOperarioSaborizado() ? 'Tomar e Iniciar Producción' : 'Iniciar Producción' }}
+                    @if (esperandoFormula()) {
+                      Esperando fórmula de Bodega
+                    } @else {
+                      {{ auth.esOperarioHorno() || auth.esOperarioSaborizado() ? 'Tomar e Iniciar Producción' : 'Iniciar Producción' }}
+                    }
                   </span>
                 </app-boton>
               }
@@ -326,6 +337,24 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
                   </div>
                 </div>
               </app-tarjeta>
+
+              <!-- Fórmula de producción: la define Bodega después de crear la orden -->
+              @if (datos.orden.formula_estado !== 'no_aplica') {
+                <app-tarjeta
+                  titulo="Fórmula de producción"
+                  subtitulo="Mezcla de papa definida por Bodega para esta orden"
+                >
+                  @if (datos.orden.formula_estado === 'sin_formula') {
+                    <div class="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3">
+                      <p class="text-sm font-bold text-amber-900">
+                        Bodega está definiendo la fórmula. La producción no puede iniciar todavía.
+                      </p>
+                    </div>
+                  } @else if (datos.formula) {
+                    <app-formula-resumen [formula]="datos.formula" modo="completo" />
+                  }
+                </app-tarjeta>
+              }
             </div>
 
             <!-- Balance de Masa y Mermas (1 Columna) -->
@@ -413,6 +442,19 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
                           </td>
                           <td class="tabular-nums font-mono text-sm font-semibold text-slate-800">
                             {{ registro.cantidad_bultos | number: '1.0-2' }} bto
+                            @if (registro.referencias.length > 0) {
+                              <div class="mt-1 flex flex-wrap gap-1 font-sans font-semibold text-[10px] text-slate-500">
+                                @for (fila of registro.referencias; track fila.referencia_papa_id) {
+                                  <span class="rounded-full bg-slate-100 px-2 py-0.5">
+                                    {{ fila.nombre }} · {{ fila.cantidad_bultos | number: '1.0-0' }} bts
+                                  </span>
+                                }
+                              </div>
+                            } @else if (registro.referencia_papa; as referencia) {
+                              <div class="mt-1 font-sans font-semibold text-[10px] text-slate-500">
+                                {{ referencia.nombre }}
+                              </div>
+                            }
                           </td>
                           <td class="tabular-nums font-mono font-bold text-sm text-slate-900">
                             {{ registro.kg_crudos_calculados | number: '1.0-2' }} kg
@@ -579,6 +621,13 @@ export class OrdenDetallePage {
    * y saborizado: son quienes están en la máquina y toman la orden que van
    * a trabajar. El backend aplica exactamente la misma regla.
    */
+  /** Las órdenes nuevas no pueden iniciar hasta que Bodega defina la fórmula. */
+  protected readonly esperandoFormula = computed(
+    () =>
+      !!this.detalle()?.orden.formula_obligatoria &&
+      this.detalle()?.orden.formula_estado === 'sin_formula',
+  );
+
   protected puedeIniciar(): boolean {
     if (this.auth.esOperarioHorno() || this.auth.esOperarioSaborizado()) {
       return true;

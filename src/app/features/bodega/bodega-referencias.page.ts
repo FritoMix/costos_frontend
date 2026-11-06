@@ -13,7 +13,6 @@ import { AuthService } from '../../core/servicios/auth.service';
 import { BodegaService } from '../../core/servicios/bodega.service';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
-import { sumarParticipacion } from '../../core/utilidades/calculos-produccion';
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 import { ConfirmarComponent } from '../../ui/confirmar.component';
@@ -74,10 +73,13 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
             </span>
           </h1>
           <p class="mt-1 max-w-2xl text-sm font-medium text-slate-500">
-            Administra tipo, peso por bulto, rendimiento de fritura y participación de cada
-            referencia. El operario solo consulta estos valores al registrar la tanda.
+            Administra el nombre y el peso promedio por bulto de cada referencia. La mezcla real
+            de cada orden se define en Fórmula de producción.
           </p>
         </div>
+        <a routerLink="/formula-produccion" class="shrink-0">
+          <app-boton variante="primario">Ir a Fórmula de producción</app-boton>
+        </a>
       </header>
 
       <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
@@ -118,20 +120,6 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
               </div>
 
               <div>
-                <label class="etiqueta text-xs font-bold text-slate-700" for="tipo">
-                  Tipo de papa
-                </label>
-                <input
-                  id="tipo"
-                  type="text"
-                  class="campo"
-                  data-testid="bodega-tipo"
-                  placeholder="Ej. Papa pareja, Papa lavada"
-                  formControlName="tipo"
-                />
-              </div>
-
-              <div>
                 <label class="etiqueta text-xs font-bold text-slate-700" for="peso">
                   Peso promedio por bulto (kg)
                 </label>
@@ -158,58 +146,6 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                   El operario verá este peso al elegir la referencia. Las tandas anteriores no se
                   recalculan.
                 </p>
-              </div>
-
-              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label class="etiqueta text-xs font-bold text-slate-700" for="rendimiento">
-                    Rendimiento de fritura (%)
-                  </label>
-                  <div class="relative">
-                    <input
-                      id="rendimiento"
-                      type="number"
-                      inputmode="decimal"
-                      step="0.0001"
-                      min="0.0001"
-                      max="100"
-                      class="campo pr-10 font-mono"
-                      data-testid="bodega-rendimiento"
-                      placeholder="Ej. 25.00"
-                      formControlName="rendimiento_fritura_pct"
-                    />
-                    <span
-                      class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs font-bold text-slate-400"
-                      >%</span
-                    >
-                  </div>
-                  <p class="ayuda">Kg fritos = kg crudos × rendimiento / 100.</p>
-                </div>
-
-                <div>
-                  <label class="etiqueta text-xs font-bold text-slate-700" for="participacion">
-                    Participación (%)
-                  </label>
-                  <div class="relative">
-                    <input
-                      id="participacion"
-                      type="number"
-                      inputmode="decimal"
-                      step="0.0001"
-                      min="0"
-                      max="100"
-                      class="campo pr-10 font-mono"
-                      data-testid="bodega-participacion"
-                      placeholder="Ej. 33.33"
-                      formControlName="porcentaje_produccion_pct"
-                    />
-                    <span
-                      class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs font-bold text-slate-400"
-                      >%</span
-                    >
-                  </div>
-                  <p class="ayuda">Las referencias activas deben sumar 100 %.</p>
-                </div>
               </div>
 
               <div class="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-4">
@@ -267,12 +203,10 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
               <div class="overflow-x-auto">
                 <table class="tabla w-full table-fixed">
                   <colgroup>
-                    <col class="w-[30%]" />
-                    <col class="w-[13%]" />
-                    <col class="w-[14%]" />
-                    <col class="w-[15%]" />
-                    <col class="w-[14%]" />
-                    <col class="w-[14%]" />
+                    <col class="w-[45%]" />
+                    <col class="w-[20%]" />
+                    <col class="w-[17.5%]" />
+                    <col class="w-[17.5%]" />
                   </colgroup>
                   <thead>
                     <tr>
@@ -285,16 +219,6 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                         class="px-2 py-3.5 text-right whitespace-normal text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-500"
                       >
                         Peso / bulto
-                      </th>
-                      <th
-                        class="px-2 py-3.5 text-right whitespace-normal text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-500"
-                      >
-                        Rendimiento
-                      </th>
-                      <th
-                        class="px-2 py-3.5 text-right whitespace-normal text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-500"
-                      >
-                        Participación
                       </th>
                       <th
                         class="px-2 py-3.5 whitespace-normal text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-500"
@@ -316,37 +240,12 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                       >
                         <td class="px-4 py-4">
                           <p class="text-sm font-bold text-slate-900">{{ referencia.nombre }}</p>
-                          <p class="mt-0.5 text-[11px] font-semibold text-slate-500">
-                            {{ referencia.tipo || 'Tipo sin configurar' }}
-                          </p>
                           <p class="mt-0.5 text-[11px] font-medium text-slate-400">
                             Creada {{ referencia.fecha_creacion | date: 'dd/MM/yyyy' }}
                           </p>
                         </td>
                         <td class="px-2 py-4 text-right font-mono text-sm font-bold text-slate-800">
                           {{ referencia.peso_promedio_bulto_kg | number: '1.2-2' }} kg
-                        </td>
-                        <td class="px-2 py-4 text-right font-mono text-sm font-bold text-slate-800">
-                          @if (referencia.rendimiento_fritura_pct !== null) {
-                            {{ referencia.rendimiento_fritura_pct | number: '1.2-4' }} %
-                          } @else {
-                            <span
-                              class="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800"
-                              title="Sin configurar"
-                              >Pendiente</span
-                            >
-                          }
-                        </td>
-                        <td class="px-2 py-4 text-right font-mono text-sm font-bold text-slate-800">
-                          @if (referencia.porcentaje_produccion_pct !== null) {
-                            {{ referencia.porcentaje_produccion_pct | number: '1.2-4' }} %
-                          } @else {
-                            <span
-                              class="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800"
-                              title="Sin configurar"
-                              >Pendiente</span
-                            >
-                          }
                         </td>
                         <td class="px-2 py-4">
                           @if (referencia.activo) {
@@ -405,30 +304,13 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
           </div>
 
           <div
-            class="mt-4 rounded-2xl border px-5 py-4 text-xs font-medium"
-            [class]="
-              configuracionCompleta()
-                ? 'border-emerald-200/70 bg-emerald-50/60 text-emerald-900'
-                : 'border-amber-200/70 bg-amber-50/60 text-amber-900'
-            "
+            class="mt-4 rounded-2xl border border-sky-200/70 bg-sky-50/60 px-5 py-4 text-xs font-medium text-sky-900"
           >
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <p class="font-bold">Participación de referencias activas</p>
-              <span class="font-mono text-sm font-black" data-testid="bodega-total-participacion">
-                {{ totalParticipacion() | number: '1.2-4' }} %
-              </span>
-            </div>
-            @if (configuracionCompleta()) {
-              <p class="mt-1 leading-relaxed">
-                Configuración completa. La proyección puede distribuir la capacidad del horno.
-              </p>
-            } @else {
-              <p class="mt-1 leading-relaxed">
-                La configuración está incompleta: las referencias activas deben tener tipo,
-                rendimiento, participación y sumar exactamente 100 %. Mientras no se corrija, el
-                sistema no permite proyectar producción. Las tandas ya registradas no cambian.
-              </p>
-            }
+            <p class="font-bold">Mezcla por orden</p>
+            <p class="mt-1 leading-relaxed">
+              La proyección reparte la capacidad del horno en partes iguales entre las referencias
+              activas. La mezcla real de cada orden se define en Fórmula de producción.
+            </p>
           </div>
         </section>
       </div>
@@ -507,9 +389,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                 <button
                   type="button"
                   class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-50"
-                  [disabled]="
-                    cargandoProyeccion() || !configuracionCompleta() || hornoSinCapacidad()
-                  "
+                  [disabled]="cargandoProyeccion() || hornoSinCapacidad()"
                   (click)="proyectar()"
                 >
                   {{ cargandoProyeccion() ? 'Calculando…' : 'Actualizar proyección' }}
@@ -517,14 +397,12 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
               </div>
             </div>
 
-            @if (!configuracionCompleta()) {
+            @if (sinReferencias()) {
               <div
                 class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-medium text-amber-900"
                 data-testid="bodega-proyeccion-incompleta"
               >
-                La configuración de referencias está incompleta: las referencias activas deben tener
-                tipo, rendimiento, participación y sumar 100 %. Corrige la tabla para habilitar la
-                proyección.
+                No hay referencias activas: registra al menos una para proyectar la producción.
               </div>
             } @else if (hornoSinCapacidad()) {
               <div
@@ -636,7 +514,6 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                       <tr>
                         <td class="px-4 py-3">
                           <p class="text-sm font-bold text-slate-900">{{ fila.nombre }}</p>
-                          <p class="text-[11px] font-semibold text-slate-500">{{ fila.tipo }}</p>
                         </td>
                         <td class="px-3 py-3 text-right font-mono text-sm text-slate-700">
                           {{ fila.porcentaje_produccion_pct | number: '1.2-4' }} %
@@ -648,10 +525,18 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                           {{ fila.kg_crudos | number: '1.0-2' }}
                         </td>
                         <td class="px-3 py-3 text-right font-mono text-sm text-slate-700">
-                          {{ fila.rendimiento_fritura_pct | number: '1.2-4' }} %
+                          @if (fila.rendimiento_fritura_pct !== null) {
+                            {{ fila.rendimiento_fritura_pct | number: '1.2-4' }} %
+                          } @else {
+                            —
+                          }
                         </td>
                         <td class="px-4 py-3 text-right font-mono text-sm font-bold text-amber-800">
-                          {{ fila.kg_fritos_estimados | number: '1.0-2' }}
+                          @if (fila.kg_fritos_estimados !== null) {
+                            {{ fila.kg_fritos_estimados | number: '1.0-2' }}
+                          } @else {
+                            —
+                          }
                         </td>
                       </tr>
                     }
@@ -672,7 +557,11 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                       </td>
                       <td></td>
                       <td class="px-4 py-3 text-right font-mono text-sm font-black text-amber-900">
-                        {{ plan.total_kg_fritos_estimados | number: '1.0-2' }}
+                        @if (plan.total_kg_fritos_estimados !== null) {
+                          {{ plan.total_kg_fritos_estimados | number: '1.0-2' }}
+                        } @else {
+                          —
+                        }
                       </td>
                     </tr>
                   </tfoot>
@@ -734,36 +623,16 @@ export class BodegaReferenciasPage {
     const horno = this.hornoSeleccionado();
     return !!horno && this.sinCapacidad(horno);
   });
-  protected readonly totalParticipacion = computed(() => sumarParticipacion(this.referencias()));
-  protected readonly configuracionCompleta = computed(() => {
-    const activas = this.referencias().filter((r) => r.activo);
-    return (
-      activas.length > 0 &&
-      activas.every(
-        (r) =>
-          !!r.tipo && r.rendimiento_fritura_pct !== null && r.porcentaje_produccion_pct !== null,
-      ) &&
-      Math.abs(this.totalParticipacion() - 100) <= 0.01
-    );
-  });
+  protected readonly sinReferencias = computed(
+    () => !this.referencias().some((referencia) => referencia.activo),
+  );
 
   protected readonly formulario = this.fb.group({
     nombre: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(120)]),
-    tipo: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(100)]),
     peso_promedio_bulto_kg: this.fb.control<number | null>(null, [
       Validators.required,
       Validators.min(0.01),
       Validators.max(9999.99),
-    ]),
-    rendimiento_fritura_pct: this.fb.control<number | null>(null, [
-      Validators.required,
-      Validators.min(0.0001),
-      Validators.max(100),
-    ]),
-    porcentaje_produccion_pct: this.fb.control<number | null>(null, [
-      Validators.required,
-      Validators.min(0),
-      Validators.max(100),
     ]),
     activo: this.fb.nonNullable.control(true),
   });
@@ -832,7 +701,7 @@ export class BodegaReferenciasPage {
     this.errorProyeccion.set(null);
     // La API tambien lo valida, pero no tiene sentido provocar un 400 (y un
     // aviso global) cuando la propia pantalla ya sabe que falta configurar.
-    if (!this.configuracionCompleta() || this.hornoSinCapacidad()) {
+    if (this.sinReferencias() || this.hornoSinCapacidad()) {
       this.proyeccion.set(null);
       this.cargandoProyeccion.set(false);
       return;
@@ -858,16 +727,7 @@ export class BodegaReferenciasPage {
     this.editando.set(referencia);
     this.formulario.setValue({
       nombre: referencia.nombre,
-      tipo: referencia.tipo ?? '',
       peso_promedio_bulto_kg: Number(referencia.peso_promedio_bulto_kg),
-      rendimiento_fritura_pct:
-        referencia.rendimiento_fritura_pct === null
-          ? null
-          : Number(referencia.rendimiento_fritura_pct),
-      porcentaje_produccion_pct:
-        referencia.porcentaje_produccion_pct === null
-          ? null
-          : Number(referencia.porcentaje_produccion_pct),
       activo: referencia.activo,
     });
   }
@@ -876,10 +736,7 @@ export class BodegaReferenciasPage {
     this.editando.set(null);
     this.formulario.reset({
       nombre: '',
-      tipo: '',
       peso_promedio_bulto_kg: null,
-      rendimiento_fritura_pct: null,
-      porcentaje_produccion_pct: null,
       activo: true,
     });
   }
@@ -892,18 +749,14 @@ export class BodegaReferenciasPage {
 
     const valores = this.formulario.getRawValue();
     const nombre = valores.nombre.trim();
-    const tipo = valores.tipo.trim();
-    if (!nombre || !tipo) {
-      this.avisos.error('El nombre y el tipo de papa son obligatorios.');
+    if (!nombre) {
+      this.avisos.error('El nombre de la referencia es obligatorio.');
       return;
     }
 
     const datos: ReferenciaPapaGuardar = {
       nombre,
-      tipo,
       peso_promedio_bulto_kg: Number(valores.peso_promedio_bulto_kg),
-      rendimiento_fritura_pct: Number(valores.rendimiento_fritura_pct),
-      porcentaje_produccion_pct: Number(valores.porcentaje_produccion_pct),
       activo: valores.activo,
     };
 

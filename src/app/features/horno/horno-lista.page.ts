@@ -71,11 +71,29 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                     }
                   </p>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  @if (orden.formula_estado === 'sin_formula') {
+                    <span class="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-800">
+                      Esperando fórmula de Bodega
+                    </span>
+                  } @else if (orden.formula_estado === 'lista') {
+                    <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800">
+                      Fórmula lista
+                    </span>
+                  } @else if (orden.formula_estado === 'no_aplica') {
+                    <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600">
+                      Sin fórmula (histórica)
+                    </span>
+                  }
                   <a [routerLink]="['/ordenes', orden.id]" class="text-xs font-bold text-slate-500 hover:text-slate-800">
                     Ver detalle
                   </a>
-                  <app-boton variante="primario" (click)="tomar(orden)" [cargando]="tomando() === orden.id">
+                  <app-boton
+                    variante="primario"
+                    (click)="tomar(orden)"
+                    [cargando]="tomando() === orden.id"
+                    [deshabilitado]="orden.formula_estado === 'sin_formula'"
+                  >
                     Tomar e iniciar
                   </app-boton>
                 </div>

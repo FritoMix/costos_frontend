@@ -529,6 +529,8 @@ export class HornoRegistroPage {
     const datos: RegistroHornoGuardar = {
       hora_inicio: valores.hora_inicio,
       hora_fin: valores.hora_fin,
+      // Pantalla heredada sin fórmula: una sola referencia, como histórica.
+      referencias: [],
       referencia_papa_id: valores.referencia_papa_id!,
       cantidad_bultos: Number(valores.cantidad_bultos),
       operarios_seleccion: Number(valores.operarios_seleccion),

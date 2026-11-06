@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import type { Notificacion } from '../core/modelos/notificacion.model';
+import { AuthService } from '../core/servicios/auth.service';
 import { NotificacionesPlantaService } from '../core/servicios/notificaciones-planta.service';
 
 /**
@@ -66,21 +68,19 @@ import { NotificacionesPlantaService } from '../core/servicios/notificaciones-pl
             @for (aviso of servicio.pendientes(); track aviso.id) {
               <article class="flex gap-3 border-b border-calido-100/60 px-4 py-3.5 last:border-0 transition-colors duration-150 hover:bg-amber-50/30">
                 <span [class]="claseIcono(aviso.tipo)">
-                  {{ aviso.tipo === 'produccion_por_terminar' ? '⏰' : '🆕' }}
+                  {{ icono(aviso.tipo) }}
                 </span>
                 <div class="min-w-0 flex-1">
                   <p class="text-sm font-extrabold text-stone-900">{{ aviso.titulo }}</p>
                   <p class="mt-0.5 text-xs font-medium text-stone-600">{{ aviso.mensaje }}</p>
                   <div class="mt-2 flex items-center gap-3">
-                    @if (aviso.orden_id) {
-                      <a
-                        [routerLink]="['/ordenes', aviso.orden_id]"
-                        (click)="abierto.set(false)"
-                        class="text-xs font-bold text-marca-700 hover:underline"
-                      >
-                        Ver orden
-                      </a>
-                    }
+                    <a
+                      [routerLink]="rutaAviso(aviso)"
+                      (click)="abierto.set(false)"
+                      class="text-xs font-bold text-marca-700 hover:underline"
+                    >
+                      {{ etiquetaEnlace(aviso.tipo) }}
+                    </a>
                     <button
                       type="button"
                       (click)="servicio.marcarLeida(aviso.id)"
@@ -104,7 +104,44 @@ import { NotificacionesPlantaService } from '../core/servicios/notificaciones-pl
 })
 export class CampanaAvisosComponent {
   protected readonly servicio = inject(NotificacionesPlantaService);
+  private readonly auth = inject(AuthService);
   protected readonly abierto = signal(false);
+
+  protected icono(tipo: string): string {
+    switch (tipo) {
+      case 'formula_lista':
+        return '✅';
+      case 'produccion_por_terminar':
+        return '⏰';
+      default:
+        return '🆕';
+    }
+  }
+
+  /**
+   * A dónde lleva cada aviso según el rol: Bodega va al editor de la fórmula;
+   * el operario de horno, a su lista; el resto, al detalle de la orden.
+   */
+  protected rutaAviso(aviso: Notificacion): string[] {
+    const ordenId = aviso.orden_id;
+    if (aviso.tipo === 'orden_para_bodega' && (this.auth.esAdmin() || this.auth.esBodeguero())) {
+      return ['/formula-produccion/ordenes', String(ordenId)];
+    }
+    if (aviso.tipo === 'formula_lista' && this.auth.esOperarioHorno()) {
+      return ['/horno'];
+    }
+    return ['/ordenes', String(ordenId)];
+  }
+
+  protected etiquetaEnlace(tipo: string): string {
+    if (tipo === 'orden_para_bodega' && (this.auth.esAdmin() || this.auth.esBodeguero())) {
+      return 'Definir fórmula';
+    }
+    if (tipo === 'formula_lista' && this.auth.esOperarioHorno()) {
+      return 'Ir a horno';
+    }
+    return 'Ver orden';
+  }
 
   protected alternar(): void {
     this.abierto.update((v) => !v);
@@ -112,8 +149,13 @@ export class CampanaAvisosComponent {
 
   protected claseIcono(tipo: string): string {
     const base = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base';
-    return tipo === 'produccion_por_terminar'
-      ? `${base} bg-amber-100/80`
-      : `${base} bg-marca-100/80`;
+    switch (tipo) {
+      case 'produccion_por_terminar':
+        return `${base} bg-amber-100/80`;
+      case 'formula_lista':
+        return `${base} bg-emerald-100/80`;
+      default:
+        return `${base} bg-marca-100/80`;
+    }
   }
 }

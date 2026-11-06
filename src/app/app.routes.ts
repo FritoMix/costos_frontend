@@ -87,6 +87,46 @@ export const rutas: Routes = [
           import('./features/bodega/bodega-referencias.page').then((m) => m.BodegaReferenciasPage),
       },
 
+      // --- Fórmula de producción (Bodeguero y Administrador) ---
+      // Bodega define la mezcla de papa de cada orden; el detalle de la
+      // orden vive aquí mismo, sin duplicar la lista del supervisor.
+      {
+        path: 'formula-produccion',
+        canActivate: [rolGuard(['admin', 'bodeguero'])],
+        children: [
+          {
+            path: '',
+            title: 'Fórmula de producción - DATACONTROL',
+            loadComponent: () =>
+              import('./features/formulas/formula-produccion.page').then(
+                (m) => m.FormulaProduccionPage,
+              ),
+          },
+          {
+            path: 'ordenes/:id',
+            title: 'Fórmula de la orden - DATACONTROL',
+            loadComponent: () =>
+              import('./features/formulas/formula-orden.page').then((m) => m.FormulaOrdenPage),
+          },
+          {
+            path: 'formulas/nueva',
+            title: 'Nueva fórmula - DATACONTROL',
+            loadComponent: () =>
+              import('./features/formulas/formula-papa-form.page').then(
+                (m) => m.FormulaPapaFormPage,
+              ),
+          },
+          {
+            path: 'formulas/:id',
+            title: 'Editar fórmula - DATACONTROL',
+            loadComponent: () =>
+              import('./features/formulas/formula-papa-form.page').then(
+                (m) => m.FormulaPapaFormPage,
+              ),
+          },
+        ],
+      },
+
       // --- Capacidad de hornos (Administrador y Supervisor) ---
       // Reutiliza la misma pantalla de Hornos. El Supervisor solo ve el
       // formulario de capacidad; el Administrador conserva la edición completa.

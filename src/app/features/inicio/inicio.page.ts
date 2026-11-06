@@ -20,6 +20,9 @@ interface AccesoRapido {
   destacado?: boolean;
 }
 
+const ICONO_FORMULA =
+  '<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>';
+
 /**
  * Pantalla de inicio: panel de control operativo futurista en Azul Zafiro Cálido
  * con estado en vivo de la planta y accesos rápidos ergonómicos por rol.
@@ -301,6 +304,12 @@ export class InicioPage {
       case 'bodeguero':
         return [
           {
+            ruta: '/formula-produccion',
+            titulo: 'Fórmula de producción',
+            descripcion: 'Define la mezcla de papa de cada orden pendiente y sigue su avance.',
+            icono: ICONO_FORMULA,
+          },
+          {
             ruta: '/bodega',
             titulo: 'Referencias de Papa',
             descripcion: 'Crear variedades de papa, su rendimiento, participación y peso por bulto.',
@@ -323,6 +332,12 @@ export class InicioPage {
             titulo: 'Bodega de Papa',
             descripcion: 'Referencias de papa, parámetros productivos y proyección de producción.',
             icono: '<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg>',
+          },
+          {
+            ruta: '/formula-produccion',
+            titulo: 'Fórmula de producción',
+            descripcion: 'Mezcla de papa por orden, proyección de kg y avance de bultos.',
+            icono: ICONO_FORMULA,
           },
           {
             ruta: '/hornos',

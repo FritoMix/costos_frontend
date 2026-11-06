@@ -1,5 +1,6 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
@@ -24,6 +25,7 @@ import { TecladoNumericoComponent } from '../../ui/teclado-numerico.component';
 
 type PasoTanda =
   | 'horario'
+  | 'mezcla'
   | 'referencia_papa'
   | 'bultos'
   | 'temperatura'
@@ -49,13 +51,52 @@ type PasoTanda =
 @Component({
   selector: 'app-horno-asistente',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, DecimalPipe, BotonComponent, CargandoComponent, TecladoNumericoComponent],
+  imports: [
+    RouterLink,
+    FormsModule,
+    DecimalPipe,
+    BotonComponent,
+    CargandoComponent,
+    TecladoNumericoComponent,
+  ],
   template: `
     <div class="mx-auto w-full max-w-xl">
       @if (cargando()) {
         <app-cargando texto="Preparando el registro…" />
       } @else if (detalle(); as datos) {
-        @if (ordenCompleta()) {
+        @if (bloqueadaPorFormula()) {
+          <div
+            class="rounded-3xl border border-amber-200 bg-white p-8 text-center shadow-xl shadow-amber-200/20"
+            data-testid="horno-sin-formula"
+          >
+            <div
+              class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-2xl"
+            >
+              📝
+            </div>
+            <h2 class="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">
+              Bodega debe definir la fórmula antes de registrar tandas
+            </h2>
+            <p class="mx-auto mt-2 max-w-md text-sm font-medium text-slate-500">
+              La orden #{{ datos.orden.numero_orden }} todavía no tiene la mezcla de papa.
+              Cuando Bodega la guarde, podrás registrar la primera tanda.
+            </p>
+            <div class="mt-6 flex flex-wrap justify-center gap-3">
+              <a
+                routerLink="/horno"
+                class="inline-flex items-center justify-center rounded-xl bg-marca-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-marca-700 active:scale-95"
+              >
+                Volver a órdenes
+              </a>
+              <a
+                [routerLink]="['/ordenes', datos.orden.id]"
+                class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-marca-300 hover:text-marca-800 active:scale-95"
+              >
+                Ver orden
+              </a>
+            </div>
+          </div>
+        } @else if (ordenCompleta()) {
           <div
             class="rounded-3xl border border-emerald-200 bg-white p-8 text-center shadow-xl shadow-emerald-200/20"
             data-testid="horno-orden-completa"
@@ -263,15 +304,17 @@ type PasoTanda =
                                 referencia.nombre
                               }}</span>
                               <span class="block text-xs font-semibold text-slate-500">
-                                {{ referencia.tipo }} ·
+                                @if (referencia.tipo) {
+                                  {{ referencia.tipo }} ·
+                                }
                                 {{ referencia.peso_promedio_bulto_kg | number: '1.2-2' }} kg/bulto
                               </span>
-                              <span class="block text-[11px] font-semibold text-amber-700">
-                                Rendimiento
-                                {{ referencia.rendimiento_fritura_pct | number: '1.2-2' }} % ·
-                                Participación
-                                {{ referencia.porcentaje_produccion_pct | number: '1.2-2' }} %
-                              </span>
+                              @if (referencia.rendimiento_fritura_pct !== null) {
+                                <span class="block text-[11px] font-semibold text-amber-700">
+                                  Rendimiento
+                                  {{ referencia.rendimiento_fritura_pct | number: '1.2-2' }} %
+                                </span>
+                              }
                             </span>
                             @if (referenciaPapaId() === referencia.id) {
                               <span
@@ -284,6 +327,119 @@ type PasoTanda =
                               ></span>
                             }
                           </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- 3. Mezcla de la fórmula -->
+                @case ('mezcla') {
+                  <div class="anim-entrada space-y-3">
+                    @if (mezclaCompleta()) {
+                      <div
+                        class="rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/70 px-5 py-6 text-center"
+                        data-testid="horno-formula-completa"
+                      >
+                        <p class="text-sm font-bold text-emerald-900">
+                          La fórmula de esta orden ya se cumplió.
+                        </p>
+                        <p class="mt-1 text-xs font-medium text-emerald-800">
+                          No se puede registrar otra tanda con esta mezcla.
+                        </p>
+                      </div>
+                    } @else {
+                      @for (fila of mezcla(); track fila.referencia_id; let indice = $index) {
+                        <div
+                          class="rounded-2xl border-2 px-4 py-3.5 text-left transition-all duration-150"
+                          [class]="fila.bultos > 0
+                            ? 'border-marca-500 bg-marca-50/60 shadow-sm ring-4 ring-marca-500/10'
+                            : 'border-slate-200 bg-white'"
+                        >
+                          <div class="flex items-center justify-between gap-2">
+                            <div class="min-w-0">
+                              <p class="font-bold text-slate-900">{{ fila.nombre }}</p>
+                              <p class="text-xs font-semibold text-slate-500">
+                                Plan {{ fila.bultos_por_tanda }} bultos · producido
+                                {{ fila.producido | number: '1.0-0' }} · restante
+                                {{ fila.restante | number: '1.0-0' }}
+                              </p>
+                            </div>
+                            @if (fila.restante <= 0) {
+                              <span
+                                class="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800"
+                              >
+                                Completa
+                              </span>
+                            }
+                          </div>
+
+                          <div class="mt-3 flex items-center gap-2.5">
+                            <button
+                              type="button"
+                              class="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-black text-slate-600 transition hover:border-marca-400 hover:text-marca-700 active:scale-95 disabled:opacity-40"
+                              [disabled]="fila.bultos <= 0 || fila.restante <= 0"
+                              (click)="ajustarBultos(indice, -1)"
+                              [attr.aria-label]="'Quitar un bulto de ' + fila.nombre"
+                            >
+                              −
+                            </button>
+                            <input
+                              type="number"
+                              inputmode="numeric"
+                              min="0"
+                              [max]="fila.restante"
+                              [ngModel]="fila.bultos"
+                              (ngModelChange)="fijarBultos(indice, $any($event))"
+                              [disabled]="fila.restante <= 0"
+                              class="h-11 w-24 rounded-xl border border-slate-200 bg-white text-center font-mono text-lg font-extrabold text-slate-900 disabled:bg-slate-100"
+                              [attr.aria-label]="'Bultos de ' + fila.nombre + ' en la tanda'"
+                              [attr.data-testid]="'horno-mezcla-' + fila.referencia_id"
+                            />
+                            <button
+                              type="button"
+                              class="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-black text-slate-600 transition hover:border-marca-400 hover:text-marca-700 active:scale-95 disabled:opacity-40"
+                              [disabled]="fila.bultos >= fila.restante"
+                              (click)="ajustarBultos(indice, 1)"
+                              [attr.aria-label]="'Agregar un bulto de ' + fila.nombre"
+                            >
+                              +
+                            </button>
+                            <span class="ml-auto text-right font-mono text-xs font-bold text-slate-500">
+                              {{ kgFila(fila) | number: '1.0-2' }} kg fritos
+                            </span>
+                          </div>
+                        </div>
+                      }
+
+                      <div class="rounded-2xl bg-slate-50 p-4">
+                        <div class="flex items-center justify-between text-sm font-bold text-slate-800">
+                          <span>Total de la tanda</span>
+                          <span class="font-mono" data-testid="horno-total-tanda">
+                            {{ totalBultosMezcla() }} bultos
+                            @if (formula()?.capacidad_bultos_hora; as capacidad) {
+                              <span class="text-xs font-semibold text-slate-400">
+                                / {{ capacidad }} por hora
+                              </span>
+                            }
+                          </span>
+                        </div>
+                        <div class="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
+                          <div
+                            class="h-full rounded-full transition-all duration-300"
+                            [class]="barraMezcla().clase"
+                            [style.width.%]="barraMezcla().porcentaje"
+                          ></div>
+                        </div>
+                        <p class="mt-2 text-xs font-semibold text-slate-500">
+                          {{ kgCrudosMezcla() | number: '1.0-2' }} kg crudos ·
+                          {{ kgFritosMezcla() | number: '1.0-2' }} kg fritos estimados
+                        </p>
+                        @if (totalBultosMezcla() > capacidadMezcla()) {
+                          <p class="mt-2 text-xs font-bold text-rose-700">
+                            El horno admite máximo {{ capacidadMezcla() }} bultos por hora.
+                            Ajusta la mezcla antes de continuar.
+                          </p>
                         }
                       </div>
                     }
@@ -373,7 +529,11 @@ type PasoTanda =
                               {{ kgFritos() | number: '1.0-2' }}
                             </span>
                             <span class="block text-[10px] font-semibold text-amber-700">
-                              Rendimiento {{ ref.rendimiento_fritura_pct | number: '1.2-2' }} %
+                              @if (ref.rendimiento_fritura_pct !== null) {
+                                Rendimiento {{ ref.rendimiento_fritura_pct | number: '1.2-2' }} %
+                              } @else {
+                                Sin rendimiento configurado
+                              }
                             </span>
                           </div>
                         </div>
@@ -605,40 +765,77 @@ type PasoTanda =
                           {{ horaInicio() }} → {{ horaFin() }}
                         </dd>
                       </div>
-                      <div class="flex items-center justify-between gap-4 px-5 py-3">
-                        <dt class="text-sm font-semibold text-slate-500">Referencia de papa</dt>
-                        <dd class="text-sm font-extrabold text-slate-900">
-                          {{ referenciaSeleccionada()?.nombre ?? '—' }}
-                        </dd>
-                      </div>
-                      <div class="flex items-center justify-between gap-4 px-5 py-3">
-                        <dt class="text-sm font-semibold text-slate-500">Tipo de papa</dt>
-                        <dd class="text-sm font-extrabold text-slate-900">
-                          {{ referenciaSeleccionada()?.tipo ?? '—' }}
-                        </dd>
-                      </div>
-                      <div class="flex items-center justify-between gap-4 px-5 py-3">
-                        <dt class="text-sm font-semibold text-slate-500">Papa cruda</dt>
-                        <dd class="text-sm font-extrabold text-slate-900">
-                          {{ numero(bultos()) | number: '1.0-2' }} bultos
-                          <span class="font-medium text-slate-500"
-                            >({{ kgCrudos() | number: '1.0-2' }} kg)</span
-                          >
-                        </dd>
-                      </div>
-                      <div class="flex items-center justify-between gap-4 px-5 py-3">
-                        <dt class="text-sm font-semibold text-slate-500">Rendimiento de fritura</dt>
-                        <dd class="text-sm font-extrabold text-slate-900">
-                          {{ referenciaSeleccionada()!.rendimiento_fritura_pct | number: '1.2-2' }}
-                          %
-                        </dd>
-                      </div>
-                      <div class="flex items-center justify-between gap-4 px-5 py-3">
-                        <dt class="text-sm font-semibold text-slate-500">Kg fritos estimados</dt>
-                        <dd class="text-sm font-extrabold text-amber-800">
-                          {{ kgFritos() | number: '1.0-2' }} kg
-                        </dd>
-                      </div>
+                      @if (hayFormula()) {
+                        <div class="flex items-start justify-between gap-4 px-5 py-3">
+                          <dt class="text-sm font-semibold text-slate-500">Mezcla de la fórmula</dt>
+                          <dd class="text-right text-sm font-extrabold text-slate-900">
+                            @for (fila of mezcla(); track fila.referencia_id) {
+                              @if (fila.bultos > 0) {
+                                <span class="block">
+                                  {{ fila.nombre }} · {{ fila.bultos }} bts
+                                </span>
+                              }
+                            }
+                          </dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-4 px-5 py-3">
+                          <dt class="text-sm font-semibold text-slate-500">Papa cruda</dt>
+                          <dd class="text-sm font-extrabold text-slate-900">
+                            {{ totalBultosMezcla() }} bultos
+                            <span class="font-medium text-slate-500"
+                              >({{ kgCrudosMezcla() | number: '1.0-2' }} kg)</span
+                            >
+                          </dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-4 px-5 py-3">
+                          <dt class="text-sm font-semibold text-slate-500">Kg fritos estimados</dt>
+                          <dd class="text-sm font-extrabold text-amber-800">
+                            {{ kgFritosMezcla() | number: '1.0-2' }} kg
+                          </dd>
+                        </div>
+                      } @else {
+                        <div class="flex items-center justify-between gap-4 px-5 py-3">
+                          <dt class="text-sm font-semibold text-slate-500">Referencia de papa</dt>
+                          <dd class="text-sm font-extrabold text-slate-900">
+                            {{ referenciaSeleccionada()?.nombre ?? '—' }}
+                          </dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-4 px-5 py-3">
+                          <dt class="text-sm font-semibold text-slate-500">Tipo de papa</dt>
+                          <dd class="text-sm font-extrabold text-slate-900">
+                            {{ referenciaSeleccionada()?.tipo ?? '—' }}
+                          </dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-4 px-5 py-3">
+                          <dt class="text-sm font-semibold text-slate-500">Papa cruda</dt>
+                          <dd class="text-sm font-extrabold text-slate-900">
+                            {{ numero(bultos()) | number: '1.0-2' }} bultos
+                            <span class="font-medium text-slate-500"
+                              >({{ kgCrudos() | number: '1.0-2' }} kg)</span
+                            >
+                          </dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-4 px-5 py-3">
+                          <dt class="text-sm font-semibold text-slate-500">Rendimiento de fritura</dt>
+                          <dd class="text-sm font-extrabold text-slate-900">
+                            @if (referenciaSeleccionada()!.rendimiento_fritura_pct !== null) {
+                              {{ referenciaSeleccionada()!.rendimiento_fritura_pct | number: '1.2-2' }} %
+                            } @else {
+                              —
+                            }
+                          </dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-4 px-5 py-3">
+                          <dt class="text-sm font-semibold text-slate-500">Kg fritos estimados</dt>
+                          <dd class="text-sm font-extrabold text-amber-800">
+                            @if (referenciaSeleccionada()!.rendimiento_fritura_pct !== null) {
+                              {{ kgFritos() | number: '1.0-2' }} kg
+                            } @else {
+                              —
+                            }
+                          </dd>
+                        </div>
+                      }
                       <div class="flex items-center justify-between gap-4 px-5 py-3">
                         <dt class="text-sm font-semibold text-slate-500">Temperatura</dt>
                         <dd class="text-sm font-extrabold text-slate-900">
@@ -737,7 +934,13 @@ type PasoTanda =
                 <li class="flex items-center justify-between gap-3 text-sm">
                   <span class="min-w-0 truncate font-semibold text-slate-700">
                     {{ registro.cantidad_bultos | number: '1.0-2' }} bultos
-                    @if (registro.referencia_papa; as referencia) {
+                    @if (registro.referencias.length > 0) {
+                      <span class="font-medium text-slate-500">
+                        · @for (fila of registro.referencias; track fila.referencia_papa_id) {
+                          {{ fila.nombre }} {{ fila.cantidad_bultos | number: '1.0-0' }} bts
+                        }
+                      </span>
+                    } @else if (registro.referencia_papa; as referencia) {
                       <span class="font-medium text-slate-500">· {{ referencia.nombre }}</span>
                     }
                   </span>
@@ -769,14 +972,22 @@ export class HornoAsistentePage {
   protected readonly referenciasPapa = signal<ReferenciaPapa[]>([]);
   protected readonly referenciaPapaId = signal<number | null>(null);
 
+  /** Fila de la mezcla que el operario ajusta en la tanda. */
+  protected readonly mezcla = signal<
+    {
+      referencia_id: number;
+      nombre: string;
+      bultos_por_tanda: number;
+      producido: number;
+      restante: number;
+      peso_promedio_bulto_kg: number;
+      rendimiento_fritura_pct: number | null;
+      bultos: number;
+    }[]
+  >([]);
+
   protected readonly referenciasDisponibles = computed(() =>
-    this.referenciasPapa().filter(
-      (r) =>
-        r.activo &&
-        r.tipo !== null &&
-        r.rendimiento_fritura_pct !== null &&
-        r.porcentaje_produccion_pct !== null,
-    ),
+    this.referenciasPapa().filter((r) => r.activo),
   );
   protected readonly referenciaSeleccionada = computed(
     () => this.referenciasPapa().find((r) => r.id === this.referenciaPapaId()) ?? null,
@@ -793,6 +1004,60 @@ export class HornoAsistentePage {
       this.kgCrudos(),
       this.referenciaSeleccionada()?.rendimiento_fritura_pct,
     ),
+  );
+
+  /** ¿La orden trabaja con la fórmula multi-referencia de Bodega? */
+  protected readonly hayFormula = computed(
+    () => (this.detalle()?.formula?.referencias.length ?? 0) > 0,
+  );
+  protected readonly formula = computed(() => this.detalle()?.formula ?? null);
+  /** Una orden nueva sin fórmula no puede registrar tandas. */
+  protected readonly bloqueadaPorFormula = computed(() => {
+    const orden = this.detalle()?.orden;
+    return (
+      !!orden &&
+      orden.formula_obligatoria &&
+      orden.formula_estado === 'sin_formula' &&
+      !this.hayFormula()
+    );
+  });
+  protected readonly capacidadMezcla = computed(
+    () => Number(this.formula()?.capacidad_bultos_hora ?? Infinity),
+  );
+  protected readonly totalBultosMezcla = computed(() =>
+    this.mezcla().reduce((acc, fila) => acc + fila.bultos, 0),
+  );
+  protected readonly kgCrudosMezcla = computed(() =>
+    this.mezcla().reduce(
+      (acc, fila) => acc + calcularKgCrudosPreview(fila.bultos, fila.peso_promedio_bulto_kg),
+      0,
+    ),
+  );
+  protected readonly kgFritosMezcla = computed(() =>
+    this.mezcla().reduce(
+      (acc, fila) =>
+        acc +
+        calcularKgFritosPreview(
+          calcularKgCrudosPreview(fila.bultos, fila.peso_promedio_bulto_kg),
+          fila.rendimiento_fritura_pct,
+        ),
+      0,
+    ),
+  );
+  protected readonly barraMezcla = computed(() => {
+    const capacidad = this.formula()?.capacidad_bultos_hora;
+    const total = this.totalBultosMezcla();
+    if (!capacidad) {
+      return { porcentaje: 0, clase: 'bg-emerald-400' };
+    }
+    if (total > capacidad) {
+      return { porcentaje: 100, clase: 'bg-rose-500' };
+    }
+    const porcentaje = Math.min(100, (total / capacidad) * 100);
+    return { porcentaje, clase: porcentaje >= 90 ? 'bg-amber-400' : 'bg-emerald-400' };
+  });
+  protected readonly mezclaCompleta = computed(
+    () => this.hayFormula() && this.mezcla().every((fila) => fila.restante <= 0),
   );
 
   /** Minutos que le quedan a la orden para registrar tandas de una hora. */
@@ -848,10 +1113,11 @@ export class HornoAsistentePage {
   /** 30, 31, 32... 55: el rango completo de bultos de una tanda. */
   protected readonly bultosComunes = Array.from({ length: 26 }, (_, i) => String(30 + i));
 
-  private readonly pasos: PasoTanda[] = [
+  private readonly pasos = computed<PasoTanda[]>(() => [
     'horario',
-    'referencia_papa',
-    'bultos',
+    ...(this.hayFormula()
+      ? (['mezcla'] as PasoTanda[])
+      : (['referencia_papa', 'bultos'] as PasoTanda[])),
     'temperatura',
     'personal_zona_humeda',
     'personal_seleccion',
@@ -859,10 +1125,10 @@ export class HornoAsistentePage {
     'aceite_final',
     'desperdicio',
     'resumen',
-  ];
+  ]);
 
-  protected readonly totalPasos = computed(() => this.pasos.length);
-  protected readonly pasoActual = computed<PasoTanda>(() => this.pasos[this.indicePaso()]);
+  protected readonly totalPasos = computed(() => this.pasos().length);
+  protected readonly pasoActual = computed<PasoTanda>(() => this.pasos()[this.indicePaso()]);
   protected readonly progreso = computed(() => ((this.indicePaso() + 1) / this.totalPasos()) * 100);
 
   private readonly textos: Record<PasoTanda, { etiqueta: string; titulo: string; sub: string }> = {
@@ -870,6 +1136,11 @@ export class HornoAsistentePage {
       etiqueta: 'Horario',
       titulo: 'Esta es la hora de tu tanda',
       sub: 'Se toma automáticamente. Cada tanda dura una hora.',
+    },
+    mezcla: {
+      etiqueta: 'Materia prima',
+      titulo: '¿Cuántos bultos de cada papa entraron?',
+      sub: 'La mezcla la definió Bodega. Ajusta los bultos dentro del restante de cada referencia.',
     },
     referencia_papa: {
       etiqueta: 'Materia prima',
@@ -938,6 +1209,12 @@ export class HornoAsistentePage {
     switch (this.pasoActual()) {
       case 'horario':
         return true;
+      case 'mezcla':
+        return (
+          this.totalBultosMezcla() > 0 &&
+          this.totalBultosMezcla() <= this.capacidadMezcla() &&
+          this.mezcla().every((fila) => fila.bultos >= 0 && fila.bultos <= fila.restante)
+        );
       case 'referencia_papa':
         return this.referenciaPapaId() !== null;
       case 'bultos':
@@ -979,6 +1256,23 @@ export class HornoAsistentePage {
         this.detalle.set(detalle);
         this.tiposDesperdicio.set(tipos);
         this.referenciasPapa.set(referencias);
+        // Tanda con fórmula: se precarga la mezcla con min(plan, restante).
+        // El operario puede ajustar los bultos dentro del restante.
+        this.mezcla.set(
+          (detalle.formula?.referencias ?? []).map((fila) => {
+            const restante = Number(fila.bultos_restantes);
+            return {
+              referencia_id: fila.referencia_id,
+              nombre: fila.nombre,
+              bultos_por_tanda: fila.bultos_por_tanda,
+              producido: Number(fila.bultos_producidos),
+              restante,
+              peso_promedio_bulto_kg: Number(fila.peso_promedio_bulto_kg),
+              rendimiento_fritura_pct: Number(fila.rendimiento_fritura_pct),
+              bultos: Math.max(0, Math.min(fila.bultos_por_tanda, restante)),
+            };
+          }),
+        );
         // Si solo hay una referencia activa, se deja elegida para ahorrar
         // un toque; el operario igual la ve en el resumen antes de guardar.
         if (this.referenciasDisponibles().length === 1) {
@@ -990,6 +1284,39 @@ export class HornoAsistentePage {
       },
       error: () => this.cargando.set(false),
     });
+  }
+
+  /** Fija los bultos de una fila respetando el restante planificado. */
+  protected fijarBultos(indice: number, bultos: number | string | null): void {
+    const valor = Number(bultos);
+    this.mezcla.update((filas) =>
+      filas.map((fila, posicion) => {
+        if (posicion !== indice) {
+          return fila;
+        }
+        const acotado = Math.max(0, Math.min(fila.restante, Number.isFinite(valor) ? valor : 0));
+        return { ...fila, bultos: acotado };
+      }),
+    );
+  }
+
+  protected ajustarBultos(indice: number, delta: number): void {
+    const fila = this.mezcla()[indice];
+    if (fila) {
+      this.fijarBultos(indice, fila.bultos + delta);
+    }
+  }
+
+  /** Kg fritos de una fila con el snapshot de la fórmula. */
+  protected kgFila(fila: {
+    bultos: number;
+    peso_promedio_bulto_kg: number;
+    rendimiento_fritura_pct: number | null;
+  }): number {
+    return calcularKgFritosPreview(
+      calcularKgCrudosPreview(fila.bultos, fila.peso_promedio_bulto_kg),
+      fila.rendimiento_fritura_pct,
+    );
   }
 
   // --- Utilidades ----------------------------------------------------------
@@ -1115,15 +1442,31 @@ export class HornoAsistentePage {
       this.avisos.error('No queda tiempo suficiente para otra tanda de una hora.');
       return;
     }
+    if (this.hayFormula() && this.mezclaCompleta()) {
+      this.avisos.error('La fórmula de esta orden ya se cumplió: no se puede registrar otra tanda.');
+      return;
+    }
 
     const conDesperdicio =
       this.tipoDesperdicioId() !== null && this.numero(this.cantidadDesperdicio()) > 0;
 
+    // Con fórmula se envía la mezcla por referencia; en órdenes históricas se
+    // conserva la referencia única de siempre.
+    const referencias = this.hayFormula()
+      ? this.mezcla()
+          .filter((fila) => fila.bultos > 0)
+          .map((fila) => ({
+            referencia_papa_id: fila.referencia_id,
+            cantidad_bultos: fila.bultos,
+          }))
+      : [];
+
     const datos: RegistroHornoGuardar = {
       hora_inicio: this.horaInicio(),
       hora_fin: this.horaFin(),
-      referencia_papa_id: this.referenciaPapaId()!,
-      cantidad_bultos: this.numero(this.bultos()),
+      referencias,
+      referencia_papa_id: this.hayFormula() ? undefined : this.referenciaPapaId()!,
+      cantidad_bultos: this.hayFormula() ? undefined : this.numero(this.bultos()),
       operarios_seleccion: this.operariosSeleccion(),
       operarios_horno: this.operariosZonaHumeda(),
       nivel_aceite_inicial_cm: this.numero(this.aceiteInicial()),

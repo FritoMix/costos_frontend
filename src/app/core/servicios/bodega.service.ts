@@ -5,6 +5,9 @@ import { shareReplay, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import type {
+  FiltrosOrdenesBodega,
+  OrdenBodega,
+  OrdenBodegaDetalle,
   ProyeccionProduccion,
   ReferenciaPapa,
   ReferenciaPapaGuardar,
@@ -67,5 +70,21 @@ export class BodegaService {
     return this.http.get<ProyeccionProduccion>(`${environment.apiUrl}/bodega/proyeccion`, {
       params: { horno_id: hornoId, horas },
     });
+  }
+
+  // --- Bandeja de órdenes con su fórmula ---------------------------------
+
+  listarOrdenes(filtros: FiltrosOrdenesBodega = {}): Observable<OrdenBodega[]> {
+    const params: Record<string, string | boolean> = {};
+    for (const [clave, valor] of Object.entries(filtros)) {
+      if (valor !== undefined && valor !== null && valor !== '') {
+        params[clave] = valor as string | boolean;
+      }
+    }
+    return this.http.get<OrdenBodega[]>(`${environment.apiUrl}/bodega/ordenes`, { params });
+  }
+
+  obtenerOrden(id: number): Observable<OrdenBodegaDetalle> {
+    return this.http.get<OrdenBodegaDetalle>(`${environment.apiUrl}/bodega/ordenes/${id}`);
   }
 }

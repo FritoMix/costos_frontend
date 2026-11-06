@@ -1,5 +1,7 @@
 /** Tipos del modulo Produccion. */
 
+import type { EstadoFormula, Formula } from './formula.model';
+
 export type EstadoOrden = 'pendiente' | 'en_produccion' | 'finalizada' | 'cancelada';
 export type DestinoOrden = 'nacional' | 'exportacion';
 export type UnidadSolicitada = 'kg' | 'canastillas';
@@ -43,6 +45,10 @@ export interface Orden {
   horas_produccion: number | null;
   hora_inicio: string | null;
   hora_fin: string | null;
+  /** Estado de la fórmula de la orden (no confundir con el estado de la orden). */
+  formula_estado: EstadoFormula;
+  /** Las órdenes nuevas exigen fórmula antes de iniciar; las históricas no. */
+  formula_obligatoria: boolean;
   supervisor: UsuarioRef;
   turno: Referencia;
   horno: Referencia;
@@ -70,14 +76,27 @@ export interface Desperdicio {
   tipo_desperdicio: Referencia;
 }
 
+export interface RegistroReferencia {
+  referencia_papa_id: number;
+  nombre: string;
+  cantidad_bultos: number;
+  peso_estandar_bulto_kg: number;
+  rendimiento_fritura_pct: number | null;
+  porcentaje_produccion_pct: number | null;
+  kg_crudos_calculados: number;
+  kg_fritos_estimados: number | null;
+}
+
 export interface RegistroHorno {
   id: number;
   orden_id: number;
   hora_inicio: string;
   hora_fin: string;
+  /** Referencia única de las órdenes históricas; en tandas nuevas va en `referencias`. */
   referencia_papa: ReferenciaPapaRef | null;
+  referencias: RegistroReferencia[];
   cantidad_bultos: number;
-  peso_estandar_bulto_kg: number;
+  peso_estandar_bulto_kg: number | null;
   rendimiento_fritura_pct: number | null;
   porcentaje_produccion_pct: number | null;
   kg_crudos_calculados: number;
@@ -98,11 +117,18 @@ export interface RegistroHorno {
   desperdicios: Desperdicio[];
 }
 
+export interface RegistroReferenciaGuardar {
+  referencia_papa_id: number;
+  cantidad_bultos: number;
+}
+
 export interface RegistroHornoGuardar {
   hora_inicio: string;
   hora_fin: string;
-  referencia_papa_id: number;
-  cantidad_bultos: number;
+  /** Mezcla de la tanda. En órdenes históricas se admite la referencia única. */
+  referencias: RegistroReferenciaGuardar[];
+  referencia_papa_id?: number;
+  cantidad_bultos?: number;
   operarios_seleccion: number;
   operarios_horno: number;
   nivel_aceite_inicial_cm: number;
@@ -154,6 +180,7 @@ export interface TotalesOrden {
 export interface DetalleOrden {
   orden: Orden;
   totales: TotalesOrden;
+  formula: Formula | null;
   registros_horno: RegistroHorno[];
   recepciones: Recepcion[];
 }
