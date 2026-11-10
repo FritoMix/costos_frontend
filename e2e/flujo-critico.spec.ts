@@ -70,6 +70,31 @@ test.describe('Flujo crítico de planta', () => {
     }
   });
 
+  test('sin sesión la app arranca en /entrar y respeta la ruta pedida', async ({ page }) => {
+    // Regresión: la raíz y cualquier ruta interna deben pedir sesión. El
+    // fixture `page` estrena contexto limpio, sin cookies de otros tests.
+    await page.goto('/');
+    await expect(page).toHaveURL(/\/entrar/);
+    await expect(page.getByTestId('login-usuario')).toBeVisible();
+    await sinViolacionesCriticas(page, 'login sin sesión');
+
+    // Deep link sin sesión: el guard deja la ruta pedida en `volverA`.
+    await page.goto('/ordenes');
+    await expect(page).toHaveURL(/\/entrar/);
+    await expect(page).toHaveURL(/volverA=(%2F|\/)ordenes/);
+    await expect(page.getByTestId('login-usuario')).toBeVisible();
+
+    // Al entrar, vuelve a la ruta que había pedido (no a la de por defecto).
+    // Se llena el formulario en la misma URL para no perder `volverA`.
+    await page.getByTestId('login-usuario').fill(USUARIO);
+    await page.getByTestId('login-password').fill(PASSWORD);
+    await page.getByTestId('login-submit').click();
+    await expect(page).toHaveURL(/\/ordenes$/);
+    await expect(
+      page.getByRole('heading', { name: /Órdenes de Producción/ }),
+    ).toBeVisible();
+  });
+
   test('login, orden, horno, saborizado, análisis y exportación', async ({ page }) => {
     await test.step('login con credenciales de entorno', async () => {
       await page.goto('/entrar');
