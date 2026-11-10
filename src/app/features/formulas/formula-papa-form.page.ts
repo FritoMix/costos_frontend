@@ -88,8 +88,11 @@ interface FilaPlantilla {
           </div>
         </div>
       } @else {
-        <!-- Datos de la fórmula -->
-        <app-tarjeta titulo="Datos de la fórmula">
+        <!-- 1. Datos de la fórmula -->
+        <app-tarjeta
+          titulo="1 · Datos de la fórmula"
+          subtitulo="Nombre y producto al que aplica la mezcla."
+        >
           <div class="grid gap-4 sm:grid-cols-2">
             <label class="block">
               <span class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
@@ -124,10 +127,10 @@ interface FilaPlantilla {
           </div>
         </app-tarjeta>
 
-        <!-- Mezcla -->
+        <!-- 2. Mezcla por tanda -->
         <app-tarjeta
-          titulo="Mezcla de la fórmula"
-          subtitulo="Bultos de cada referencia de papa en cada tanda. La misma mezcla se repite en todas las tandas."
+          titulo="2 · Mezcla por tanda"
+          subtitulo="Bultos de cada referencia de papa. La misma mezcla se repite en todas las tandas."
         >
           <div class="space-y-4">
             <div class="overflow-x-auto">
@@ -228,7 +231,15 @@ interface FilaPlantilla {
                 }
               </app-boton>
             </div>
+          </div>
+        </app-tarjeta>
 
+        <!-- 3. Resumen por tanda -->
+        <app-tarjeta
+          titulo="3 · Resumen por tanda"
+          subtitulo="Lo que carga cada tanda frente a la capacidad del horno."
+        >
+          <div class="space-y-4">
             @if (capacidadHorno(); as capacidad) {
               <div class="rounded-2xl bg-slate-50 p-4" data-testid="formula-papa-capacidad">
                 <div class="flex items-center justify-between text-sm font-bold text-slate-800">
@@ -292,9 +303,22 @@ interface FilaPlantilla {
               </div>
             </div>
 
-            <label class="block">
-              <span class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Notas (opcional)
+            @if (!capacidadHorno()) {
+              <p class="text-xs font-medium text-slate-400">
+                Configura la capacidad de los hornos para ver el tope por tanda.
+              </p>
+            }
+          </div>
+        </app-tarjeta>
+
+        <!-- 4. Notas para horno -->
+        <app-tarjeta
+          titulo="4 · Notas para horno"
+          subtitulo="Instrucciones opcionales que verá el operario."
+        >
+          <label class="block">
+            <span class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Notas (opcional)
               </span>
               <textarea
                 [ngModel]="notas()"
@@ -305,6 +329,21 @@ interface FilaPlantilla {
                 placeholder="Instrucciones de la mezcla para el operario"
               ></textarea>
             </label>
+        </app-tarjeta>
+
+        <!-- 5. Guardar y activar -->
+        <app-tarjeta
+          [titulo]="id() ? '5 · Guardar, activar o eliminar' : '5 · Guardar fórmula'"
+          subtitulo="Al activarla, las órdenes nuevas la aplican solas; las órdenes ya creadas no cambian."
+        >
+          <div class="space-y-4">
+            @if (advertencias().length > 0) {
+              <ul class="space-y-1 rounded-2xl bg-amber-50 px-4 py-3">
+                @for (advertencia of advertencias(); track advertencia) {
+                  <li class="text-xs font-semibold text-amber-900">⚠️ {{ advertencia }}</li>
+                }
+              </ul>
+            }
 
             @if (avisoGuardado()) {
               <p class="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
@@ -368,14 +407,6 @@ interface FilaPlantilla {
                   Actívala para que el supervisor la vea al crear la orden.
                 }
               </p>
-            }
-
-            @if (advertencias().length > 0) {
-              <ul class="space-y-1 rounded-2xl bg-amber-50 px-4 py-3">
-                @for (advertencia of advertencias(); track advertencia) {
-                  <li class="text-xs font-semibold text-amber-900">⚠️ {{ advertencia }}</li>
-                }
-              </ul>
             }
           </div>
         </app-tarjeta>
