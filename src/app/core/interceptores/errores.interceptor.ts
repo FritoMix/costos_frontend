@@ -1,5 +1,6 @@
 import type { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 
 import { AuthService } from '../servicios/auth.service';
@@ -16,6 +17,7 @@ import { NotificacionesService } from '../servicios/notificaciones.service';
 export const erroresInterceptor: HttpInterceptorFn = (peticion, siguiente) => {
   const avisos = inject(NotificacionesService);
   const auth = inject(AuthService);
+  const enrutador = inject(Router);
 
   return siguiente(peticion).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -24,12 +26,20 @@ export const erroresInterceptor: HttpInterceptorFn = (peticion, siguiente) => {
       if (error.status === 401) {
         // Al abrir la app comprobamos la sesión contra /auth/yo: si la
         // cookie ya no sirve, no hace falta molestar al usuario con un
-        // aviso rojo. Limpiamos el estado local (la cookie ya está
-        // inválida; no vale la pena pedir el logout).
-        if (!peticion.url.endsWith('/auth/yo')) {
+        // aviso rojo. En ese caso NO navegamos aquí: el guard de sesión ya
+        // redirige al login con `volverA` y una navegación extra la pisaría.
+        if (peticion.url.endsWith('/auth/yo')) {
+          auth.limpiarLocal(false);
+        } else {
+          // La sesión se venció a mitad de una acción: se avisa y se vuelve
+          // al login recordando dónde estaba para retomarlo al entrar.
           avisos.error(mensaje);
+          const destino = enrutador.url;
+          auth.limpiarLocal(false);
+          void enrutador.navigate(['/entrar'], {
+            queryParams: destino === '/entrar' ? {} : { volverA: destino },
+          });
         }
-        auth.limpiarLocal();
       } else if (error.status !== 422) {
         // El 422 lo muestra el propio formulario, campo por campo.
         avisos.error(mensaje);

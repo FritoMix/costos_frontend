@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
 import { AlarmaService } from '../../core/servicios/alarma.service';
@@ -209,6 +209,7 @@ export class LoginPage {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly ruta = inject(ActivatedRoute);
   private readonly alarma = inject(AlarmaService);
 
   protected readonly appNombre = environment.appNombre;
@@ -242,10 +243,26 @@ export class LoginPage {
     this.auth.iniciarSesion(this.formulario.getRawValue()).subscribe({
       next: () => {
         this.enviando.set(false);
-        void this.router.navigateByUrl(this.auth.rutaInicial());
+        void this.router.navigateByUrl(this.destinoTrasEntrar());
       },
       error: () => this.enviando.set(false),
     });
+  }
+
+  /**
+   * A dónde ir después de entrar.
+   *
+   * Si alguien abrió una ruta interna sin sesión (o se le venció mientras
+   * trabajaba), el guard deja `volverA` con esa ruta y aquí se respeta. Solo
+   * se aceptan rutas internas ("/algo"), nunca URLs externas ni
+   * protocol-relative ("//otro-sitio").
+   */
+  private destinoTrasEntrar(): string {
+    const volverA = this.ruta.snapshot.queryParamMap.get('volverA');
+    if (volverA && volverA.startsWith('/') && !volverA.startsWith('//')) {
+      return volverA;
+    }
+    return this.auth.rutaInicial();
   }
 }
 

@@ -2,6 +2,7 @@ import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common
 import type { HttpErrorResponse } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 
 import { AuthService } from '../servicios/auth.service';
 import { NotificacionesService } from '../servicios/notificaciones.service';
@@ -12,10 +13,12 @@ describe('erroresInterceptor', () => {
   let controlador: HttpTestingController;
   let auth: { limpiarLocal: jasmine.Spy };
   let avisos: { error: jasmine.Spy };
+  let router: { navigate: jasmine.Spy; url: string };
 
   beforeEach(() => {
     auth = { limpiarLocal: jasmine.createSpy('limpiarLocal') };
     avisos = { error: jasmine.createSpy('error') };
+    router = { navigate: jasmine.createSpy('navigate'), url: '/ordenes' };
 
     TestBed.configureTestingModule({
       providers: [
@@ -23,6 +26,7 @@ describe('erroresInterceptor', () => {
         provideHttpClientTesting(),
         { provide: AuthService, useValue: auth },
         { provide: NotificacionesService, useValue: avisos },
+        { provide: Router, useValue: router },
       ],
     });
     http = TestBed.inject(HttpClient);
@@ -45,7 +49,12 @@ describe('erroresInterceptor', () => {
       );
 
     expect(avisos.error).toHaveBeenCalledWith('Tu sesión expiró. Vuelve a iniciar sesión.');
-    expect(auth.limpiarLocal).toHaveBeenCalled();
+    // No navega el servicio: el interceptor vuelve al login recordando la
+    // ruta actual para retomarla al entrar.
+    expect(auth.limpiarLocal).toHaveBeenCalledWith(false);
+    expect(router.navigate).toHaveBeenCalledWith(['/entrar'], {
+      queryParams: { volverA: '/ordenes' },
+    });
     expect(capturado?.status).toBe(401);
   });
 
@@ -57,7 +66,10 @@ describe('erroresInterceptor', () => {
       .flush({ detail: 'No autenticado' }, { status: 401, statusText: 'Unauthorized' });
 
     expect(avisos.error).not.toHaveBeenCalled();
-    expect(auth.limpiarLocal).toHaveBeenCalled();
+    expect(auth.limpiarLocal).toHaveBeenCalledWith(false);
+    // El guard de sesión es quien redirige con `volverA`: aquí no se navega
+    // para no pisar esa redirección.
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('deja los 422 al formulario, sin aviso global', () => {
