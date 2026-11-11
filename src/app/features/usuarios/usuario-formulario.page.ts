@@ -18,12 +18,21 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
   template: `
     <div class="mx-auto max-w-2xl space-y-6">
       <header>
-        <a routerLink="/usuarios" class="text-sm font-semibold text-marca-700 hover:underline"
-          >← Volver a usuarios</a
+        <a
+          routerLink="/usuarios"
+          class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition"
         >
-        <h1 class="mt-2 text-2xl font-bold text-slate-800">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+          Volver a usuarios
+        </a>
+        <h1 class="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
           {{ id() ? 'Corregir usuario' : 'Nuevo usuario' }}
         </h1>
+        <p class="mt-1 text-sm text-slate-500 font-medium">
+          Asigna credenciales, rol y estado de acceso al sistema de control de planta.
+        </p>
       </header>
 
       @if (cargando()) {

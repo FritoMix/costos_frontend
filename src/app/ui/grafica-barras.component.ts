@@ -23,14 +23,14 @@ export interface BarraDato {
   template: `
     @if (datos().length === 0) {
       <div class="py-8 text-center anim-entrada">
-        <p class="text-sm font-medium text-stone-400">Todavía no hay datos para mostrar.</p>
+        <p class="text-sm font-medium text-slate-400">Todavía no hay datos para mostrar.</p>
       </div>
     } @else {
       <ul class="space-y-4 escalona">
         @for (dato of datos(); track dato.etiqueta) {
           <li class="group">
             <div class="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
-              <span class="font-semibold text-stone-800 tracking-tight group-hover:text-marca-700 transition-colors duration-200">{{ dato.etiqueta }}</span>
+              <span class="font-semibold text-slate-900 tracking-tight group-hover:text-marca-700 transition-colors duration-200">{{ dato.etiqueta }}</span>
               <div class="flex items-center gap-2">
                 <!-- Badge: muestra % de cumplimiento si hay meta, o % relativo si no hay -->
                 @if (dato.meta != null && dato.meta > 0) {
@@ -47,7 +47,7 @@ export interface BarraDato {
                     {{ porcentaje(dato.valor) | number: '1.0-1' }}%
                   </span>
                 }
-                <span class="font-mono font-bold text-stone-700 tabular-nums text-xs">
+                <span class="font-mono font-bold text-slate-700 tabular-nums text-xs">
                   {{ dato.valor | number: '1.0-2' }} {{ unidad() }}
                 </span>
               </div>

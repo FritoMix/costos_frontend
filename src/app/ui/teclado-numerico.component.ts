@@ -17,10 +17,10 @@ import { ChangeDetectionStrategy, Component, input, model } from '@angular/core'
   template: `
     <div class="mx-auto max-w-sm">
       <!-- Visor -->
-      <div class="rounded-3xl border border-calido-200/80 p-6 text-center shadow-inner relative overflow-hidden"
-           style="background: linear-gradient(135deg, rgba(250,245,238,0.9) 0%, rgba(255,249,240,0.7) 100%); backdrop-filter: blur(8px);">
+      <div class="rounded-3xl border border-sky-200/80 p-5 sm:p-6 text-center shadow-inner relative overflow-hidden"
+           style="background: linear-gradient(135deg, rgba(240,249,255,0.85) 0%, rgba(224,242,254,0.5) 100%); backdrop-filter: blur(8px);">
         <p
-          class="text-6xl font-extrabold text-stone-900 tabular-nums font-mono tracking-tight"
+          class="text-5xl sm:text-6xl font-extrabold text-slate-900 tabular-nums font-mono tracking-tight"
           data-testid="teclado-valor"
         >
           {{ valor() || '0' }}
@@ -89,13 +89,13 @@ export class TecladoNumericoComponent {
   protected readonly teclas = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
   protected readonly claseTecla =
-    'flex h-14 items-center justify-center rounded-2xl border border-calido-200/80 bg-white/80 text-2xl ' +
-    'font-extrabold text-stone-800 shadow-2xs transition-all duration-150 hover:border-marca-400 hover:bg-marca-50 ' +
-    'hover:text-marca-800 hover:shadow-sm active:scale-95 active:bg-marca-100 font-mono';
+    'flex h-13 sm:h-14 items-center justify-center rounded-2xl border border-sky-200/80 bg-white/90 text-2xl ' +
+    'font-extrabold text-slate-900 shadow-2xs transition-all duration-150 hover:border-marca-400 hover:bg-sky-50 ' +
+    'hover:text-marca-800 hover:shadow-sm active:scale-95 active:bg-sky-100 font-mono select-none cursor-pointer';
 
   protected readonly claseTeclaAccion =
-    'flex h-14 items-center justify-center rounded-2xl border border-calido-200/80 bg-calido-100/60 ' +
-    'text-stone-500 shadow-2xs transition-all duration-150 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 active:scale-95';
+    'flex h-13 sm:h-14 items-center justify-center rounded-2xl border border-sky-200/80 bg-sky-50/70 ' +
+    'text-slate-600 shadow-2xs transition-all duration-150 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 active:scale-95 select-none cursor-pointer';
 
   protected pulsar(digito: string): void {
     const actual = this.valor();

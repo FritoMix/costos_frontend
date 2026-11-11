@@ -68,7 +68,7 @@ interface FilaPlantilla {
             class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset"
             [class]="actual.activa
               ? 'bg-emerald-50 text-emerald-800 ring-emerald-500/20'
-              : 'bg-calido-100 text-stone-600 ring-calido-300/30'"
+              : 'bg-sky-50/70 text-slate-600 ring-sky-200/60'"
           >
             <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
             {{ actual.activa ? 'Activa' : 'Inactiva' }}
@@ -94,28 +94,30 @@ interface FilaPlantilla {
           subtitulo="Nombre y producto al que aplica la mezcla."
         >
           <div class="grid gap-4 sm:grid-cols-2">
-            <label class="block">
-              <span class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Nombre
-              </span>
+            <div>
+              <label class="etiqueta" for="formula-nombre">
+                Nombre de la fórmula
+              </label>
               <input
+                id="formula-nombre"
                 type="text"
                 maxlength="150"
                 [ngModel]="nombre()"
                 (ngModelChange)="nombre.set($any($event))"
-                class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700"
+                class="campo"
                 placeholder="Ej. Mezcla estándar hojuela"
                 data-testid="formula-papa-nombre"
               />
-            </label>
-            <label class="block">
-              <span class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            </div>
+            <div>
+              <label class="etiqueta" for="formula-producto">
                 Producto
-              </span>
+              </label>
               <select
+                id="formula-producto"
                 [ngModel]="productoId()"
                 (ngModelChange)="productoId.set($any($event))"
-                class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700"
+                class="campo"
                 data-testid="formula-papa-producto"
               >
                 <option [ngValue]="null">Elige un producto…</option>
@@ -123,7 +125,7 @@ interface FilaPlantilla {
                   <option [ngValue]="producto.id">{{ producto.nombre_comercial }}</option>
                 }
               </select>
-            </label>
+            </div>
           </div>
         </app-tarjeta>
 
@@ -133,26 +135,26 @@ interface FilaPlantilla {
           subtitulo="Bultos de cada referencia de papa. La misma mezcla se repite en todas las tandas."
         >
           <div class="space-y-4">
-            <div class="overflow-x-auto">
-              <table class="w-full min-w-150 text-left text-sm">
-                <thead class="border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <div class="tabla-contenedor">
+              <table class="tabla min-w-150">
+                <thead>
                   <tr>
-                    <th class="py-2 pr-3">Referencia</th>
-                    <th class="px-3 py-2">Bultos por tanda</th>
-                    <th class="px-3 py-2 text-right">%</th>
-                    <th class="px-3 py-2 text-right">Kg crudos</th>
-                    <th class="px-3 py-2 text-right">Kg fritos</th>
-                    <th class="py-2 pl-3"></th>
+                    <th class="py-3 pr-3">Referencia</th>
+                    <th class="px-3 py-3">Bultos por tanda</th>
+                    <th class="px-3 py-3 text-right">%</th>
+                    <th class="px-3 py-3 text-right">Kg crudos</th>
+                    <th class="px-3 py-3 text-right">Kg fritos</th>
+                    <th class="py-3 pl-3"></th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody>
                   @for (fila of filas(); track $index; let indice = $index) {
                     <tr>
                       <td class="py-2.5 pr-3">
                         <select
                           [ngModel]="fila.referencia_papa_id"
                           (ngModelChange)="fijarReferencia(indice, $any($event))"
-                          class="w-full min-w-52 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700"
+                          class="campo min-w-52 py-2 text-xs sm:text-sm"
                           aria-label="Referencia de papa de la mezcla"
                           [attr.data-testid]="'formula-papa-referencia-' + indice"
                         >
@@ -178,7 +180,7 @@ interface FilaPlantilla {
                           inputmode="numeric"
                           [ngModel]="fila.bultos_por_tanda"
                           (ngModelChange)="fijarBultos(indice, $any($event))"
-                          class="w-28 rounded-xl border border-slate-200 px-3 py-2 text-right font-mono text-sm font-bold text-slate-800"
+                          class="campo w-28 py-2 text-right font-mono text-sm font-bold"
                           aria-label="Bultos por tanda de la referencia"
                           [attr.data-testid]="'formula-papa-bultos-' + indice"
                         />
@@ -316,19 +318,20 @@ interface FilaPlantilla {
           titulo="4 · Notas para horno"
           subtitulo="Instrucciones opcionales que verá el operario."
         >
-          <label class="block">
-            <span class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          <div>
+            <label class="etiqueta" for="formula-notas">
               Notas (opcional)
-              </span>
-              <textarea
-                [ngModel]="notas()"
-                (ngModelChange)="notas.set($any($event))"
-                maxlength="500"
-                rows="2"
-                class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700"
-                placeholder="Instrucciones de la mezcla para el operario"
-              ></textarea>
             </label>
+            <textarea
+              id="formula-notas"
+              [ngModel]="notas()"
+              (ngModelChange)="notas.set($any($event))"
+              maxlength="500"
+              rows="3"
+              class="campo"
+              placeholder="Instrucciones de la mezcla para el operario"
+            ></textarea>
+          </div>
         </app-tarjeta>
 
         <!-- 5. Guardar y activar -->

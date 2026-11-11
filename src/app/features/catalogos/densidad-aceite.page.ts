@@ -157,8 +157,8 @@ import { CargandoComponent } from '../../ui/cargando.component';
                 Todavía no hay muestras registradas en el historial.
               </p>
             } @else {
-              <div class="overflow-x-auto">
-                <table class="tabla">
+              <div class="tabla-contenedor">
+                <table class="tabla min-w-100">
                   <thead>
                     <tr>
                       <th class="py-3.5 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Fecha</th>

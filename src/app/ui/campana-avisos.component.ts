@@ -21,7 +21,7 @@ import { NotificacionesPlantaService } from '../core/servicios/notificaciones-pl
       <button
         type="button"
         (click)="alternar()"
-        class="relative flex h-10 w-10 items-center justify-center rounded-xl border border-calido-200/80 bg-white/80 text-stone-500 transition-all duration-200 hover:bg-amber-50/60 hover:text-amber-700 hover:border-amber-300/50 active:scale-95"
+        class="relative flex h-10 w-10 items-center justify-center rounded-xl border border-sky-200/80 bg-white/80 text-slate-600 transition-all duration-200 hover:bg-sky-50 hover:text-sky-700 hover:border-sky-300 active:scale-95"
         style="backdrop-filter: blur(4px);"
         [attr.aria-label]="'Avisos: ' + servicio.sinLeer() + ' sin leer'"
       >
@@ -47,12 +47,12 @@ import { NotificacionesPlantaService } from '../core/servicios/notificaciones-pl
         <div class="fixed inset-0 z-40" (click)="abierto.set(false)"></div>
 
         <div
-          class="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-3xl border border-calido-200/60 bg-white/90 shadow-2xl anim-bajar sm:w-96"
+          class="absolute right-0 z-50 mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-96 overflow-hidden rounded-3xl border border-sky-200/80 bg-white/95 shadow-2xl anim-bajar"
           style="backdrop-filter: blur(16px) saturate(1.2);"
         >
-          <header class="flex items-center justify-between border-b border-calido-100/80 px-4 py-3"
-                  style="background: linear-gradient(135deg, rgba(250,245,238,0.8) 0%, rgba(255,249,240,0.6) 100%);">
-            <p class="text-sm font-extrabold text-stone-900">Avisos de planta</p>
+          <header class="flex items-center justify-between border-b border-sky-100/90 px-4 py-3"
+                  style="background: linear-gradient(135deg, rgba(240,249,255,0.85) 0%, rgba(224,242,254,0.5) 100%);">
+            <p class="text-sm font-extrabold text-slate-900">Avisos de planta</p>
             @if (servicio.sinLeer() > 0) {
               <button
                 type="button"
@@ -66,13 +66,13 @@ import { NotificacionesPlantaService } from '../core/servicios/notificaciones-pl
 
           <div class="max-h-96 overflow-y-auto">
             @for (aviso of servicio.pendientes(); track aviso.id) {
-              <article class="flex gap-3 border-b border-calido-100/60 px-4 py-3.5 last:border-0 transition-colors duration-150 hover:bg-amber-50/30">
+              <article class="flex gap-3 border-b border-sky-100/70 px-4 py-3.5 last:border-0 transition-colors duration-150 hover:bg-sky-50/50">
                 <span [class]="claseIcono(aviso.tipo)">
                   {{ icono(aviso.tipo) }}
                 </span>
                 <div class="min-w-0 flex-1">
-                  <p class="text-sm font-extrabold text-stone-900">{{ aviso.titulo }}</p>
-                  <p class="mt-0.5 text-xs font-medium text-stone-600">{{ aviso.mensaje }}</p>
+                  <p class="text-sm font-extrabold text-slate-900">{{ aviso.titulo }}</p>
+                  <p class="mt-0.5 text-xs font-medium text-slate-600">{{ aviso.mensaje }}</p>
                   <div class="mt-2 flex items-center gap-3">
                     <a
                       [routerLink]="rutaAviso(aviso)"
@@ -84,7 +84,7 @@ import { NotificacionesPlantaService } from '../core/servicios/notificaciones-pl
                     <button
                       type="button"
                       (click)="servicio.marcarLeida(aviso.id)"
-                      class="text-xs font-bold text-stone-400 hover:text-stone-700 transition-colors"
+                      class="text-xs font-bold text-slate-400 hover:text-slate-700 transition-colors"
                     >
                       Listo
                     </button>
@@ -92,7 +92,7 @@ import { NotificacionesPlantaService } from '../core/servicios/notificaciones-pl
                 </div>
               </article>
             } @empty {
-              <p class="px-4 py-10 text-center text-sm font-medium text-stone-400">
+              <p class="px-4 py-10 text-center text-sm font-medium text-slate-400">
                 No tienes avisos pendientes.
               </p>
             }

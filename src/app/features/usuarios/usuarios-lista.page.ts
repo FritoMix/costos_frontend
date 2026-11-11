@@ -40,8 +40,8 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
         @if (cargando()) {
           <app-cargando texto="Cargando usuarios autorizados…" />
         } @else {
-          <div class="overflow-x-auto">
-            <table class="tabla">
+          <div class="tabla-contenedor">
+            <table class="tabla min-w-140">
               <thead>
                 <tr>
                   <th>Colaborador</th>

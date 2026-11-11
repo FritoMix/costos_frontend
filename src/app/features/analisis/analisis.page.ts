@@ -173,28 +173,28 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
             <app-indicador
               nombre="Órdenes Procesadas"
               [valor]="datos.numero_ordenes"
-              tono="morado"
+              tono="azul"
               subtexto="Total de órdenes con registro"
             />
             <app-indicador
               nombre="Materia Prima (Cruda)"
               [valor]="datos.kg_crudos"
               unidad="kg"
-              tono="marca"
+              tono="ambar"
               subtexto="Peso neto de papa ingresada"
             />
             <app-indicador
               nombre="Producto Terminado (Frita)"
               [valor]="datos.kg_papa_frita"
               unidad="kg"
-              tono="verde"
+              tono="azul"
               subtexto="Papa frita saborizada obtenida"
             />
             <app-indicador
               nombre="Desperdicio Total"
               [valor]="datos.kg_desperdicio"
               unidad="kg"
-              tono="rojo"
+              tono="ambar"
               subtexto="Merma total registrada en planta"
             />
           </div>
@@ -211,7 +211,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
               nombre="Rendimiento Global"
               [valor]="datos.rendimiento_porcentaje"
               unidad="%"
-              tono="verde"
+              tono="azul"
               faltante="Faltan datos de horno/saborizado"
               subtexto="Kg frita / Kg cruda procesada"
             />
@@ -227,14 +227,14 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
               nombre="Aceite Consumido"
               [valor]="datos.kg_aceite"
               unidad="kg"
-              tono="ambar"
+              tono="azul"
               subtexto="Aceite total utilizado en fritura"
             />
             <app-indicador
               nombre="Aceite por Bulto"
               [valor]="datos.aceite_por_bulto"
               unidad="kg/bto"
-              tono="azul"
+              tono="ambar"
               faltante="Faltan bultos o densidad"
               subtexto="Consumo promedio por bulto crudo"
             />
@@ -274,13 +274,13 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                   [subtitulo]="categoria.numero_ordenes + ' orden(es) registrada(s)'"
                 >
                   <div class="grid grid-cols-2 gap-4">
-                    <app-indicador nombre="Cruda" [valor]="categoria.kg_crudos" unidad="kg" tono="marca" />
-                    <app-indicador nombre="Frita" [valor]="categoria.kg_papa_frita" unidad="kg" tono="verde" />
+                    <app-indicador nombre="Cruda" [valor]="categoria.kg_crudos" unidad="kg" tono="azul" />
+                    <app-indicador nombre="Frita" [valor]="categoria.kg_papa_frita" unidad="kg" tono="ambar" />
                     <app-indicador
                       nombre="Rendimiento"
                       [valor]="categoria.rendimiento_porcentaje"
                       unidad="%"
-                      tono="verde"
+                      tono="azul"
                       faltante="Sin datos"
                     />
                     <app-indicador
@@ -319,8 +319,8 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
               </p>
             </div>
           } @else {
-            <div class="overflow-x-auto">
-              <table class="tabla">
+            <div class="tabla-contenedor">
+              <table class="tabla min-w-200">
                 <thead>
                   <tr>
                     <th>Orden</th>

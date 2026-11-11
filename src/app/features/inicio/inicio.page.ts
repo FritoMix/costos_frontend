@@ -41,7 +41,7 @@ const ICONO_FORMULA =
   template: `
     <div class="space-y-6 anim-pagina">
       <!-- Hero de bienvenida futurista en Azul Zafiro y Cyan -->
-      <div class="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-xl"
+      <div class="relative overflow-hidden rounded-3xl p-5 sm:p-8 text-white shadow-xl"
            style="background: linear-gradient(135deg, #0c4a6e 0%, #075985 40%, #0284c7 80%, #0369a1 100%);
                   border: 1px solid rgba(255,255,255,0.2);">
         <!-- Resplandor ambiental de fondo -->
@@ -121,7 +121,7 @@ const ICONO_FORMULA =
         } @else {
           <ul class="divide-y divide-sky-100">
             @for (orden of enProduccion(); track orden.id) {
-              <li class="group flex flex-wrap items-center justify-between gap-4 p-5 sm:px-6 transition-all duration-200 hover:bg-sky-50/50">
+              <li class="group flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5 sm:px-6 transition-all duration-200 hover:bg-sky-50/50">
                 <div class="min-w-0 flex-1">
                   <div class="flex flex-wrap items-center gap-2.5">
                     <span class="rounded-xl px-2.5 py-1 font-mono text-xs font-bold text-white shadow-sm"

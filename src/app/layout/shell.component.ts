@@ -143,10 +143,10 @@ interface OpcionMenu {
       <div class="flex min-w-0 flex-1 flex-col">
         <!-- Barra Superior Clara con Glassmorphism -->
         <header
-          class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-sky-100/90 px-5 sm:px-8"
+          class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-sky-100/90 px-3.5 sm:px-6 lg:px-8"
           style="background: rgba(244,249,253,0.85); backdrop-filter: blur(16px) saturate(1.3);"
         >
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2.5 sm:gap-4">
             <button
               type="button"
               class="flex h-10 w-10 items-center justify-center rounded-xl border border-sky-200 text-sky-700 hover:bg-sky-50 hover:border-sky-300 lg:hidden transition-all duration-200"
@@ -159,18 +159,19 @@ interface OpcionMenu {
               </svg>
             </button>
 
-            <div class="hidden sm:flex items-center gap-3">
-              <div class="h-9 w-9 rounded-xl bg-white p-0.5 border border-sky-200 shadow-sm flex items-center justify-center">
+            <!-- Brand on mobile & desktop -->
+            <div class="flex items-center gap-2 sm:gap-3">
+              <div class="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-white p-0.5 border border-sky-200 shadow-sm flex items-center justify-center">
                 <img src="/logo.png" alt="Pasabocas Frito Mix" class="h-full w-full object-contain" />
               </div>
               <div>
-                <span class="text-[11px] font-bold uppercase tracking-wider text-sky-600 block leading-none">Sistema de Control</span>
-                <p class="text-sm font-extrabold text-slate-900 mt-0.5">DATACONTROL <span class="font-normal text-slate-500">· Pasabocas Frito Mix</span></p>
+                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-sky-600 block leading-none">Sistema de Control</span>
+                <p class="text-xs sm:text-sm font-extrabold text-slate-900 mt-0.5">DATACONTROL <span class="hidden sm:inline font-normal text-slate-500">· Pasabocas Frito Mix</span></p>
               </div>
             </div>
           </div>
 
-          <div class="flex items-center gap-3 sm:gap-4">
+          <div class="flex items-center gap-2 sm:gap-4">
             <div class="hidden md:flex items-center gap-2 rounded-xl bg-white/80 border border-sky-200/80 px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs" style="backdrop-filter: blur(8px);">
               <svg class="h-4 w-4 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -178,7 +179,7 @@ interface OpcionMenu {
               <span class="capitalize">{{ fechaActual | date: 'EEEE, d MMMM yyyy' }}</span>
             </div>
 
-            <div class="flex items-center gap-2.5">
+            <div class="flex items-center gap-2 sm:gap-2.5">
               <app-campana-avisos />
               <span class="hidden rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 px-3 py-1.5 text-xs font-bold text-sky-900 border border-sky-200/80 sm:inline-block">
                 {{ etiquetaRol() }}
@@ -188,7 +189,7 @@ interface OpcionMenu {
         </header>
 
         <!-- Contenedor Principal -->
-        <main class="min-w-0 flex-1 p-5 sm:p-7 lg:p-9 max-w-7xl w-full mx-auto">
+        <main class="min-w-0 flex-1 p-3.5 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           <div [@animacionRuta]="prepararRuta(salida)">
             <router-outlet #salida="outlet" />
           </div>

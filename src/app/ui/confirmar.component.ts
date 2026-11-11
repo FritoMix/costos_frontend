@@ -12,12 +12,11 @@ import { BotonComponent } from './boton.component';
   template: `
     @if (abierto()) {
       <div
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 anim-aparecer"
-        style="background: rgba(90,56,32,0.4); backdrop-filter: blur(6px);"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm anim-aparecer"
         role="dialog"
         aria-modal="true"
       >
-        <div class="w-full max-w-md rounded-3xl border border-calido-200/60 bg-white/90 p-6 shadow-2xl anim-escala"
+        <div class="w-full max-w-md rounded-3xl border border-sky-100 bg-white/95 p-5 sm:p-6 shadow-2xl anim-escala"
              style="backdrop-filter: blur(16px) saturate(1.2);">
           <div class="flex items-start gap-3.5">
             @if (peligroso()) {
@@ -27,19 +26,19 @@ import { BotonComponent } from './boton.component';
                 </svg>
               </div>
             } @else {
-              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-marca-100 to-amber-50 text-marca-700 border border-marca-200/40">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-100 to-sky-50 text-sky-700 border border-sky-200/50">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
                 </svg>
               </div>
             }
             <div class="flex-1">
-              <h2 class="text-lg font-bold text-stone-900 tracking-tight">{{ titulo() }}</h2>
-              <p class="mt-1.5 text-sm text-stone-600 leading-relaxed font-medium">{{ mensaje() }}</p>
+              <h2 class="text-lg font-bold text-slate-900 tracking-tight">{{ titulo() }}</h2>
+              <p class="mt-1.5 text-sm text-slate-600 leading-relaxed font-medium">{{ mensaje() }}</p>
             </div>
           </div>
 
-          <div class="mt-6 flex justify-end gap-2.5 border-t border-calido-100/60 pt-4">
+          <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5 border-t border-sky-100/80 pt-4">
             <app-boton variante="secundario" (click)="cancelado.emit()">
               {{ textoCancelar() }}
             </app-boton>
