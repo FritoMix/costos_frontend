@@ -41,7 +41,7 @@ import { NotificacionesService } from '../core/servicios/notificaciones.service'
           <p class="flex-1 text-sm font-semibold tracking-tight">{{ aviso.mensaje }}</p>
           <button
             type="button"
-            class="shrink-0 rounded-lg p-1 text-stone-400 hover:bg-black/5 hover:text-stone-700 transition-all duration-200"
+            class="shrink-0 rounded-lg p-1 text-slate-400 hover:bg-black/5 hover:text-slate-700 transition-all duration-200"
             (click)="servicio.cerrar(aviso.id)"
             aria-label="Cerrar aviso"
           >
@@ -60,11 +60,11 @@ export class AvisosComponent {
   protected estilo(tipo: string): string {
     switch (tipo) {
       case 'exito':
-        return 'border-emerald-200/60 bg-emerald-50/90 text-emerald-950 shadow-emerald-500/10';
+        return 'border-emerald-200/80 bg-emerald-50/95 text-emerald-950 shadow-emerald-500/15';
       case 'error':
-        return 'border-rose-200/60 bg-rose-50/90 text-rose-950 shadow-rose-500/10';
+        return 'border-rose-200/80 bg-rose-50/95 text-rose-950 shadow-rose-500/15';
       default:
-        return 'border-calido-200/60 bg-white/90 text-stone-900 shadow-amber-500/5';
+        return 'border-sky-200/80 bg-white/95 text-slate-900 shadow-sky-500/10';
     }
   }
 }

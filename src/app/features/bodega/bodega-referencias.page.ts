@@ -200,8 +200,8 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                 <app-cargando texto="Cargando referencias de papa…" />
               </div>
             } @else {
-              <div class="overflow-x-auto">
-                <table class="tabla w-full table-fixed">
+              <div class="tabla-contenedor">
+                <table class="tabla w-full min-w-120">
                   <colgroup>
                     <col class="w-[45%]" />
                     <col class="w-[20%]" />
@@ -473,8 +473,8 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                 </div>
               </div>
 
-              <div class="mt-5 overflow-x-auto rounded-2xl border border-slate-200">
-                <table class="tabla">
+              <div class="mt-5 tabla-contenedor border border-slate-200">
+                <table class="tabla min-w-140">
                   <thead class="bg-slate-50/80">
                     <tr>
                       <th

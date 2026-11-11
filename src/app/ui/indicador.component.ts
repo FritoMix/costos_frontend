@@ -12,7 +12,7 @@ export type TonoIndicador = 'neutral' | 'marca' | 'verde' | 'azul' | 'ambar' | '
   imports: [DecimalPipe],
   template: `
     <div
-      class="group relative flex flex-col justify-between overflow-hidden rounded-3xl border-2 p-5 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+      class="group relative flex flex-col justify-between overflow-hidden rounded-3xl border-2 p-4 sm:p-5 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
       [style]="estiloContenedor()"
     >
       <!-- Círculo decorativo grande -->
@@ -52,7 +52,7 @@ export type TonoIndicador = 'neutral' | 'marca' | 'verde' | 'azul' | 'ambar' | '
           }
         } @else {
           <div class="flex items-baseline gap-2 flex-wrap">
-            <span class="text-3xl sm:text-4xl font-extrabold font-mono tracking-tight tabular-nums" [style]="estiloValorTexto()">
+            <span class="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-mono tracking-tight tabular-nums" [style]="estiloValorTexto()">
               {{ valor() | number: '1.0-2' }}
             </span>
             @if (unidad()) {
@@ -84,119 +84,47 @@ export class IndicadorComponent {
   /** Paletas de color intensas por tono */
   private readonly paleta = computed(() => {
     switch (this.tono()) {
-      case 'marca':
-        return {
-          bg: 'linear-gradient(135deg, #fdba74 0%, #fed7aa 60%, #ffedd5 100%)',
-          border: '#ea580c',
-          iconBg: '#f97316',
-          iconBorder: '#c2410c',
-          iconColor: '#ffffff',
-          titleColor: '#7c2d12',
-          valueColor: '#431407',
-          unitBg: '#ea580c',
-          unitBorder: '#c2410c',
-          unitColor: '#ffffff',
-          subtextBorder: '#fb923c',
-          subtextColor: '#7c2d12',
-          accent: '#f97316',
-          faltanteBg: '#fff7ed',
-          faltanteBorder: '#fdba74',
-          faltanteColor: '#7c2d12',
-        };
-      case 'verde':
-        return {
-          bg: 'linear-gradient(135deg, #6ee7b7 0%, #a7f3d0 60%, #d1fae5 100%)',
-          border: '#059669',
-          iconBg: '#10b981',
-          iconBorder: '#065f46',
-          iconColor: '#ffffff',
-          titleColor: '#064e3b',
-          valueColor: '#022c22',
-          unitBg: '#059669',
-          unitBorder: '#065f46',
-          unitColor: '#ffffff',
-          subtextBorder: '#34d399',
-          subtextColor: '#065f46',
-          accent: '#10b981',
-          faltanteBg: '#f0fdf4',
-          faltanteBorder: '#6ee7b7',
-          faltanteColor: '#065f46',
-        };
       case 'azul':
-        return {
-          bg: 'linear-gradient(135deg, #93c5fd 0%, #bfdbfe 60%, #dbeafe 100%)',
-          border: '#2563eb',
-          iconBg: '#3b82f6',
-          iconBorder: '#1d4ed8',
-          iconColor: '#ffffff',
-          titleColor: '#1e3a8a',
-          valueColor: '#172554',
-          unitBg: '#2563eb',
-          unitBorder: '#1d4ed8',
-          unitColor: '#ffffff',
-          subtextBorder: '#60a5fa',
-          subtextColor: '#1e40af',
-          accent: '#3b82f6',
-          faltanteBg: '#eff6ff',
-          faltanteBorder: '#93c5fd',
-          faltanteColor: '#1e40af',
-        };
-      case 'ambar':
-        return {
-          bg: 'linear-gradient(135deg, #fcd34d 0%, #fde68a 60%, #fef3c7 100%)',
-          border: '#d97706',
-          iconBg: '#f59e0b',
-          iconBorder: '#92400e',
-          iconColor: '#ffffff',
-          titleColor: '#451a03',
-          valueColor: '#1c0a00',
-          unitBg: '#d97706',
-          unitBorder: '#92400e',
-          unitColor: '#ffffff',
-          subtextBorder: '#fbbf24',
-          subtextColor: '#78350f',
-          accent: '#f59e0b',
-          faltanteBg: '#fffbeb',
-          faltanteBorder: '#fcd34d',
-          faltanteColor: '#78350f',
-        };
+      case 'verde':
       case 'morado':
         return {
-          bg: 'linear-gradient(135deg, #c4b5fd 0%, #ddd6fe 60%, #ede9fe 100%)',
-          border: '#7c3aed',
-          iconBg: '#8b5cf6',
-          iconBorder: '#4c1d95',
+          bg: 'linear-gradient(135deg, #92d4f2 0%, #b4e3f7 50%, #d8f1fc 100%)',
+          border: '#38bdf8',
+          iconBg: '#0284c7',
+          iconBorder: '#0369a1',
           iconColor: '#ffffff',
-          titleColor: '#2e1065',
-          valueColor: '#1a0040',
-          unitBg: '#7c3aed',
-          unitBorder: '#4c1d95',
+          titleColor: '#0c4a6e',
+          valueColor: '#082f49',
+          unitBg: '#0284c7',
+          unitBorder: '#0369a1',
           unitColor: '#ffffff',
-          subtextBorder: '#a78bfa',
-          subtextColor: '#4c1d95',
-          accent: '#8b5cf6',
-          faltanteBg: '#faf5ff',
-          faltanteBorder: '#c4b5fd',
-          faltanteColor: '#4c1d95',
+          subtextBorder: '#7dd3fc',
+          subtextColor: '#0369a1',
+          accent: '#38bdf8',
+          faltanteBg: '#f0f9ff',
+          faltanteBorder: '#92d4f2',
+          faltanteColor: '#0369a1',
         };
+      case 'ambar':
+      case 'marca':
       case 'rojo':
         return {
-          bg: 'linear-gradient(135deg, #fca5a5 0%, #fecaca 60%, #fee2e2 100%)',
-          border: '#dc2626',
-          iconBg: '#ef4444',
-          iconBorder: '#991b1b',
+          bg: 'linear-gradient(135deg, #ffffc5 0%, #fef9c3 50%, #fefce8 100%)',
+          border: '#eab308',
+          iconBg: '#ca8a04',
+          iconBorder: '#a16207',
           iconColor: '#ffffff',
-          titleColor: '#7f1d1d',
-          valueColor: '#450a0a',
-          unitBg: '#dc2626',
-          unitBorder: '#991b1b',
+          titleColor: '#713f12',
+          valueColor: '#422006',
+          unitBg: '#ca8a04',
+          unitBorder: '#a16207',
           unitColor: '#ffffff',
-          subtextBorder: '#f87171',
-          subtextColor: '#991b1b',
-          accent: '#ef4444',
-          faltanteBg: '#fff5f5',
-          faltanteBorder: '#fca5a5',
-          faltanteColor: '#991b1b',
+          subtextBorder: '#fde047',
+          subtextColor: '#854d0e',
+          accent: '#fde047',
+          faltanteBg: '#fefce8',
+          faltanteBorder: '#fef08a',
+          faltanteColor: '#854d0e',
         };
       default: // neutral
         return {

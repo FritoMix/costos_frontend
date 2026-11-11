@@ -7,9 +7,9 @@ const ETIQUETAS_ESTADO: Record<EstadoFormula, { texto: string; clases: string }>
   sin_formula: { texto: 'Por definir', clases: 'bg-amber-50 text-amber-800 ring-amber-500/20' },
   lista: { texto: 'Lista', clases: 'bg-emerald-50 text-emerald-800 ring-emerald-500/20' },
   en_produccion: { texto: 'Congelada', clases: 'bg-sky-50 text-sky-800 ring-sky-500/20' },
-  finalizada: { texto: 'Finalizada', clases: 'bg-calido-100 text-stone-700 ring-calido-300/30' },
+  finalizada: { texto: 'Finalizada', clases: 'bg-sky-50 text-slate-700 ring-sky-200/80' },
   cancelada: { texto: 'Cancelada', clases: 'bg-rose-50 text-rose-700 ring-rose-500/20' },
-  no_aplica: { texto: 'No aplica', clases: 'bg-calido-100 text-stone-600 ring-calido-300/30' },
+  no_aplica: { texto: 'No aplica', clases: 'bg-sky-50/70 text-slate-600 ring-sky-200/60' },
 };
 
 /**
@@ -43,7 +43,7 @@ const ETIQUETAS_ESTADO: Record<EstadoFormula, { texto: string; clases: string }>
       </div>
 
       @if (formula().estado === 'sin_formula' || formula().estado === 'no_aplica') {
-        <p class="rounded-2xl bg-calido-50 px-4 py-3 text-sm font-medium text-stone-600">
+        <p class="rounded-2xl bg-calido-50 px-4 py-3 text-sm font-medium text-slate-600">
           {{ formula().estado === 'no_aplica'
             ? 'Orden histórica: se produce con el registro de horno anterior, sin fórmula por orden.'
             : 'Bodega todavía no definió la mezcla de esta orden.' }}
@@ -58,8 +58,8 @@ const ETIQUETAS_ESTADO: Record<EstadoFormula, { texto: string; clases: string }>
           </div>
         }
 
-        <div class="overflow-x-auto">
-          <table class="w-full min-w-125 text-left text-sm">
+        <div class="tabla-contenedor">
+          <table class="tabla min-w-125">
             <thead class="border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-400">
               <tr>
                 <th class="py-2 pr-3">Referencia</th>

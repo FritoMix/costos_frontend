@@ -68,8 +68,13 @@
   }
 
   body {
-    @apply bg-calido-50 text-slate-800 antialiased min-h-screen;
+    @apply bg-calido-50 text-slate-800 antialiased min-h-screen selection:bg-marca-500 selection:text-white;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  ::selection {
+    background-color: #0284c7;
+    color: #ffffff;
   }
 
   :focus-visible {
@@ -94,6 +99,41 @@
 }
 
 @layer components {
+  /* Jerarquía Tipográfica y de Diseño del Sistema */
+  .titulo-pagina {
+    @apply text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900;
+  }
+
+  .subtitulo-pagina {
+    @apply mt-1 text-sm text-slate-500 font-medium max-w-2xl leading-relaxed;
+  }
+
+  .titulo-seccion {
+    @apply text-base sm:text-lg font-extrabold tracking-tight text-slate-900;
+  }
+
+  .subtitulo-seccion {
+    @apply mt-0.5 text-xs text-slate-500 font-medium;
+  }
+
+  .etiqueta-seccion {
+    @apply text-[11px] font-extrabold uppercase tracking-widest text-sky-600;
+  }
+
+  .dato-mono {
+    @apply font-mono tabular-nums font-bold;
+  }
+
+  .badge-codigo {
+    @apply font-mono text-xs font-bold px-2 py-0.5 rounded-lg border tabular-nums;
+  }
+
+  /* Contenedor responsivo para tablas industriales */
+  .tabla-contenedor {
+    @apply w-full overflow-x-auto rounded-2xl;
+    -webkit-overflow-scrolling: touch;
+  }
+
   /* Campos de formulario amplios, ergonómicos y limpios con azul cálido glassmorphism */
   .campo {
     @apply block w-full rounded-2xl border border-sky-200/90 bg-white/80 px-4 py-3 text-sm font-medium

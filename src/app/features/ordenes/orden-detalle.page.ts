@@ -238,13 +238,13 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
         </section>
 
         <!-- Selector de Pestañas Ergonómico -->
-        <nav class="flex flex-wrap items-center gap-2 rounded-2xl bg-white p-2 border border-slate-200/80 shadow-xs">
+        <nav class="flex items-center gap-1.5 sm:gap-2 rounded-2xl bg-white p-1.5 border border-slate-200/80 shadow-xs overflow-x-auto scrollbar-none">
           <button
             type="button"
             data-testid="tab-resumen"
             (click)="tabActiva.set('resumen')"
-            class="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-150"
-            [class]="tabActiva() === 'resumen' ? 'bg-slate-950 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
+            class="flex shrink-0 items-center gap-2 rounded-xl px-3.5 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold transition-all duration-150 whitespace-nowrap"
+            [class]="tabActiva() === 'resumen' ? 'bg-gradient-to-r from-sky-500 to-marca-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-sky-50'"
           >
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
             Ficha & Resumen Operativo
@@ -254,14 +254,14 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
             type="button"
             data-testid="tab-horno"
             (click)="tabActiva.set('horno')"
-            class="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-150"
-            [class]="tabActiva() === 'horno' ? 'bg-slate-950 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
+            class="flex shrink-0 items-center gap-2 rounded-xl px-3.5 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold transition-all duration-150 whitespace-nowrap"
+            [class]="tabActiva() === 'horno' ? 'bg-gradient-to-r from-sky-500 to-marca-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-sky-50'"
           >
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" /></svg>
             Tandas de Horno
             <span
               class="rounded-full px-2 py-0.5 text-xs font-mono font-bold"
-              [class]="tabActiva() === 'horno' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700'"
+              [class]="tabActiva() === 'horno' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'"
             >
               {{ datos.registros_horno.length }}
             </span>
@@ -271,14 +271,14 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
             type="button"
             data-testid="tab-saborizado"
             (click)="tabActiva.set('saborizado')"
-            class="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-150"
-            [class]="tabActiva() === 'saborizado' ? 'bg-slate-950 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
+            class="flex shrink-0 items-center gap-2 rounded-xl px-3.5 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold transition-all duration-150 whitespace-nowrap"
+            [class]="tabActiva() === 'saborizado' ? 'bg-gradient-to-r from-sky-500 to-marca-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-sky-50'"
           >
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-16.5-.52l-.54.075A2.25 2.25 0 003 7.27v7.46c0 1.096.786 2.03 1.875 2.18m14.25-11.94c.36.052.716.11 1.07.175A2.25 2.25 0 0122 7.27v7.46c0 1.096-.786 2.03-1.875 2.18" /></svg>
             Recepciones Saborizado
             <span
               class="rounded-full px-2 py-0.5 text-xs font-mono font-bold"
-              [class]="tabActiva() === 'saborizado' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700'"
+              [class]="tabActiva() === 'saborizado' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'"
             >
               {{ datos.recepciones.length }}
             </span>
@@ -419,7 +419,7 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
                   </p>
                 </div>
               } @else {
-                <div class="overflow-x-auto">
+                <div class="tabla-contenedor">
                   <table class="tabla min-w-full">
                     <thead>
                       <tr>
@@ -514,7 +514,7 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
                   </p>
                 </div>
               } @else {
-                <div class="overflow-x-auto">
+                <div class="tabla-contenedor">
                   <table class="tabla min-w-full">
                     <thead>
                       <tr>

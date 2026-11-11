@@ -133,8 +133,8 @@ interface Textos {
                 <app-cargando texto="Cargando catálogo…" />
               </div>
             } @else {
-              <div class="overflow-x-auto">
-                <table class="tabla">
+              <div class="tabla-contenedor">
+                <table class="tabla min-w-100">
                   <thead>
                     <tr>
                       <th class="py-3.5 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Nombre</th>

@@ -73,9 +73,9 @@ export class BotonComponent {
     };
 
     const porTamano: Record<TamanoBoton, string> = {
-      pequeno: 'min-h-9 px-3 py-1.5 text-xs',
-      normal: 'min-h-11 px-4 py-2.5 text-sm tracking-tight',
-      grande: 'min-h-13 px-6 py-3 text-base tracking-tight',
+      pequeno: 'min-h-[38px] px-3 py-1.5 text-xs',
+      normal: 'min-h-[44px] px-4 py-2.5 text-sm tracking-tight',
+      grande: 'min-h-[50px] px-6 py-3 text-base tracking-tight',
     };
 
     return [

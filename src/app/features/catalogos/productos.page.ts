@@ -152,8 +152,8 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                 <app-cargando texto="Cargando catálogo de productos…" />
               </div>
             } @else {
-              <div class="overflow-x-auto">
-                <table class="tabla">
+              <div class="tabla-contenedor">
+                <table class="tabla min-w-140">
                   <thead>
                     <tr>
                       <th class="py-3.5 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Producto</th>

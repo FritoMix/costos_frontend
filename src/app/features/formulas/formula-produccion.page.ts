@@ -27,9 +27,9 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
   sin_formula: { texto: 'Por definir', clases: 'bg-amber-50 text-amber-800 ring-amber-500/20' },
   lista: { texto: 'Lista', clases: 'bg-emerald-50 text-emerald-800 ring-emerald-500/20' },
   en_produccion: { texto: 'Congelada', clases: 'bg-sky-50 text-sky-800 ring-sky-500/20' },
-  finalizada: { texto: 'Finalizada', clases: 'bg-calido-100 text-stone-700 ring-calido-300/30' },
+  finalizada: { texto: 'Finalizada', clases: 'bg-sky-50 text-slate-700 ring-sky-200/80' },
   cancelada: { texto: 'Cancelada', clases: 'bg-rose-50 text-rose-700 ring-rose-500/20' },
-  no_aplica: { texto: 'No aplica', clases: 'bg-calido-100 text-stone-600 ring-calido-300/30' },
+  no_aplica: { texto: 'No aplica', clases: 'bg-sky-50/70 text-slate-600 ring-sky-200/60' },
 };
 
 /**
@@ -166,7 +166,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
                     class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset"
                     [class]="formula.activa
                       ? 'bg-emerald-50 text-emerald-800 ring-emerald-500/20'
-                      : 'bg-calido-100 text-stone-600 ring-calido-300/30'"
+                      : 'bg-sky-50/70 text-slate-600 ring-sky-200/60'"
                   >
                     <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
                     {{ formula.activa ? 'Activa' : 'Inactiva' }}

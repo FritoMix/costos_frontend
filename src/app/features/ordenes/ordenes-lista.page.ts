@@ -49,16 +49,16 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
       </header>
 
       <!-- Segmented filter controls -->
-      <div class="flex flex-wrap items-center gap-2 rounded-2xl bg-white p-1.5 border border-slate-200/80 shadow-2xs">
+      <div class="flex items-center gap-1.5 sm:gap-2 rounded-2xl bg-white p-1.5 border border-slate-200/80 shadow-2xs overflow-x-auto">
         @for (opcion of filtros; track opcion.valor) {
           <button
             type="button"
             (click)="cambiarFiltro(opcion.valor)"
-            class="rounded-xl px-4 py-2 text-xs sm:text-sm font-bold tracking-tight transition-all duration-150"
+            class="shrink-0 rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold tracking-tight whitespace-nowrap transition-all duration-150 cursor-pointer"
             [class]="
               filtro() === opcion.valor
-                ? 'bg-slate-950 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'bg-gradient-to-r from-sky-500 to-marca-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-sky-50'
             "
           >
             {{ opcion.texto }}
@@ -75,8 +75,8 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
             descripcion="Intenta seleccionar otro estado en las pestañas superiores o registra una nueva orden."
           />
         } @else {
-          <div class="overflow-x-auto">
-            <table class="tabla">
+          <div class="tabla-contenedor">
+            <table class="tabla min-w-160">
               <thead>
                 <tr>
                   <th class="w-32">Orden</th>

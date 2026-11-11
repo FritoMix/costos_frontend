@@ -167,26 +167,26 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
             </div>
           } @else if (editable()) {
             <div class="space-y-4">
-              <div class="overflow-x-auto">
-                <table class="w-full min-w-150 text-left text-sm">
-                  <thead class="border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <div class="tabla-contenedor">
+                <table class="tabla min-w-150">
+                  <thead>
                     <tr>
-                      <th class="py-2 pr-3">Referencia</th>
-                      <th class="px-3 py-2">Bultos por tanda</th>
-                      <th class="px-3 py-2 text-right">%</th>
-                      <th class="px-3 py-2 text-right">Kg crudos</th>
-                      <th class="px-3 py-2 text-right">Kg fritos</th>
-                      <th class="py-2 pl-3"></th>
+                      <th class="py-3 pr-3">Referencia</th>
+                      <th class="px-3 py-3">Bultos por tanda</th>
+                      <th class="px-3 py-3 text-right">%</th>
+                      <th class="px-3 py-3 text-right">Kg crudos</th>
+                      <th class="px-3 py-3 text-right">Kg fritos</th>
+                      <th class="py-3 pl-3"></th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-slate-100">
+                  <tbody>
                     @for (fila of filas(); track $index; let indice = $index) {
                       <tr>
                         <td class="py-2.5 pr-3">
                           <select
                             [(ngModel)]="fila.referencia_papa_id"
                             (ngModelChange)="programarProyeccion()"
-                            class="w-full min-w-52 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700"
+                            class="campo min-w-52 py-2 text-xs sm:text-sm"
                             aria-label="Referencia de papa de la mezcla"
                             [attr.data-testid]="'formula-referencia-' + (fila.referencia_papa_id ?? indice)"
                           >
@@ -212,7 +212,7 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
                             inputmode="numeric"
                             [(ngModel)]="fila.bultos_por_tanda"
                             (ngModelChange)="programarProyeccion()"
-                            class="w-28 rounded-xl border border-slate-200 px-3 py-2 text-right font-mono text-sm font-bold text-slate-800"
+                            class="campo w-28 py-2 text-right font-mono text-sm font-bold"
                             aria-label="Bultos por tanda de la referencia"
                             [attr.data-testid]="'formula-bultos-' + (fila.referencia_papa_id ?? indice)"
                           />
@@ -371,7 +371,7 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
               [mostrarProducido]="true"
             />
           } @else {
-            <p class="rounded-2xl bg-calido-50 px-4 py-3 text-sm font-medium text-stone-600">
+            <p class="rounded-2xl bg-calido-50 px-4 py-3 text-sm font-medium text-slate-600">
               {{ avisoEstado() }}
             </p>
           }

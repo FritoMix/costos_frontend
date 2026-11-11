@@ -35,13 +35,13 @@ export class EtiquetaEstadoComponent {
       case 'pendiente':
         return 'bg-amber-50/80 text-amber-800 ring-amber-500/20';
       case 'finalizada':
-        return 'bg-calido-100/60 text-stone-700 ring-calido-300/30';
+        return 'bg-sky-50 text-slate-700 ring-sky-200/80';
       case 'cancelada':
         return 'bg-rose-50/80 text-rose-700 ring-rose-500/20';
       case 'exportacion':
         return 'bg-sky-50/80 text-sky-800 ring-sky-500/20';
       default:
-        return 'bg-calido-100/60 text-stone-600 ring-calido-300/30';
+        return 'bg-sky-50/70 text-slate-600 ring-sky-200/60';
     }
   });
 }
