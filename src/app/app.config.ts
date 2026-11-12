@@ -1,6 +1,12 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import type { ApplicationConfig} from '@angular/core';
-import { LOCALE_ID, isDevMode, provideZoneChangeDetection } from '@angular/core';
+import {
+  ErrorHandler,
+  LOCALE_ID,
+  isDevMode,
+  provideBrowserGlobalErrorListeners,
+  provideZoneChangeDetection,
+} from '@angular/core';
 import { registerLocaleData } from '@angular/common';
 import localeEsCo from '@angular/common/locales/es-CO';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -11,6 +17,7 @@ import { rutas } from './app.routes';
 import { authInterceptor } from './core/interceptores/auth.interceptor';
 import { cacheInterceptor } from './core/interceptores/cache.interceptor';
 import { erroresInterceptor } from './core/interceptores/errores.interceptor';
+import { ManejadorErrores } from './core/servicios/manejador-errores.service';
 
 // Fechas y numeros con el formato de Colombia (1.234,56 y dd/mm/aaaa).
 registerLocaleData(localeEsCo);
@@ -38,5 +45,9 @@ export const appConfig: ApplicationConfig = {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:3000',
     }),
+    // Los errores no capturados (incluidos los de un deploy que dejó chunks
+    // viejos) pasan por el manejador: recarga una vez y deja registro.
+    provideBrowserGlobalErrorListeners(),
+    { provide: ErrorHandler, useClass: ManejadorErrores },
   ],
 };
