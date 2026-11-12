@@ -58,21 +58,24 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
     FormulaResumenComponent,
   ],
   template: `
-    <div class="space-y-6" data-testid="formula-orden">
-      <header class="flex flex-wrap items-center justify-between gap-3">
+    <div class="space-y-8 sm:space-y-10" data-testid="formula-orden">
+      <header class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
           <a
             routerLink="/formula-produccion"
-            class="text-xs font-bold text-sky-600 hover:underline"
+            class="inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 hover:text-sky-800 transition mb-2"
           >
             ← Volver a Fórmula de producción
           </a>
-          <h1 class="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
             Fórmula de la orden
           </h1>
+          <p class="mt-1 text-sm text-slate-500 font-medium">
+            Programación de mezcla de papa cruda y balance de masa para esta orden específica.
+          </p>
         </div>
         @if (orden()) {
-          <span class="font-mono rounded-xl bg-slate-100 px-3 py-1.5 text-sm font-bold text-slate-600">
+          <span class="font-mono rounded-xl bg-slate-100 border border-slate-200 px-3.5 py-1.5 text-sm font-black text-slate-700 shadow-2xs">
             #{{ orden()!.numero_orden }}
           </span>
         }
@@ -166,27 +169,27 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
               }
             </div>
           } @else if (editable()) {
-            <div class="space-y-4">
-              <div class="tabla-contenedor">
+            <div class="space-y-6">
+              <div class="tabla-contenedor border border-slate-200/80 shadow-2xs">
                 <table class="tabla min-w-150">
                   <thead>
                     <tr>
-                      <th class="py-3 pr-3">Referencia</th>
-                      <th class="px-3 py-3">Bultos por tanda</th>
-                      <th class="px-3 py-3 text-right">%</th>
-                      <th class="px-3 py-3 text-right">Kg crudos</th>
-                      <th class="px-3 py-3 text-right">Kg fritos</th>
-                      <th class="py-3 pl-3"></th>
+                      <th class="py-3.5 px-4">Referencia</th>
+                      <th class="px-4 py-3.5">Bultos por tanda</th>
+                      <th class="px-4 py-3.5 text-right">%</th>
+                      <th class="px-4 py-3.5 text-right">Kg crudos</th>
+                      <th class="px-4 py-3.5 text-right">Kg fritos</th>
+                      <th class="py-3.5 px-4 text-right">Acción</th>
                     </tr>
                   </thead>
                   <tbody>
                     @for (fila of filas(); track $index; let indice = $index) {
                       <tr>
-                        <td class="py-2.5 pr-3">
+                        <td class="py-3.5 px-4">
                           <select
                             [(ngModel)]="fila.referencia_papa_id"
                             (ngModelChange)="programarProyeccion()"
-                            class="campo min-w-52 py-2 text-xs sm:text-sm"
+                            class="campo min-w-56"
                             aria-label="Referencia de papa de la mezcla"
                             [attr.data-testid]="'formula-referencia-' + (fila.referencia_papa_id ?? indice)"
                           >
@@ -204,7 +207,7 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
                             }
                           </select>
                         </td>
-                        <td class="px-3 py-2.5">
+                        <td class="px-4 py-3.5">
                           <input
                             type="number"
                             min="1"
@@ -212,21 +215,21 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
                             inputmode="numeric"
                             [(ngModel)]="fila.bultos_por_tanda"
                             (ngModelChange)="programarProyeccion()"
-                            class="campo w-28 py-2 text-right font-mono text-sm font-bold"
+                            class="campo w-32 text-right font-mono text-base font-bold"
                             aria-label="Bultos por tanda de la referencia"
                             [attr.data-testid]="'formula-bultos-' + (fila.referencia_papa_id ?? indice)"
                           />
                         </td>
-                        <td class="px-3 py-2.5 text-right font-mono text-slate-600">
-                          {{ datoProyeccion(fila.referencia_papa_id)?.porcentaje_produccion_pct | number: '1.0-1' }}
+                        <td class="px-4 py-3.5 text-right font-mono text-sm font-semibold text-slate-700">
+                          {{ datoProyeccion(fila.referencia_papa_id)?.porcentaje_produccion_pct | number: '1.0-1' }} %
                         </td>
-                        <td class="px-3 py-2.5 text-right font-mono text-slate-600">
-                          {{ datoProyeccion(fila.referencia_papa_id)?.kg_crudos_por_tanda | number: '1.0-2' }}
+                        <td class="px-4 py-3.5 text-right font-mono text-sm font-semibold text-slate-700">
+                          {{ datoProyeccion(fila.referencia_papa_id)?.kg_crudos_por_tanda | number: '1.0-2' }} kg
                         </td>
-                        <td class="px-3 py-2.5 text-right font-mono text-slate-600">
-                          {{ datoProyeccion(fila.referencia_papa_id)?.kg_fritos_por_tanda | number: '1.0-2' }}
+                        <td class="px-4 py-3.5 text-right font-mono text-sm font-semibold text-slate-700">
+                          {{ datoProyeccion(fila.referencia_papa_id)?.kg_fritos_por_tanda | number: '1.0-2' }} kg
                         </td>
-                        <td class="py-2.5 pl-3 text-right">
+                        <td class="py-3.5 px-4 text-right">
                           <app-boton
                             variante="texto"
                             tamano="pequeno"
@@ -242,13 +245,12 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
                 </table>
               </div>
 
-              <div class="flex flex-wrap items-center gap-2">
-                <app-boton variante="secundario" tamano="pequeno" (click)="agregarFila()">
+              <div class="flex flex-wrap items-center gap-3 pt-2">
+                <app-boton variante="secundario" (click)="agregarFila()">
                   + Agregar referencia
                 </app-boton>
                 <app-boton
                   variante="secundario"
-                  tamano="pequeno"
                   [cargando]="proyectando()"
                   (click)="usarSugerencia()"
                 >
@@ -258,8 +260,8 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
 
               <!-- Totales en vivo -->
               @if (proyeccion(); as proy) {
-                <div class="grid gap-4 rounded-2xl bg-slate-50 p-4 lg:grid-cols-3">
-                  <div>
+                <div class="grid gap-4 sm:grid-cols-3 pt-2">
+                  <div class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs flex flex-col justify-between">
                     <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                       Bultos por tanda
                     </p>
@@ -277,11 +279,11 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
                       ></div>
                     </div>
                   </div>
-                  <div>
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <div class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs flex flex-col justify-between">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">
                       Kg de la orden ({{ proy.tandas_programadas }} tandas)
                     </p>
-                    <p class="font-mono mt-0.5 text-sm font-extrabold text-slate-900">
+                    <p class="font-mono mt-2 text-sm font-extrabold text-slate-900">
                       {{ proy.total_kg_crudos | number: '1.0-2' }} kg crudos ·
                       @if (proy.total_kg_fritos_estimados !== null) {
                         {{ proy.total_kg_fritos_estimados | number: '1.0-2' }} kg fritos
@@ -289,7 +291,7 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
                         kg fritos —
                       }
                     </p>
-                    <p class="mt-1 text-xs font-semibold" [class]="claseDiferencia()">
+                    <p class="mt-2 text-xs font-semibold" [class]="claseDiferencia()">
                       @if (proy.diferencia_kg !== null) {
                         Diferencia vs. pedido:
                         {{ proy.diferencia_kg | number: '1.0-2' }} kg
@@ -299,16 +301,16 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
                       }
                     </p>
                   </div>
-                  <div>
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <div class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs flex flex-col justify-between">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">
                       Tandas
                     </p>
-                    <p class="font-mono mt-0.5 text-sm font-extrabold text-slate-900">
+                    <p class="font-mono mt-2 text-base font-extrabold text-slate-900">
                       {{ formula()?.tandas_registradas ?? 0 }} registradas /
                       {{ proy.tandas_programadas }} programadas
                     </p>
                     @if (proyectando()) {
-                      <p class="mt-1 text-[11px] font-semibold text-sky-600">Actualizando vista previa…</p>
+                      <p class="mt-2 text-[11px] font-semibold text-sky-600">Actualizando vista previa…</p>
                     }
                   </div>
                 </div>
