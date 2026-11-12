@@ -19,7 +19,6 @@ import {
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 import { ConfirmarComponent } from '../../ui/confirmar.component';
-import { TarjetaComponent } from '../../ui/tarjeta.component';
 
 interface FilaPlantilla {
   referencia_papa_id: number | null;
@@ -40,23 +39,22 @@ interface FilaPlantilla {
     RouterLink,
     FormsModule,
     DecimalPipe,
-    TarjetaComponent,
     BotonComponent,
     CargandoComponent,
     ConfirmarComponent,
   ],
   template: `
-    <div class="mx-auto max-w-4xl space-y-6" data-testid="formula-papa-form">
-      <header class="flex flex-wrap items-center justify-between gap-3">
+    <div class="mx-auto max-w-4xl space-y-8 sm:space-y-10" data-testid="formula-papa-form">
+      <header class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
           <a
             routerLink="/formula-produccion"
             [queryParams]="{ seccion: 'formulas' }"
-            class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 transition hover:text-slate-900"
+            class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 transition hover:text-slate-900 mb-2"
           >
             ← Volver a Fórmula de producción
           </a>
-          <h1 class="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
             {{ id() ? 'Editar fórmula' : 'Nueva fórmula' }}
           </h1>
           <p class="mt-1 text-sm text-slate-500 font-medium">
@@ -65,12 +63,12 @@ interface FilaPlantilla {
         </div>
         @if (formula(); as actual) {
           <span
-            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset"
+            class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold ring-1 ring-inset shadow-2xs"
             [class]="actual.activa
               ? 'bg-emerald-50 text-emerald-800 ring-emerald-500/20'
               : 'bg-sky-50/70 text-slate-600 ring-sky-200/60'"
           >
-            <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
+            <span class="h-2 w-2 rounded-full bg-current opacity-80"></span>
             {{ actual.activa ? 'Activa' : 'Inactiva' }}
           </span>
         }
@@ -88,73 +86,89 @@ interface FilaPlantilla {
           </div>
         </div>
       } @else {
-        <!-- 1. Datos de la fórmula -->
-        <app-tarjeta
-          titulo="1 · Datos de la fórmula"
-          subtitulo="Nombre y producto al que aplica la mezcla."
-        >
-          <div class="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label class="etiqueta" for="formula-nombre">
-                Nombre de la fórmula
-              </label>
-              <input
-                id="formula-nombre"
-                type="text"
-                maxlength="150"
-                [ngModel]="nombre()"
-                (ngModelChange)="nombre.set($any($event))"
-                class="campo"
-                placeholder="Ej. Mezcla estándar hojuela"
-                data-testid="formula-papa-nombre"
-              />
-            </div>
-            <div>
-              <label class="etiqueta" for="formula-producto">
-                Producto
-              </label>
-              <select
-                id="formula-producto"
-                [ngModel]="productoId()"
-                (ngModelChange)="productoId.set($any($event))"
-                class="campo"
-                data-testid="formula-papa-producto"
-              >
-                <option [ngValue]="null">Elige un producto…</option>
-                @for (producto of productos(); track producto.id) {
-                  <option [ngValue]="producto.id">{{ producto.nombre_comercial }}</option>
-                }
-              </select>
-            </div>
-          </div>
-        </app-tarjeta>
+        <!-- Formulario Unificado en un solo panel integrado -->
+        <div class="tarjeta p-6 sm:p-8 lg:p-10 space-y-8 divide-y divide-slate-100">
 
-        <!-- 2. Mezcla por tanda -->
-        <app-tarjeta
-          titulo="2 · Mezcla por tanda"
-          subtitulo="Bultos de cada referencia de papa. La misma mezcla se repite en todas las tandas."
-        >
-          <div class="space-y-4">
-            <div class="tabla-contenedor">
+          <!-- 1. Datos de la fórmula -->
+          <section class="space-y-5">
+            <div class="flex items-center gap-3">
+              <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sky-800 text-sm font-black shadow-2xs">
+                1
+              </span>
+              <div>
+                <h2 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">Datos de la fórmula</h2>
+                <p class="text-xs text-slate-500 font-medium">Nombre identificador y producto al que aplica la mezcla.</p>
+              </div>
+            </div>
+
+            <div class="grid gap-6 sm:grid-cols-2">
+              <div>
+                <label class="etiqueta mb-2 block" for="formula-nombre">
+                  Nombre de la fórmula
+                </label>
+                <input
+                  id="formula-nombre"
+                  type="text"
+                  maxlength="150"
+                  [ngModel]="nombre()"
+                  (ngModelChange)="nombre.set($any($event))"
+                  class="campo"
+                  placeholder="Ej. Mezcla estándar hojuela"
+                  data-testid="formula-papa-nombre"
+                />
+              </div>
+              <div>
+                <label class="etiqueta mb-2 block" for="formula-producto">
+                  Producto
+                </label>
+                <select
+                  id="formula-producto"
+                  [ngModel]="productoId()"
+                  (ngModelChange)="productoId.set($any($event))"
+                  class="campo"
+                  data-testid="formula-papa-producto"
+                >
+                  <option [ngValue]="null">Elige un producto…</option>
+                  @for (producto of productos(); track producto.id) {
+                    <option [ngValue]="producto.id">{{ producto.nombre_comercial }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2. Mezcla por tanda -->
+          <section class="pt-8 space-y-5">
+            <div class="flex items-center gap-3">
+              <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sky-800 text-sm font-black shadow-2xs">
+                2
+              </span>
+              <div>
+                <h2 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">Mezcla por tanda</h2>
+                <p class="text-xs text-slate-500 font-medium">Bultos de cada referencia de papa cruda que se repiten en cada tanda.</p>
+              </div>
+            </div>
+
+            <div class="tabla-contenedor border border-slate-200/80 shadow-2xs">
               <table class="tabla min-w-150">
                 <thead>
                   <tr>
-                    <th class="py-3 pr-3">Referencia</th>
-                    <th class="px-3 py-3">Bultos por tanda</th>
-                    <th class="px-3 py-3 text-right">%</th>
-                    <th class="px-3 py-3 text-right">Kg crudos</th>
-                    <th class="px-3 py-3 text-right">Kg fritos</th>
-                    <th class="py-3 pl-3"></th>
+                    <th class="py-3.5 px-4">Referencia</th>
+                    <th class="px-4 py-3.5">Bultos por tanda</th>
+                    <th class="px-4 py-3.5 text-right">%</th>
+                    <th class="px-4 py-3.5 text-right">Kg crudos</th>
+                    <th class="px-4 py-3.5 text-right">Kg fritos</th>
+                    <th class="py-3.5 px-4 text-right">Acción</th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (fila of filas(); track $index; let indice = $index) {
                     <tr>
-                      <td class="py-2.5 pr-3">
+                      <td class="py-3.5 px-4">
                         <select
                           [ngModel]="fila.referencia_papa_id"
                           (ngModelChange)="fijarReferencia(indice, $any($event))"
-                          class="campo min-w-52 py-2 text-xs sm:text-sm"
+                          class="campo min-w-56"
                           aria-label="Referencia de papa de la mezcla"
                           [attr.data-testid]="'formula-papa-referencia-' + indice"
                         >
@@ -172,7 +186,7 @@ interface FilaPlantilla {
                           }
                         </select>
                       </td>
-                      <td class="px-3 py-2.5">
+                      <td class="px-4 py-3.5">
                         <input
                           type="number"
                           min="1"
@@ -180,25 +194,25 @@ interface FilaPlantilla {
                           inputmode="numeric"
                           [ngModel]="fila.bultos_por_tanda"
                           (ngModelChange)="fijarBultos(indice, $any($event))"
-                          class="campo w-28 py-2 text-right font-mono text-sm font-bold"
+                          class="campo w-32 text-right font-mono text-base font-bold"
                           aria-label="Bultos por tanda de la referencia"
                           [attr.data-testid]="'formula-papa-bultos-' + indice"
                         />
                       </td>
-                      <td class="px-3 py-2.5 text-right font-mono text-slate-600">
-                        {{ porcentajeFila(fila) | number: '1.0-1' }}
+                      <td class="px-4 py-3.5 text-right font-mono text-sm font-semibold text-slate-700">
+                        {{ porcentajeFila(fila) | number: '1.0-1' }} %
                       </td>
-                      <td class="px-3 py-2.5 text-right font-mono text-slate-600">
-                        {{ kgCrudosFila(fila) | number: '1.0-2' }}
+                      <td class="px-4 py-3.5 text-right font-mono text-sm font-semibold text-slate-700">
+                        {{ kgCrudosFila(fila) | number: '1.0-2' }} kg
                       </td>
-                      <td class="px-3 py-2.5 text-right font-mono text-slate-600">
+                      <td class="px-4 py-3.5 text-right font-mono text-sm font-semibold text-slate-700">
                         @if (referenciaDe(fila)?.rendimiento_fritura_pct !== null) {
-                          {{ kgFritosFila(fila) | number: '1.0-2' }}
+                          {{ kgFritosFila(fila) | number: '1.0-2' }} kg
                         } @else {
                           —
                         }
                       </td>
-                      <td class="py-2.5 pl-3 text-right">
+                      <td class="py-3.5 px-4 text-right">
                         <app-boton
                           variante="texto"
                           tamano="pequeno"
@@ -214,13 +228,12 @@ interface FilaPlantilla {
               </table>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2">
-              <app-boton variante="secundario" tamano="pequeno" (click)="agregarFila()">
+            <div class="flex flex-wrap items-center gap-3 pt-2">
+              <app-boton variante="secundario" (click)="agregarFila()">
                 + Agregar referencia
               </app-boton>
               <app-boton
-                variante="acento"
-                tamano="pequeno"
+                variante="primario"
                 [deshabilitado]="!puedeRepartir()"
                 [cargando]="repartiendo()"
                 testId="formula-papa-repartir"
@@ -233,24 +246,31 @@ interface FilaPlantilla {
                 }
               </app-boton>
             </div>
-          </div>
-        </app-tarjeta>
+          </section>
 
-        <!-- 3. Resumen por tanda -->
-        <app-tarjeta
-          titulo="3 · Resumen por tanda"
-          subtitulo="Lo que carga cada tanda frente a la capacidad del horno."
-        >
-          <div class="space-y-4">
+          <!-- 3. Resumen y capacidad de horno -->
+          <section class="pt-8 space-y-5">
+            <div class="flex items-center gap-3">
+              <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sky-800 text-sm font-black shadow-2xs">
+                3
+              </span>
+              <div>
+                <h2 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">Resumen por tanda</h2>
+                <p class="text-xs text-slate-500 font-medium">Carga proyectada por tanda y relación frente a la capacidad del horno.</p>
+              </div>
+            </div>
             @if (capacidadHorno(); as capacidad) {
-              <div class="rounded-2xl bg-slate-50 p-4" data-testid="formula-papa-capacidad">
-                <div class="flex items-center justify-between text-sm font-bold text-slate-800">
-                  <span>Total por tanda</span>
-                  <span class="font-mono">
-                    {{ totalBultos() }} / {{ capacidad }} bultos del horno
+              <div
+                class="rounded-2xl border border-sky-200/80 bg-sky-50/50 p-5 sm:p-6 shadow-2xs"
+                data-testid="formula-papa-capacidad"
+              >
+                <div class="flex items-center justify-between text-sm sm:text-base font-extrabold text-slate-900">
+                  <span>Capacidad del Horno por Tanda</span>
+                  <span class="font-mono text-sky-950 font-black text-base sm:text-lg">
+                    {{ totalBultos() }} / {{ capacidad }} bultos
                   </span>
                 </div>
-                <div class="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
+                <div class="mt-3 h-3 w-full overflow-hidden rounded-full bg-slate-200/90 shadow-inner">
                   <div
                     class="h-full rounded-full transition-all duration-300"
                     [class]="barraCapacidad().clase"
@@ -258,48 +278,48 @@ interface FilaPlantilla {
                   ></div>
                 </div>
                 @if (excedeCapacidad()) {
-                  <p class="mt-2 text-xs font-bold text-rose-700">
-                    La mezcla supera los {{ capacidad }} bultos que procesa el horno. Reparte la
+                  <p class="mt-3 text-xs font-bold text-rose-700 flex items-center gap-1.5">
+                    ⚠️ La mezcla supera los {{ capacidad }} bultos que procesa el horno. Reparte la
                     capacidad o ajusta los bultos antes de guardar.
                   </p>
                 } @else if (totalBultos() === capacidad) {
-                  <p class="mt-2 text-xs font-semibold text-emerald-700">
-                    La tanda va llena: {{ capacidad }} bultos en total.
+                  <p class="mt-3 text-xs font-bold text-emerald-700 flex items-center gap-1.5">
+                    ✓ La tanda va a capacidad completa: {{ capacidad }} bultos en total.
                   </p>
                 } @else {
-                  <p class="mt-2 text-xs font-semibold text-slate-500">
-                    El horno admite hasta {{ capacidad }} bultos por tanda.
+                  <p class="mt-3 text-xs font-semibold text-slate-500">
+                    ℹ️ El horno admite hasta {{ capacidad }} bultos por tanda.
                   </p>
                 }
               </div>
             }
 
-            <div class="grid gap-4 rounded-2xl bg-slate-50 p-4 sm:grid-cols-3">
-              <div>
-                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <div class="grid gap-4 sm:grid-cols-3">
+              <div class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs flex flex-col justify-between">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">
                   Bultos por tanda
                 </p>
-                <p class="font-mono mt-0.5 text-xl font-black text-slate-900" data-testid="formula-papa-total">
+                <p class="font-mono mt-3 text-2xl sm:text-3xl font-black text-slate-900" data-testid="formula-papa-total">
                   {{ totalBultos() }}
                 </p>
               </div>
-              <div>
-                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <div class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs flex flex-col justify-between">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">
                   Kg crudos por tanda
                 </p>
-                <p class="font-mono mt-0.5 text-sm font-extrabold text-slate-900">
-                  {{ totalKgCrudos() | number: '1.0-2' }} kg
+                <p class="font-mono mt-3 text-xl sm:text-2xl font-black text-slate-900">
+                  {{ totalKgCrudos() | number: '1.0-2' }} <span class="text-xs font-bold text-slate-500">kg</span>
                 </p>
               </div>
-              <div>
-                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <div class="rounded-2xl border border-amber-200/90 bg-amber-50/40 p-5 shadow-xs flex flex-col justify-between">
+                <p class="text-xs font-bold uppercase tracking-wider text-amber-800">
                   Kg fritos por tanda
                 </p>
-                <p class="font-mono mt-0.5 text-sm font-extrabold text-amber-800">
+                <p class="font-mono mt-3 text-xl sm:text-2xl font-black text-amber-900">
                   @if (faltaRendimiento()) {
                     —
                   } @else {
-                    {{ totalKgFritos() | number: '1.0-2' }} kg
+                    {{ totalKgFritos() | number: '1.0-2' }} <span class="text-xs font-bold text-amber-800">kg</span>
                   }
                 </p>
               </div>
@@ -310,51 +330,53 @@ interface FilaPlantilla {
                 Configura la capacidad de los hornos para ver el tope por tanda.
               </p>
             }
-          </div>
-        </app-tarjeta>
+          </section>
 
-        <!-- 4. Notas para horno -->
-        <app-tarjeta
-          titulo="4 · Notas para horno"
-          subtitulo="Instrucciones opcionales que verá el operario."
-        >
-          <div>
-            <label class="etiqueta" for="formula-notas">
-              Notas (opcional)
-            </label>
-            <textarea
-              id="formula-notas"
-              [ngModel]="notas()"
-              (ngModelChange)="notas.set($any($event))"
-              maxlength="500"
-              rows="3"
-              class="campo"
-              placeholder="Instrucciones de la mezcla para el operario"
-            ></textarea>
-          </div>
-        </app-tarjeta>
+          <!-- 4. Notas para el operario -->
+          <section class="pt-8 space-y-4">
+            <div class="flex items-center gap-3">
+              <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sky-800 text-sm font-black shadow-2xs">
+                4
+              </span>
+              <div>
+                <h2 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">Notas para horno</h2>
+                <p class="text-xs text-slate-500 font-medium">Instrucciones opcionales que verá el operario al preparar la mezcla.</p>
+              </div>
+            </div>
 
-        <!-- 5. Guardar y activar -->
-        <app-tarjeta
-          [titulo]="id() ? '5 · Guardar, activar o eliminar' : '5 · Guardar fórmula'"
-          subtitulo="Al activarla, las órdenes nuevas la aplican solas; las órdenes ya creadas no cambian."
-        >
-          <div class="space-y-4">
+            <div>
+              <label class="etiqueta mb-2 block" for="formula-notas">
+                Notas para el operario (opcional)
+              </label>
+              <textarea
+                id="formula-notas"
+                [ngModel]="notas()"
+                (ngModelChange)="notas.set($any($event))"
+                maxlength="500"
+                rows="3"
+                class="campo mt-1"
+                placeholder="Instrucciones de la mezcla para el operario en línea..."
+              ></textarea>
+            </div>
+          </section>
+
+          <!-- 5. Acciones y Guardado -->
+          <section class="pt-8 space-y-6">
             @if (advertencias().length > 0) {
-              <ul class="space-y-1 rounded-2xl bg-amber-50 px-4 py-3">
+              <ul class="space-y-2 rounded-2xl bg-amber-50/80 border border-amber-200/80 p-4">
                 @for (advertencia of advertencias(); track advertencia) {
-                  <li class="text-xs font-semibold text-amber-900">⚠️ {{ advertencia }}</li>
+                  <li class="text-xs font-bold text-amber-900 flex items-center gap-2">⚠️ {{ advertencia }}</li>
                 }
               </ul>
             }
 
             @if (avisoGuardado()) {
-              <p class="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
-                {{ avisoGuardado() }}
+              <p class="rounded-2xl bg-emerald-50 border border-emerald-200 px-4 py-3.5 text-sm font-bold text-emerald-900 flex items-center gap-2">
+                ✓ {{ avisoGuardado() }}
               </p>
             }
 
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap items-center gap-4 pt-2">
               <app-boton
                 variante="primario"
                 tamano="grande"
@@ -404,15 +426,16 @@ interface FilaPlantilla {
                 Creada por {{ actual.creado_por?.nombre_completo ?? 'Bodega' }}.
                 @if (actual.activa) {
                   Las órdenes nuevas de
-                  <span class="font-bold">{{ nombreProducto(actual.producto.id) }}</span>
+                  <span class="font-bold text-slate-600">{{ nombreProducto(actual.producto.id) }}</span>
                   usarán esta mezcla automáticamente.
                 } @else {
                   Actívala para que el supervisor la vea al crear la orden.
                 }
               </p>
             }
-          </div>
-        </app-tarjeta>
+          </section>
+
+        </div>
       }
 
       <app-confirmar
