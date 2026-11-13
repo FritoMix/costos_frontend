@@ -54,6 +54,11 @@ function extraerMensaje(error: HttpErrorResponse): string {
   if (error.status === 0) {
     return 'No se pudo contactar al servidor. Revisa la conexión e intenta de nuevo.';
   }
+  if (error.status === 429) {
+    const segundos = Number(error.headers.get('Retry-After'));
+    if (segundos > 0)
+      return `Demasiados intentos. Espera ${Math.ceil(segundos)} segundos y vuelve a intentar.`;
+  }
   const detalle = (error.error as { detail?: string } | null)?.detail;
   if (typeof detalle === 'string' && detalle.trim()) {
     return detalle;

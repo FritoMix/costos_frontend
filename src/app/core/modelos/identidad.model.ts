@@ -5,11 +5,7 @@
  */
 
 export type CodigoRol =
-  | 'admin'
-  | 'supervisor'
-  | 'operario_horno'
-  | 'operario_saborizado'
-  | 'bodeguero';
+  'admin' | 'supervisor' | 'operario_horno' | 'operario_saborizado' | 'bodeguero';
 
 export interface Rol {
   id: number;
@@ -35,6 +31,7 @@ export interface RespuestaLogin {
   // El token NO viene aquí: viaja en una cookie HttpOnly que el navegador
   // maneja solo. Solo recibimos quién entró y cuánto dura la sesión.
   expira_en_segundos: number;
+  inactividad_segundos?: number;
   usuario: Usuario;
 }
 

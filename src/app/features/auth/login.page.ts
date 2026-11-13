@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -143,6 +144,8 @@ import { BotonComponent } from '../../ui/boton.component';
                     (click)="toggleMostrarPassword()"
                     class="absolute right-3 flex items-center group/btn focus:outline-none"
                     [title]="mostrarPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                    [attr.aria-label]="mostrarPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                    [attr.aria-pressed]="mostrarPassword()"
                   >
                     <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 group-hover/btn:bg-cyan-400/30 text-cyan-200 group-hover/btn:text-white transition-all border border-white/20">
                       @if (mostrarPassword()) {
@@ -188,12 +191,12 @@ import { BotonComponent } from '../../ui/boton.component';
         <div class="mt-6 text-center text-[11px] text-cyan-100/90 font-medium flex items-center justify-center gap-3 bg-slate-950/40 rounded-full py-2.5 px-6 border border-cyan-300/30 shadow-md backdrop-blur-md">
           <span class="inline-flex items-center gap-1.5">
             <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            Servidor en Línea
+            Uso interno de planta
           </span>
           <span class="text-cyan-300/40">•</span>
           <span class="inline-flex items-center gap-1.5">
             <span class="h-2 w-2 rounded-full bg-cyan-300"></span>
-            Conexión Cifrada
+            {{ conexionHttps ? 'Conexión HTTPS' : 'Conexión HTTP' }}
           </span>
           <span class="text-cyan-300/40">•</span>
           <span class="rounded-md bg-cyan-500/20 px-2.5 py-0.5 text-[10px] font-mono font-bold text-cyan-200 border border-cyan-300/30">
@@ -212,14 +215,15 @@ export class LoginPage {
   private readonly ruta = inject(ActivatedRoute);
   private readonly alarma = inject(AlarmaService);
 
+  protected readonly conexionHttps = inject(DOCUMENT).location?.protocol === 'https:';
   protected readonly appNombre = environment.appNombre;
   protected readonly empresa = environment.empresa;
   protected readonly enviando = signal(false);
   protected readonly mostrarPassword = signal(false);
 
   protected readonly formulario = this.fb.nonNullable.group({
-    nombre_usuario: ['', Validators.required],
-    password: ['', Validators.required],
+    nombre_usuario: ['', [Validators.required, Validators.maxLength(50)]],
+    password: ['', [Validators.required, Validators.maxLength(1024)]],
   });
 
   protected invalido(campo: string): boolean {
@@ -232,6 +236,7 @@ export class LoginPage {
   }
 
   protected entrar(): void {
+    if (this.enviando()) return;
     if (this.formulario.invalid) {
       this.formulario.markAllAsTouched();
       return;
