@@ -34,7 +34,7 @@ async function iniciarSesion(page: Page): Promise<void> {
 
 async function cancelarSalida(page: Page, enlace: Locator): Promise<void> {
   const url = page.url();
-  const dialogo = page.waitForEvent('dialog');
+  const dialogo = page.waitForEvent('dialog', { timeout: 15_000 });
   const click = enlace.click();
   const aviso = await dialogo;
   expect(aviso.message()).toContain('cambios sin guardar');
@@ -72,6 +72,9 @@ async function sinViolacionesCriticas(page: Page, contexto: string): Promise<voi
 }
 
 test.describe('Flujo crítico de planta', () => {
+  // page.route no intercepta peticiones asumidas por un service worker.
+  // Solo este grupo simula fallos HTTP; las demás pruebas mantienen la PWA.
+  test.use({ serviceWorkers: 'block' });
   test.afterEach(async ({ page }) => {
     if (ordenId === null) {
       return;
@@ -154,9 +157,11 @@ test.describe('Flujo crítico de planta', () => {
       await cancelarSalida(page, page.getByRole('link', { name: 'Ir a Fórmula de producción' }));
       await expect(page.getByTestId('bodega-nombre')).toHaveValue('Papa UI E2E');
       await fallarUnaEscritura(page, '**/api/v1/bodega/referencias-papa');
-      const falloReferencia = page.waitForResponse(r => r.status() === 503);
+      const falloReferencia = page.waitForResponse(r =>
+        r.url().endsWith('/api/v1/bodega/referencias-papa') && r.request().method() === 'POST',
+        { timeout: 15_000 });
       await page.getByTestId('guardar-referencia').click();
-      await falloReferencia;
+      expect((await falloReferencia).status()).toBe(503);
       await cancelarSalida(page, page.getByRole('link', { name: 'Ir a Fórmula de producción' }));
       await expect(page.getByTestId('bodega-peso')).toHaveValue('48');
       await page.getByTestId('guardar-referencia').click();
@@ -356,9 +361,11 @@ test.describe('Flujo crítico de planta', () => {
 
       await esperarPaso(page, 'resumen');
       await fallarUnaEscritura(page, `**/api/v1/ordenes/${ordenId}/registros-horno`);
-      const falloTanda = page.waitForResponse(r => r.status() === 503);
+      const falloTanda = page.waitForResponse(r =>
+        r.url().endsWith(`/api/v1/ordenes/${ordenId}/registros-horno`) && r.request().method() === 'POST',
+        { timeout: 15_000 });
       await page.getByTestId('guardar-tanda').click();
-      await falloTanda;
+      expect((await falloTanda).status()).toBe(503);
       await cancelarSalida(page, page.getByRole('link', { name: 'Salir del registro' }));
       await esperarPaso(page, 'resumen');
       await page.getByTestId('guardar-tanda').click();
@@ -399,9 +406,11 @@ test.describe('Flujo crítico de planta', () => {
 
       await esperarPaso(page, 'resumen');
       await fallarUnaEscritura(page, `**/api/v1/ordenes/${ordenId}/recepciones`);
-      const falloRecepcion = page.waitForResponse(r => r.status() === 503);
+      const falloRecepcion = page.waitForResponse(r =>
+        r.url().endsWith(`/api/v1/ordenes/${ordenId}/recepciones`) && r.request().method() === 'POST',
+        { timeout: 15_000 });
       await page.getByTestId('registrar-recepcion').click();
-      await falloRecepcion;
+      expect((await falloRecepcion).status()).toBe(503);
       await cancelarSalida(page, page.getByRole('link', { name: 'Salir del registro' }));
       await expect(page.getByText('25 kg').first()).toBeVisible();
       await page.getByTestId('registrar-recepcion').click();

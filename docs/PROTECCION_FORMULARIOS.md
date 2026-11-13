@@ -29,3 +29,7 @@ Verificación: pruebas unitarias de seguimiento, navegación y escrituras
 pendientes; Playwright recorre las cinco pantallas, cancela salidas y simula
 respuestas 503 al guardar referencia, tanda y recepción antes de reintentar.
 También comprueba descartar/cancelar correcciones dentro de bodega y saborizado.
+
+El grupo E2E que simula errores HTTP bloquea service workers para que
+Playwright pueda interceptar las peticiones. Las demás pruebas conservan
+la configuración PWA habitual. La aplicación no modifica su service worker.
