@@ -90,6 +90,28 @@ jobs:
           E2E_SKIP_WEBSERVER: "1"
         run: npm run test:e2e
 
+      - name: Medir lecturas concurrentes en el stack desechable
+        run: |
+          mkdir -p loadtest-results
+          chmod 777 loadtest-results
+          docker run --rm --network host \
+            -e BASE_URL=http://127.0.0.1:4200 \
+            -e LOADTEST_DISPOSABLE=1 \
+            -e ADMIN_PASS="$E2E_ADMIN_PASS" \
+            -e VUS=10 -e DURATION=30s \
+            -v "$PWD/backdata/loadtests:/scripts:ro" \
+            -v "$PWD/loadtest-results:/results" \
+            grafana/k6:1.0.0 run --summary-export=/results/lectura.json /scripts/lectura.js
+
+      - name: Publicar mediciones de carga
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: loadtest-results
+          path: loadtest-results
+          retention-days: 14
+          if-no-files-found: ignore
+
       - name: Logs del stack (si falla)
         if: failure()
         run: docker compose -f e2e/docker-compose.e2e.yml logs --no-color

@@ -1,3 +1,4 @@
+import { protegerRecarga } from '../../core/guards/cambios.guard';
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import type { SafeHtml } from '@angular/platform-browser';
@@ -47,6 +48,7 @@ type ClavePaso =
 @Component({
   selector: 'app-orden-asistente',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[attr.inert]': 'enviando() ? "" : null' },
   imports: [RouterLink, DecimalPipe, BotonComponent, CargandoComponent],
   template: `
     <div class="mx-auto w-full max-w-xl">
@@ -527,6 +529,17 @@ type ClavePaso =
   `,
 })
 export class OrdenAsistentePage {
+  private estadoGuardado = '';
+
+  private estadoFormulario(): string {
+    return JSON.stringify([this.destino(), this.categoriaId(), this.productoId(),
+      this.hornoId(), this.turnoId(), this.horas(), this.unidad(), this.cantidadTexto()]);
+  }
+
+  cambiosPendientes(): boolean {
+    return this.enviando() || this.estadoFormulario() !== this.estadoGuardado;
+  }
+
   private readonly catalogos = inject(CatalogosService);
   private readonly ordenes = inject(OrdenesService);
   private readonly avisos = inject(NotificacionesService);
@@ -714,6 +727,8 @@ export class OrdenAsistentePage {
     'rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/60 px-5 py-6 text-center text-sm font-semibold text-amber-800';
 
   constructor() {
+    this.estadoGuardado = this.estadoFormulario();
+    protegerRecarga(() => this.cambiosPendientes());
     // Si cambia la categoría o el destino, las elecciones que dependían de
     // ellas pueden dejar de ser válidas: se limpian para no arrastrar datos
     // inconsistentes.
@@ -1022,6 +1037,7 @@ export class OrdenAsistentePage {
   }
 
   protected crear(): void {
+    if (this.enviando()) return;
     const datos: OrdenGuardar = {
       turno_id: this.turnoId()!,
       horno_id: this.hornoId()!,
@@ -1037,6 +1053,7 @@ export class OrdenAsistentePage {
     this.enviando.set(true);
     this.ordenes.crear(datos).subscribe({
       next: (orden) => {
+        this.estadoGuardado = this.estadoFormulario();
         this.enviando.set(false);
         this.avisos.exito(`Orden ${orden.numero_orden} creada.`);
         void this.router.navigate(['/ordenes', orden.id]);

@@ -1,3 +1,4 @@
+import { cambiosGuard } from './core/guards/cambios.guard';
 import type { Routes } from '@angular/router';
 
 import { rolGuard, sesionGuard } from './core/guards/sesion.guard';
@@ -52,6 +53,7 @@ export const rutas: Routes = [
           },
           {
             path: 'nueva',
+            canDeactivate: [cambiosGuard],
             title: 'Nueva orden - DATACONTROL',
             canActivate: [rolGuard(['admin', 'supervisor'])],
             // Alta guiada por pasos (asistente tipo Duolingo). La edición
@@ -61,6 +63,7 @@ export const rutas: Routes = [
           },
           {
             path: ':id/editar',
+            canDeactivate: [cambiosGuard],
             title: 'Editar orden - DATACONTROL',
             canActivate: [rolGuard(['admin', 'supervisor'])],
             loadComponent: () =>
@@ -264,6 +267,7 @@ export const rutas: Routes = [
           },
           {
             path: 'nuevo',
+            canDeactivate: [cambiosGuard],
             title: 'Nuevo usuario - DATACONTROL',
             loadComponent: () =>
               import('./features/usuarios/usuario-formulario.page').then(
@@ -273,6 +277,7 @@ export const rutas: Routes = [
           {
             path: ':id',
             title: 'Editar usuario - DATACONTROL',
+            canDeactivate: [cambiosGuard],
             loadComponent: () =>
               import('./features/usuarios/usuario-formulario.page').then(
                 (m) => m.UsuarioFormularioPage,

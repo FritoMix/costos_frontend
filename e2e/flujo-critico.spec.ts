@@ -374,3 +374,30 @@ test.describe('Flujo crítico de planta', () => {
     });
   });
 });
+
+test('protege datos de usuario al cancelar una salida sin guardar', async ({ page }) => {
+  await iniciarSesion(page);
+  await page.goto('/usuarios/nuevo');
+  await page.getByLabel('Nombre completo', { exact: true }).fill('Dato ficticio pendiente');
+  page.once('dialog', (dialog) => dialog.dismiss());
+  await page.getByRole('link', { name: 'Volver a usuarios' }).click();
+  await expect(page).toHaveURL(/\/usuarios\/nuevo$/);
+  await expect(page.getByLabel('Nombre completo', { exact: true })).toHaveValue('Dato ficticio pendiente');
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('link', { name: 'Volver a usuarios' }).click();
+  await expect(page).toHaveURL(/\/usuarios$/);
+});
+
+test('protege selecciones del asistente de órdenes', async ({ page }) => {
+  await iniciarSesion(page);
+  await page.goto('/ordenes/nueva');
+  await page.getByTestId('opcion-destino-exportacion').click();
+  await esperarPaso(page, 'categoria');
+  page.once('dialog', (dialog) => dialog.dismiss());
+  await page.getByRole('link', { name: 'Salir del asistente' }).click();
+  await expect(page).toHaveURL(/\/ordenes\/nueva$/);
+  await esperarPaso(page, 'categoria');
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('link', { name: 'Salir del asistente' }).click();
+  await expect(page).toHaveURL(/\/ordenes$/);
+});
