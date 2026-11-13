@@ -374,3 +374,16 @@ test.describe('Flujo crítico de planta', () => {
     });
   });
 });
+
+test('protege datos de usuario al cancelar una salida sin guardar', async ({ page }) => {
+  await iniciarSesion(page);
+  await page.goto('/usuarios/nuevo');
+  await page.getByLabel('Nombre completo', { exact: true }).fill('Dato ficticio pendiente');
+  page.once('dialog', (dialog) => dialog.dismiss());
+  await page.getByRole('link', { name: 'Volver a usuarios' }).click();
+  await expect(page).toHaveURL(/\/usuarios\/nuevo$/);
+  await expect(page.getByLabel('Nombre completo', { exact: true })).toHaveValue('Dato ficticio pendiente');
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('link', { name: 'Volver a usuarios' }).click();
+  await expect(page).toHaveURL(/\/usuarios$/);
+});

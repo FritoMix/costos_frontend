@@ -1,3 +1,4 @@
+import { protegerRecarga } from '../../core/guards/cambios.guard';
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -107,6 +108,10 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
   `,
 })
 export class UsuarioFormularioPage {
+  cambiosPendientes(): boolean {
+    return this.formulario.dirty || this.enviando();
+  }
+
   readonly id = input<string | undefined>();
 
   private readonly fb = inject(FormBuilder);
@@ -127,6 +132,7 @@ export class UsuarioFormularioPage {
   });
 
   constructor() {
+    protegerRecarga(() => this.cambiosPendientes());
     queueMicrotask(() => this.cargar());
   }
 
@@ -164,6 +170,7 @@ export class UsuarioFormularioPage {
   }
 
   protected guardar(): void {
+    if (this.enviando()) return;
     if (this.formulario.invalid) {
       this.formulario.markAllAsTouched();
       this.avisos.error('Revisa los datos del formulario.');
@@ -189,6 +196,7 @@ export class UsuarioFormularioPage {
 
     peticion.subscribe({
       next: () => {
+        this.formulario.markAsPristine();
         this.enviando.set(false);
         this.avisos.exito(id ? 'Usuario actualizado.' : 'Usuario creado.');
         void this.router.navigate(['/usuarios']);

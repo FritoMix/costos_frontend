@@ -1,3 +1,4 @@
+import { protegerRecarga } from '../../core/guards/cambios.guard';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -224,6 +225,10 @@ import { FormulaResumenComponent } from '../formulas/formula-resumen.component';
   `,
 })
 export class OrdenFormularioPage {
+  cambiosPendientes(): boolean {
+    return this.formulario.dirty || this.enviando();
+  }
+
   /** Llega de la ruta /ordenes/:id/editar (withComponentInputBinding). */
   readonly id = input<string | undefined>();
 
@@ -277,6 +282,7 @@ export class OrdenFormularioPage {
   });
 
   constructor() {
+    protegerRecarga(() => this.cambiosPendientes());
     this.formulario.valueChanges.subscribe(() => this.valores.set(this.formulario.getRawValue()));
 
     // Si cambia la categoria, el producto elegido puede dejar de valer.
@@ -337,6 +343,7 @@ export class OrdenFormularioPage {
   }
 
   protected guardar(): void {
+    if (this.enviando()) return;
     if (this.formulario.invalid) {
       this.formulario.markAllAsTouched();
       this.avisos.error('Faltan datos por completar en el formulario.');
@@ -365,6 +372,7 @@ export class OrdenFormularioPage {
 
     peticion.subscribe({
       next: (orden) => {
+        this.formulario.markAsPristine();
         this.enviando.set(false);
         this.avisos.exito(id ? 'Orden actualizada.' : `Orden ${orden.numero_orden} creada.`);
         void this.router.navigate(['/ordenes', orden.id]);

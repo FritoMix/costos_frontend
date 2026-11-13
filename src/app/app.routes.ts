@@ -1,3 +1,4 @@
+import { cambiosGuard } from './core/guards/cambios.guard';
 import type { Routes } from '@angular/router';
 
 import { rolGuard, sesionGuard } from './core/guards/sesion.guard';
@@ -61,6 +62,7 @@ export const rutas: Routes = [
           },
           {
             path: ':id/editar',
+            canDeactivate: [cambiosGuard],
             title: 'Editar orden - DATACONTROL',
             canActivate: [rolGuard(['admin', 'supervisor'])],
             loadComponent: () =>
@@ -73,214 +75,67 @@ export const rutas: Routes = [
             path: ':id',
             title: 'Orden - DATACONTROL',
             loadComponent: () =>
-              import('./features/ordenes/orden-detalle.page').then((m) => m.OrdenDetallePage),
-          },
-        ],
-      },
+              import('./features/ordenes/orden-detalle.page').then((m) => …2242 tokens truncated…editar', component: EditorPrueba, canDeactivate: [cambiosGuard] },
+          { path: 'salir', component: DestinoPrueba },
+        ]),
+      ],
+    });
+  });
 
-      // --- Bodega de papa (Bodeguero, Supervisor y Administrador) ---
-      {
-        path: 'bodega',
-        title: 'Bodega de Papa - DATACONTROL',
-        canActivate: [rolGuard(['admin', 'supervisor', 'bodeguero'])],
-        loadComponent: () =>
-          import('./features/bodega/bodega-referencias.page').then((m) => m.BodegaReferenciasPage),
-      },
+  it('cargar valores desde la API no genera una confirmación', async () => {
+    const confirmar = spyOn(window, 'confirm');
+    const harness = await RouterTestingHarness.create();
+    const editor = await harness.navigateByUrl('/editar', EditorPrueba);
+    editor.formulario.patchValue({ nombre: 'Cargado' });
+    await harness.navigateByUrl('/salir', DestinoPrueba);
+    expect(confirmar).not.toHaveBeenCalled();
+  });
 
-      // --- Fórmula de producción (Bodeguero y Administrador) ---
-      // Bodega define la mezcla de papa de cada orden; el detalle de la
-      // orden vive aquí mismo, sin duplicar la lista del supervisor.
-      {
-        path: 'formula-produccion',
-        canActivate: [rolGuard(['admin', 'bodeguero'])],
-        children: [
-          {
-            path: '',
-            title: 'Fórmula de producción - DATACONTROL',
-            loadComponent: () =>
-              import('./features/formulas/formula-produccion.page').then(
-                (m) => m.FormulaProduccionPage,
-              ),
-          },
-          {
-            path: 'ordenes/:id',
-            title: 'Fórmula de la orden - DATACONTROL',
-            loadComponent: () =>
-              import('./features/formulas/formula-orden.page').then((m) => m.FormulaOrdenPage),
-          },
-          {
-            path: 'formulas/nueva',
-            title: 'Nueva fórmula - DATACONTROL',
-            loadComponent: () =>
-              import('./features/formulas/formula-papa-form.page').then(
-                (m) => m.FormulaPapaFormPage,
-              ),
-          },
-          {
-            path: 'formulas/:id',
-            title: 'Editar fórmula - DATACONTROL',
-            loadComponent: () =>
-              import('./features/formulas/formula-papa-form.page').then(
-                (m) => m.FormulaPapaFormPage,
-              ),
-          },
-        ],
-      },
+  it('cancelar conserva la pantalla y los datos; confirmar permite salir', async () => {
+    const confirmar = spyOn(window, 'confirm').and.returnValue(false);
+    const harness = await RouterTestingHarness.create();
+    const editor = await harness.navigateByUrl('/editar', EditorPrueba);
+    editor.formulario.setValue({ nombre: 'Pendiente' });
+    editor.formulario.markAsDirty();
+    await harness.navigateByUrl('/salir');
+    expect(harness.routeDebugElement?.componentInstance).toBe(editor);
+    expect(editor.formulario.value.nombre).toBe('Pendiente');
+    confirmar.and.returnValue(true);
+    await harness.navigateByUrl('/salir', DestinoPrueba);
+    expect(confirmar).toHaveBeenCalledTimes(2);
+  });
 
-      // --- Capacidad de hornos (Administrador y Supervisor) ---
-      // Reutiliza la misma pantalla de Hornos. El Supervisor solo ve el
-      // formulario de capacidad; el Administrador conserva la edición completa.
-      {
-        path: 'hornos',
-        title: 'Hornos - DATACONTROL',
-        canActivate: [rolGuard(['admin', 'supervisor'])],
-        loadComponent: () => import('./features/catalogos/hornos.page').then((m) => m.HornosPage),
-      },
+  it('permite salir después de guardar y marcar el formulario limpio', async () => {
+    const confirmar = spyOn(window, 'confirm');
+    const harness = await RouterTestingHarness.create();
+    const editor = await harness.navigateByUrl('/editar', EditorPrueba);
+    editor.formulario.markAsDirty();
+    editor.formulario.markAsPristine();
+    await harness.navigateByUrl('/salir', DestinoPrueba);
+    expect(confirmar).not.toHaveBeenCalled();
+  });
 
-      // --- Registro de horno (Operario de Horno) ---
-      {
-        path: 'horno',
-        canActivate: [rolGuard(['admin', 'operario_horno'])],
-        children: [
-          {
-            path: '',
-            title: 'Registro de horno - DATACONTROL',
-            loadComponent: () => import('./features/horno/horno-lista.page').then((m) => m.HornoListaPage),
-          },
-          {
-            path: ':id',
-            title: 'Registrar tanda - DATACONTROL',
-            // Registro guiado paso a paso: el horario se toma solo y cada
-            // tanda dura una hora (ver horno-asistente.page.ts).
-            loadComponent: () =>
-              import('./features/horno/horno-asistente.page').then((m) => m.HornoAsistentePage),
-          },
-        ],
-      },
+  it('una sesión terminada puede redirigir sin confirmación', async () => {
+    const confirmar = spyOn(window, 'confirm');
+    const harness = await RouterTestingHarness.create();
+    const editor = await harness.navigateByUrl('/editar', EditorPrueba);
+    editor.formulario.markAsDirty();
+    auth.usuario.and.returnValue(null);
+    await harness.navigateByUrl('/salir', DestinoPrueba);
+    expect(confirmar).not.toHaveBeenCalled();
+  });
 
-      // --- Saborizado (Operario de Saborizado) ---
-      {
-        path: 'saborizado',
-        canActivate: [rolGuard(['admin', 'operario_saborizado'])],
-        children: [
-          {
-            path: '',
-            title: 'Saborizado - DATACONTROL',
-            loadComponent: () =>
-              import('./features/saborizado/saborizado-lista.page').then((m) => m.SaborizadoListaPage),
-          },
-          {
-            path: ':id',
-            title: 'Registrar recepción - DATACONTROL',
-            loadComponent: () =>
-              import('./features/saborizado/saborizado-recepcion.page').then(
-                (m) => m.SaborizadoRecepcionPage,
-              ),
-          },
-        ],
-      },
-
-      // --- Analisis (Administrador) ---
-      {
-        path: 'analisis',
-        title: 'Análisis - DATACONTROL',
-        canActivate: [rolGuard(['admin'])],
-        loadComponent: () => import('./features/analisis/analisis.page').then((m) => m.AnalisisPage),
-      },
-
-      // --- Catalogos (Administrador) ---
-      {
-        path: 'catalogos',
-        canActivate: [rolGuard(['admin'])],
-        children: [
-          {
-            path: '',
-            title: 'Catálogos - DATACONTROL',
-            loadComponent: () =>
-              import('./features/catalogos/catalogos-indice.page').then((m) => m.CatalogosIndicePage),
-          },
-          {
-            path: 'categorias',
-            title: 'Categorías - DATACONTROL',
-            data: { catalogo: 'categorias' },
-            loadComponent: () =>
-              import('./features/catalogos/catalogo-simple.page').then((m) => m.CatalogoSimplePage),
-          },
-          {
-            path: 'sabores',
-            title: 'Sabores - DATACONTROL',
-            data: { catalogo: 'sabores' },
-            loadComponent: () =>
-              import('./features/catalogos/catalogo-simple.page').then((m) => m.CatalogoSimplePage),
-          },
-          {
-            path: 'tipos-desperdicio',
-            title: 'Tipos de desperdicio - DATACONTROL',
-            data: { catalogo: 'tipos-desperdicio' },
-            loadComponent: () =>
-              import('./features/catalogos/catalogo-simple.page').then((m) => m.CatalogoSimplePage),
-          },
-          {
-            path: 'turnos',
-            title: 'Turnos - DATACONTROL',
-            loadComponent: () => import('./features/catalogos/turnos.page').then((m) => m.TurnosPage),
-          },
-          {
-            path: 'hornos',
-            title: 'Hornos - DATACONTROL',
-            loadComponent: () => import('./features/catalogos/hornos.page').then((m) => m.HornosPage),
-          },
-          {
-            path: 'productos',
-            title: 'Productos - DATACONTROL',
-            loadComponent: () =>
-              import('./features/catalogos/productos.page').then((m) => m.ProductosPage),
-          },
-          {
-            path: 'configuracion',
-            title: 'Configuración - DATACONTROL',
-            loadComponent: () =>
-              import('./features/catalogos/configuracion.page').then((m) => m.ConfiguracionPage),
-          },
-          {
-            path: 'densidad-aceite',
-            title: 'Densidad del aceite - DATACONTROL',
-            loadComponent: () =>
-              import('./features/catalogos/densidad-aceite.page').then((m) => m.DensidadAceitePage),
-          },
-        ],
-      },
-
-      // --- Usuarios (Administrador) ---
-      {
-        path: 'usuarios',
-        canActivate: [rolGuard(['admin'])],
-        children: [
-          {
-            path: '',
-            title: 'Usuarios - DATACONTROL',
-            loadComponent: () =>
-              import('./features/usuarios/usuarios-lista.page').then((m) => m.UsuariosListaPage),
-          },
-          {
-            path: 'nuevo',
-            title: 'Nuevo usuario - DATACONTROL',
-            loadComponent: () =>
-              import('./features/usuarios/usuario-formulario.page').then(
-                (m) => m.UsuarioFormularioPage,
-              ),
-          },
-          {
-            path: ':id',
-            title: 'Editar usuario - DATACONTROL',
-            loadComponent: () =>
-              import('./features/usuarios/usuario-formulario.page').then(
-                (m) => m.UsuarioFormularioPage,
-              ),
-          },
-        ],
-      },
-    ],
-  },
-  { path: '**', redirectTo: '' },
-];
+  it('protege recargas y retira el listener al destruir la pantalla', async () => {
+    const harness = await RouterTestingHarness.create();
+    const editor = await harness.navigateByUrl('/editar', EditorPrueba);
+    editor.formulario.markAsDirty();
+    const evento = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(evento);
+    expect(evento.defaultPrevented).toBeTrue();
+    spyOn(window, 'confirm').and.returnValue(true);
+    await harness.navigateByUrl('/salir', DestinoPrueba);
+    const despues = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(despues);
+    expect(despues.defaultPrevented).toBeFalse();
+  });
+});
