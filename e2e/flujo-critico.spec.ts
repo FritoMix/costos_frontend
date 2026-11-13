@@ -93,6 +93,13 @@ test.describe('Flujo crítico de planta', () => {
     await expect(
       page.getByRole('heading', { name: /Órdenes de Producción/ }),
     ).toBeVisible();
+    // La pantalla también debe poder cargar el nuevo contrato paginado.
+    const paginaOrdenes = await page.request.get('/api/v1/ordenes/pagina?pagina=1&tamano=50');
+    expect(paginaOrdenes.status()).toBe(200);
+    const listado = await paginaOrdenes.json();
+    expect(Array.isArray(listado.items)).toBe(true);
+    expect(typeof listado.total).toBe('number');
+
   });
 
   test('login, orden, horno, saborizado, análisis y exportación', async ({ page }) => {
