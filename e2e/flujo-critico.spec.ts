@@ -425,10 +425,10 @@ test.describe('Flujo crítico de planta', () => {
       await continuar(page, 'continuar-saborizado');
       await esperarPaso(page, 'cantidad_sabor');
       await page.getByTestId('tecla-1').click();
-      const pesoAntes = await page.getByTestId('teclado-valor').innerText();
+      await expect(page.getByTestId('teclado-valor')).toHaveText('21');
       page.once('dialog', dialog => dialog.dismiss());
       await page.getByRole('button', { name: 'Cancelar corrección' }).click();
-      await expect(page.getByTestId('teclado-valor')).toHaveText(pesoAntes);
+      await expect(page.getByTestId('teclado-valor')).toHaveText('21');
       page.once('dialog', dialog => dialog.accept());
       await page.getByRole('button', { name: 'Cancelar corrección' }).click();
       await expect(page.getByTestId('saborizado-orden-completa')).toBeVisible();
