@@ -1,5 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Subject, catchError, of, startWith, switchMap } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 
 import type { EstadoOrden, Orden } from '../../core/modelos/produccion.model';
@@ -32,7 +34,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
           <div class="flex items-center gap-2">
             <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Órdenes de Producción</h1>
             <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-mono font-bold text-slate-600 border border-slate-200">
-              {{ ordenes().length }}
+              {{ total() }}
             </span>
           </div>
           <p class="mt-1 text-sm text-slate-500 font-medium">
@@ -67,7 +69,12 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
       </div>
 
       <app-tarjeta [sinRelleno]="true">
-        @if (cargando()) {
+        @if (errorCarga()) {
+          <div role="alert" class="p-6 text-center">
+            <p>No se pudo cargar el listado. Revisa la conexión e intenta de nuevo.</p>
+            <button type="button" class="mt-3 font-bold text-sky-700" (click)="recargar()">Reintentar</button>
+          </div>
+        } @else if (cargando()) {
           <app-cargando texto="Cargando listado de órdenes…" />
         } @else if (ordenes().length === 0) {
           <app-estado-vacio
@@ -170,6 +177,15 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
           </div>
         }
       </app-tarjeta>
+      @if (total() > 0) {
+        <nav aria-label="Paginación de órdenes" class="flex items-center justify-between gap-3 text-sm">
+          <button type="button" aria-label="Página anterior" (click)="cambiarPagina(-1)"
+            [disabled]="cargando() || pagina() <= 1" class="rounded-lg border px-4 py-2 disabled:opacity-40">Anterior</button>
+          <span aria-live="polite">Página {{ pagina() }} de {{ paginas() }} · {{ total() }} órdenes</span>
+          <button type="button" aria-label="Página siguiente" (click)="cambiarPagina(1)"
+            [disabled]="cargando() || pagina() >= paginas()" class="rounded-lg border px-4 py-2 disabled:opacity-40">Siguiente</button>
+        </nav>
+      }
     </div>
   `,
 })
@@ -188,28 +204,56 @@ export class OrdenesListaPage {
   protected readonly filtro = signal<EstadoOrden | 'todas'>('todas');
   protected readonly cargando = signal(true);
   private readonly todas = signal<Orden[]>([]);
+  private readonly consultas = new Subject<void>();
+  protected readonly total = signal(0);
+  protected readonly pagina = signal(1);
+  protected readonly paginas = computed(() => Math.max(1, Math.ceil(this.total() / 50)));
+  protected readonly errorCarga = signal(false);
 
   protected readonly ordenes = computed(() => this.todas());
 
   constructor() {
-    this.cargar();
+    this.consultas.pipe(
+      startWith(undefined),
+      switchMap(() => {
+        this.cargando.set(true);
+        this.errorCarga.set(false);
+        const filtro = this.filtro();
+        return this.servicio.listarPagina({ pagina: this.pagina(), tamano: 50,
+          estado: filtro === 'todas' ? undefined : filtro }).pipe(catchError(() => of(null)));
+      }),
+      takeUntilDestroyed(),
+    ).subscribe((respuesta) => {
+      this.cargando.set(false);
+      if (respuesta === null) {
+        this.errorCarga.set(true);
+        this.todas.set([]);
+        this.total.set(0);
+        return;
+      }
+      this.todas.set(respuesta.items);
+      this.total.set(respuesta.total);
+      if (respuesta.items.length === 0 && this.pagina() > 1 && respuesta.total > 0) {
+        this.pagina.set(Math.max(1, Math.ceil(respuesta.total / 50)));
+        this.consultas.next();
+      }
+    });
   }
 
   protected cambiarFiltro(valor: EstadoOrden | 'todas'): void {
     this.filtro.set(valor);
-    this.cargar();
+    this.pagina.set(1);
+    this.consultas.next();
   }
 
-  private cargar(): void {
-    this.cargando.set(true);
-    const filtro = this.filtro();
-    this.servicio.listar(filtro === 'todas' ? {} : { estado: filtro }).subscribe({
-      next: (ordenes) => {
-        this.todas.set(ordenes);
-        this.cargando.set(false);
-      },
-      error: () => this.cargando.set(false),
-    });
+  protected cambiarPagina(delta: number): void {
+    const nueva = this.pagina() + delta;
+    if (this.cargando() || nueva < 1 || nueva > this.paginas()) return;
+    this.pagina.set(nueva);
+    this.consultas.next();
+  }
+
+  protected recargar(): void {
+    this.consultas.next();
   }
 }
-
