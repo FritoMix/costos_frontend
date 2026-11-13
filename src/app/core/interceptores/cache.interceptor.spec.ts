@@ -88,4 +88,34 @@ describe('cacheInterceptor', () => {
     expect(segunda).toEqual([{ id: 2 }]);
     tick(100);
   }));
+  it('no restaura una lectura anterior después de limpiar la sesión', () => {
+    http.get(URL, { context: contexto() }).subscribe();
+    const pendiente = controlador.expectOne(URL);
+    limpiarCache();
+    pendiente.flush([{ id: 1 }]);
+    http.get(URL, { context: contexto() }).subscribe();
+    controlador.expectOne(URL).flush([{ id: 2 }]);
+  });
+
+  it('invalida lecturas iniciadas mientras se guardaban cambios', () => {
+    http.post('/api/v1/ordenes', {}).subscribe();
+    const escritura = controlador.expectOne('/api/v1/ordenes');
+    http.get(URL, { context: contexto() }).subscribe();
+    const lectura = controlador.expectOne(URL);
+    escritura.flush({});
+    lectura.flush([{ id: 1 }]);
+    http.get(URL, { context: contexto() }).subscribe();
+    controlador.expectOne(URL).flush([{ id: 2 }]);
+  });
+
+  it('no almacena eventos de progreso como respuestas', () => {
+    http.get(URL, { context: contexto(), reportProgress: true }).subscribe();
+    const pendiente = controlador.expectOne(URL);
+    pendiente.event({ type: 3, loaded: 5 });
+    http.get(URL, { context: contexto() }).subscribe();
+    const segunda = controlador.expectOne(URL);
+    pendiente.flush([{ id: 1 }]);
+    segunda.flush([{ id: 2 }]);
+  });
+
 });

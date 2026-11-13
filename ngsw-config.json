@@ -27,20 +27,12 @@
       "installMode": "prefetch",
       "updateMode": "prefetch",
       "resources": {
-        "files": ["/*.woff2", "/*.woff"]
+        "files": [
+          "/*.woff2",
+          "/*.woff"
+        ]
       }
     }
   ],
-  "dataGroups": [
-    {
-      "name": "api-lectura",
-      "urls": ["/api/**", "!/api/v1/auth/**"],
-      "cacheConfig": {
-        "strategy": "freshness",
-        "maxSize": 50,
-        "maxAge": "30s",
-        "timeout": "8s"
-      }
-    }
-  ]
+  "dataGroups": []
 }
