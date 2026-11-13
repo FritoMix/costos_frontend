@@ -3,6 +3,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
+import { seguirCambios } from '../../core/guards/cambios.guard';
+
 import type {
   ProyeccionProduccion,
   ReferenciaPapa,
@@ -28,6 +30,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
 @Component({
   selector: 'app-bodega-referencias',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[attr.inert]': 'enviando() ? "" : null' },
   imports: [
     ReactiveFormsModule,
     RouterLink,
@@ -637,6 +640,19 @@ export class BodegaReferenciasPage {
     activo: this.fb.nonNullable.control(true),
   });
 
+  private readonly proteccion = seguirCambios(
+    () => [this.editando()?.id ?? null, this.formulario.getRawValue()],
+    () => this.enviando(),
+  );
+
+  operacionPendiente(): boolean {
+    return this.proteccion.ocupado();
+  }
+
+  cambiosPendientes(): boolean {
+    return this.proteccion.pendientes();
+  }
+
   constructor() {
     this.cargar();
     if (this.puedeProyectar()) {
@@ -724,24 +740,34 @@ export class BodegaReferenciasPage {
   }
 
   protected editar(referencia: ReferenciaPapa): void {
+    if (!this.proteccion.confirmarDescarte()) return;
     this.editando.set(referencia);
     this.formulario.setValue({
       nombre: referencia.nombre,
       peso_promedio_bulto_kg: Number(referencia.peso_promedio_bulto_kg),
       activo: referencia.activo,
     });
+    this.formulario.markAsPristine();
+    this.proteccion.aceptar();
   }
 
   protected cancelarEdicion(): void {
+    if (!this.proteccion.confirmarDescarte()) return;
+    this.restablecerFormulario();
+  }
+
+  private restablecerFormulario(): void {
     this.editando.set(null);
     this.formulario.reset({
       nombre: '',
       peso_promedio_bulto_kg: null,
       activo: true,
     });
+    this.proteccion.aceptar();
   }
 
   protected guardar(): void {
+    if (this.enviando()) return;
     if (this.formulario.invalid) {
       this.formulario.markAllAsTouched();
       return;
@@ -770,7 +796,7 @@ export class BodegaReferenciasPage {
       next: () => {
         this.enviando.set(false);
         this.avisos.exito(editando ? 'Referencia actualizada.' : 'Referencia registrada.');
-        this.cancelarEdicion();
+        this.restablecerFormulario();
         this.cargar();
       },
       error: () => this.enviando.set(false),
@@ -778,15 +804,22 @@ export class BodegaReferenciasPage {
   }
 
   protected eliminar(): void {
+    if (this.enviando()) return;
     const referencia = this.aEliminar();
     this.aEliminar.set(null);
     if (!referencia) {
       return;
     }
 
-    this.bodega.eliminar(referencia.id).subscribe(() => {
-      this.avisos.exito(`"${referencia.nombre}" eliminada.`);
-      this.cargar();
+    this.enviando.set(true);
+    this.bodega.eliminar(referencia.id).subscribe({
+      next: () => {
+        this.enviando.set(false);
+        if (this.editando()?.id === referencia.id) this.restablecerFormulario();
+        this.avisos.exito(`"${referencia.nombre}" eliminada.`);
+        this.cargar();
+      },
+      error: () => this.enviando.set(false),
     });
   }
 }

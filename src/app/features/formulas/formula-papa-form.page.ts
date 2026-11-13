@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
+import { seguirCambios } from '../../core/guards/cambios.guard';
+
 import type { ReferenciaPapa } from '../../core/modelos/bodega.model';
 import type { Horno, Producto } from '../../core/modelos/catalogos.model';
 import type { FormulaPapa, FormulaPapaGuardar } from '../../core/modelos/formula-papa.model';
@@ -35,6 +37,7 @@ interface FilaPlantilla {
 @Component({
   selector: 'app-formula-papa-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[attr.inert]': 'guardando() || cambiandoEstado() || eliminando() || repartiendo() ? "" : null' },
   imports: [
     RouterLink,
     FormsModule,
@@ -560,6 +563,19 @@ export class FormulaPapaFormPage {
     return this.totalBultos() > 0;
   });
 
+  private readonly proteccion = seguirCambios(
+    () => [this.nombre(), this.productoId(), this.notas(), this.filas()],
+    () => this.guardando() || this.cambiandoEstado() || this.eliminando() || this.repartiendo(),
+  );
+
+  operacionPendiente(): boolean {
+    return this.proteccion.ocupado();
+  }
+
+  cambiosPendientes(): boolean {
+    return this.proteccion.pendientes();
+  }
+
   constructor() {
     this.cargar();
   }
@@ -594,6 +610,7 @@ export class FormulaPapaFormPage {
                 bultos_por_tanda: fila.bultos_por_tanda,
               })),
             );
+            this.proteccion.aceptar();
             this.cargando.set(false);
           },
           error: (respuesta: HttpErrorResponse) => {
@@ -739,12 +756,15 @@ export class FormulaPapaFormPage {
       next: (formula) => {
         this.guardando.set(false);
         this.formula.set(formula);
+        this.nombre.set(formula.nombre);
+        this.notas.set(formula.notas ?? '');
         this.filas.set(
           formula.referencias.map((fila) => ({
             referencia_papa_id: fila.referencia_id,
             bultos_por_tanda: fila.bultos_por_tanda,
           })),
         );
+        this.proteccion.aceptar();
         if (id) {
           this.avisos.exito('Fórmula actualizada. Las órdenes ya creadas no cambian.');
           this.avisoGuardado.set('Fórmula actualizada.');
@@ -814,6 +834,7 @@ export class FormulaPapaFormPage {
     this.eliminando.set(true);
     this.formulas.eliminar(actual.id).subscribe({
       next: () => {
+        this.proteccion.aceptar();
         this.eliminando.set(false);
         this.confirmarEliminar.set(false);
         this.avisos.exito('Fórmula eliminada del catálogo.');
