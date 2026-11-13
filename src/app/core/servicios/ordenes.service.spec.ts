@@ -154,4 +154,32 @@ describe('OrdenesService', () => {
     expect(borrar.request.method).toBe('DELETE');
     borrar.flush(null);
   });
+  it('conserva la clave tras un fallo de red y la cambia para una nueva orden confirmada', () => {
+    servicio.crear(orden).subscribe({ error: () => undefined });
+    const primera = http.expectOne('/api/v1/ordenes');
+    const clave = primera.request.headers.get('Idempotency-Key');
+    expect(clave).toMatch(/^[a-f0-9]{32}$/);
+    primera.error(new ProgressEvent('error'));
+
+    servicio.crear(orden).subscribe();
+    const reintento = http.expectOne('/api/v1/ordenes');
+    expect(reintento.request.headers.get('Idempotency-Key')).toBe(clave);
+    reintento.flush({ id: 1 });
+
+    servicio.crear(orden).subscribe();
+    const nueva = http.expectOne('/api/v1/ordenes');
+    expect(nueva.request.headers.get('Idempotency-Key')).not.toBe(clave);
+    nueva.flush({ id: 2 });
+  });
+
+  it('dos envíos pendientes del mismo formulario comparten la clave', () => {
+    servicio.crear(orden).subscribe();
+    servicio.crear(orden).subscribe();
+    const peticiones = http.match('/api/v1/ordenes');
+    expect(peticiones.length).toBe(2);
+    expect(peticiones[0].request.headers.get('Idempotency-Key')).toBe(
+      peticiones[1].request.headers.get('Idempotency-Key'),
+    );
+    peticiones.forEach((p) => p.flush({ id: 1 }));
+  });
 });
