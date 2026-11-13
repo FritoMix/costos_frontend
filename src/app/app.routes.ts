@@ -53,6 +53,7 @@ export const rutas: Routes = [
           },
           {
             path: 'nueva',
+            canDeactivate: [cambiosGuard],
             title: 'Nueva orden - DATACONTROL',
             canActivate: [rolGuard(['admin', 'supervisor'])],
             // Alta guiada por pasos (asistente tipo Duolingo). La edición

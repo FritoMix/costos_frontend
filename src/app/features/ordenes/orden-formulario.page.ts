@@ -26,6 +26,7 @@ import { FormulaResumenComponent } from '../formulas/formula-resumen.component';
 @Component({
   selector: 'app-orden-formulario',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[attr.inert]': 'enviando() ? "" : null' },
   imports: [
     ReactiveFormsModule,
     RouterLink,
