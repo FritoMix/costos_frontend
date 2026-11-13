@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import type { Observable } from 'rxjs';
+import { tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import type {
@@ -18,6 +19,35 @@ import type {
 @Injectable({ providedIn: 'root' })
 export class OrdenesService {
   private readonly http = inject(HttpClient);
+  private readonly pendientes = new Map<string, { clave: string; creada: number }>();
+
+  private crearUnaVez<T>(url: string, datos: unknown): Observable<T> {
+    const ahora = Date.now();
+    for (const [huella, operacion] of this.pendientes) {
+      if (ahora - operacion.creada >= 24 * 60 * 60_000) this.pendientes.delete(huella);
+    }
+    const huella = `${url}:${JSON.stringify(datos)}`;
+    let operacion = this.pendientes.get(huella);
+    if (!operacion) {
+      const bytes = crypto.getRandomValues(new Uint8Array(16));
+      operacion = {
+        clave: Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join(''),
+        creada: ahora,
+      };
+      this.pendientes.set(huella, operacion);
+    }
+    return this.http.post<T>(url, datos, { headers: { 'Idempotency-Key': operacion.clave } }).pipe(
+      tap({
+        next: () => this.pendientes.delete(huella),
+        error: (error) => {
+          // Ante red caída/5xx se desconoce si se guardó: el siguiente intento
+          // del mismo formulario conserva la clave y recupera el resultado.
+          if (error.status >= 400 && error.status < 500) this.pendientes.delete(huella);
+        },
+      }),
+    );
+  }
+
   private readonly base = `${environment.apiUrl}/ordenes`;
 
   listar(opciones: { estado?: EstadoOrden; soloPropias?: boolean } = {}): Observable<Orden[]> {
@@ -36,7 +66,7 @@ export class OrdenesService {
   }
 
   crear(datos: OrdenGuardar): Observable<Orden> {
-    return this.http.post<Orden>(this.base, datos);
+    return this.crearUnaVez<Orden>(this.base, datos);
   }
 
   actualizar(id: number, datos: OrdenGuardar): Observable<Orden> {
@@ -62,7 +92,7 @@ export class OrdenesService {
   // --- Registros de horno -------------------------------------------------
 
   crearRegistroHorno(ordenId: number, datos: RegistroHornoGuardar): Observable<RegistroHorno> {
-    return this.http.post<RegistroHorno>(`${this.base}/${ordenId}/registros-horno`, datos);
+    return this.crearUnaVez<RegistroHorno>(`${this.base}/${ordenId}/registros-horno`, datos);
   }
 
   actualizarRegistroHorno(
@@ -83,7 +113,7 @@ export class OrdenesService {
   // --- Recepciones de saborizado -----------------------------------------
 
   crearRecepcion(ordenId: number, datos: RecepcionGuardar): Observable<Recepcion> {
-    return this.http.post<Recepcion>(`${this.base}/${ordenId}/recepciones`, datos);
+    return this.crearUnaVez<Recepcion>(`${this.base}/${ordenId}/recepciones`, datos);
   }
 
   actualizarRecepcion(
