@@ -79,16 +79,19 @@ describe('protección de cambios sin guardar', () => {
   });
 
   it('protege recargas y retira el listener al destruir la pantalla', async () => {
+    const agregar = spyOn(window, 'addEventListener').and.callThrough();
+    const retirar = spyOn(window, 'removeEventListener').and.callThrough();
     const harness = await RouterTestingHarness.create();
     const editor = await harness.navigateByUrl('/editar', EditorPrueba);
     editor.formulario.markAsDirty();
+    const llamada = agregar.calls.allArgs().find(([tipo]) => tipo === 'beforeunload')!;
+    const listener = llamada[1] as EventListener;
     const evento = new Event('beforeunload', { cancelable: true });
-    window.dispatchEvent(evento);
+    // Invocar solo nuestro listener evita disparar el detector de recargas de Karma.
+    listener(evento);
     expect(evento.defaultPrevented).toBeTrue();
     spyOn(window, 'confirm').and.returnValue(true);
     await harness.navigateByUrl('/salir', DestinoPrueba);
-    const despues = new Event('beforeunload', { cancelable: true });
-    window.dispatchEvent(despues);
-    expect(despues.defaultPrevented).toBeFalse();
+    expect(retirar).toHaveBeenCalledWith('beforeunload', listener);
   });
 });
