@@ -9,6 +9,7 @@ import type {
   EstadoOrden,
   Orden,
   OrdenGuardar,
+  PaginaOrdenes,
   Recepcion,
   RecepcionGuardar,
   RegistroHorno,
@@ -59,6 +60,17 @@ export class OrdenesService {
       params['solo_propias'] = opciones.soloPropias;
     }
     return this.http.get<Orden[]>(this.base, { params });
+  }
+
+  listarPagina(
+    opciones: { pagina?: number; tamano?: number; estado?: EstadoOrden } = {},
+  ): Observable<PaginaOrdenes> {
+    const params: Record<string, string | number> = {
+      pagina: opciones.pagina ?? 1,
+      tamano: opciones.tamano ?? 50,
+    };
+    if (opciones.estado) params['estado'] = opciones.estado;
+    return this.http.get<PaginaOrdenes>(`${this.base}/pagina`, { params });
   }
 
   detalle(id: number): Observable<DetalleOrden> {

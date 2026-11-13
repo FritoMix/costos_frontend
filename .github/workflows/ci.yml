@@ -15,7 +15,7 @@ permissions:
 jobs:
   calidad:
     name: Lint y build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Descargar codigo
@@ -48,7 +48,7 @@ jobs:
 
   e2e:
     name: E2E del flujo crítico
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: calidad
     env:
       E2E_ADMIN_PASS: e2e-admin-pass

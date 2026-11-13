@@ -184,3 +184,10 @@ export interface DetalleOrden {
   registros_horno: RegistroHorno[];
   recepciones: Recepcion[];
 }
+
+export interface PaginaOrdenes {
+  items: Orden[];
+  total: number;
+  pagina: number;
+  tamano: number;
+}
