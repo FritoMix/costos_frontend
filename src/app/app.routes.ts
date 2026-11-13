@@ -85,6 +85,7 @@ export const rutas: Routes = [
       {
         path: 'bodega',
         title: 'Bodega de Papa - DATACONTROL',
+            canDeactivate: [cambiosGuard],
         canActivate: [rolGuard(['admin', 'supervisor', 'bodeguero'])],
         loadComponent: () =>
           import('./features/bodega/bodega-referencias.page').then((m) => m.BodegaReferenciasPage),
@@ -108,12 +109,14 @@ export const rutas: Routes = [
           {
             path: 'ordenes/:id',
             title: 'Fórmula de la orden - DATACONTROL',
+            canDeactivate: [cambiosGuard],
             loadComponent: () =>
               import('./features/formulas/formula-orden.page').then((m) => m.FormulaOrdenPage),
           },
           {
             path: 'formulas/nueva',
             title: 'Nueva fórmula - DATACONTROL',
+            canDeactivate: [cambiosGuard],
             loadComponent: () =>
               import('./features/formulas/formula-papa-form.page').then(
                 (m) => m.FormulaPapaFormPage,
@@ -122,6 +125,7 @@ export const rutas: Routes = [
           {
             path: 'formulas/:id',
             title: 'Editar fórmula - DATACONTROL',
+            canDeactivate: [cambiosGuard],
             loadComponent: () =>
               import('./features/formulas/formula-papa-form.page').then(
                 (m) => m.FormulaPapaFormPage,
@@ -153,6 +157,7 @@ export const rutas: Routes = [
           {
             path: ':id',
             title: 'Registrar tanda - DATACONTROL',
+            canDeactivate: [cambiosGuard],
             // Registro guiado paso a paso: el horario se toma solo y cada
             // tanda dura una hora (ver horno-asistente.page.ts).
             loadComponent: () =>
@@ -175,6 +180,7 @@ export const rutas: Routes = [
           {
             path: ':id',
             title: 'Registrar recepción - DATACONTROL',
+            canDeactivate: [cambiosGuard],
             loadComponent: () =>
               import('./features/saborizado/saborizado-recepcion.page').then(
                 (m) => m.SaborizadoRecepcionPage,

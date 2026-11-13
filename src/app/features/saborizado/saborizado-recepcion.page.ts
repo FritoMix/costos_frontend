@@ -3,6 +3,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal } f
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
+import { seguirCambios } from '../../core/guards/cambios.guard';
+
 import type { ItemCatalogo } from '../../core/modelos/catalogos.model';
 import type { DetalleOrden, RecepcionGuardar } from '../../core/modelos/produccion.model';
 import { AuthService } from '../../core/servicios/auth.service';
@@ -36,6 +38,7 @@ type PasoRecepcion =
 @Component({
   selector: 'app-saborizado-recepcion',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[attr.inert]': 'enviando() ? "" : null' },
   imports: [
     RouterLink,
     DecimalPipe,
@@ -549,11 +552,26 @@ export class SaborizadoRecepcionPage {
     }
   });
 
+  private readonly proteccion = seguirCambios(
+    () => [this.editandoId(), this.inicio().getTime(), this.duracionMin(),
+      this.saborId(), this.cantidadSabor(), this.canastillaActual(), this.canastillas()],
+    () => this.enviando(),
+  );
+
+  operacionPendiente(): boolean {
+    return this.proteccion.ocupado();
+  }
+
+  cambiosPendientes(): boolean {
+    return this.proteccion.pendientes();
+  }
+
   constructor() {
     queueMicrotask(() => this.cargar());
   }
 
   private cargar(): void {
+    this.cargando.set(true);
     forkJoin({
       detalle: this.ordenes.detalle(Number(this.id())),
       sabores: this.catalogos.listarSabores(true),
@@ -563,6 +581,7 @@ export class SaborizadoRecepcionPage {
         this.sabores.set(sabores);
         this.inicio.set(new Date());
         this.ajustarDuracionDisponible();
+        this.proteccion.aceptar();
         this.cargando.set(false);
       },
       error: () => this.cargando.set(false),
@@ -608,7 +627,9 @@ export class SaborizadoRecepcionPage {
     if (!recepcion) {
       return;
     }
+    if (!this.proteccion.confirmarDescarte()) return;
     this.editandoId.set(recepcionId);
+    this.canastillaActual.set('0');
     this.canastillas.set(recepcion.canastillas.map((c) => Number(c.peso_kg)));
     this.saborId.set(recepcion.sabor.id);
     this.cantidadSabor.set(String(Number(recepcion.cantidad_sabor_kg)));
@@ -618,10 +639,17 @@ export class SaborizadoRecepcionPage {
     const duracion = Math.max(1, Math.round((fin.getTime() - inicio.getTime()) / 60000));
     this.duracionMin.set(duracion);
     this.indicePaso.set(0);
+    this.proteccion.aceptar();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   protected cancelarEdicion(): void {
+    if (!this.proteccion.confirmarDescarte()) return;
+    this.restablecerFormulario();
+  }
+
+  private restablecerFormulario(): void {
+    this.canastillaActual.set('0');
     this.editandoId.set(null);
     this.indicePaso.set(0);
     this.canastillas.set([]);
@@ -629,6 +657,7 @@ export class SaborizadoRecepcionPage {
     this.cantidadSabor.set('0');
     this.inicio.set(new Date());
     this.ajustarDuracionDisponible();
+    this.proteccion.aceptar();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -672,7 +701,7 @@ export class SaborizadoRecepcionPage {
         this.avisos.exito(
           `${editando ? 'Recepción corregida' : 'Recepción registrada'}: ${recepcion.kg_recibidos} kg.`,
         );
-        this.cancelarEdicion();
+        this.restablecerFormulario();
         this.cargar();
       },
       error: () => this.enviando.set(false),

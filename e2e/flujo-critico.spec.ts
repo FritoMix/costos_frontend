@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type Locator } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
 /**
@@ -32,6 +32,26 @@ async function iniciarSesion(page: Page): Promise<void> {
   await expect(page).toHaveURL(/\/inicio/);
 }
 
+async function cancelarSalida(page: Page, enlace: Locator): Promise<void> {
+  const url = page.url();
+  const dialogo = page.waitForEvent('dialog', { timeout: 15_000 });
+  const click = enlace.click();
+  const aviso = await dialogo;
+  expect(aviso.message()).toContain('cambios sin guardar');
+  await aviso.dismiss();
+  await click;
+  await expect(page).toHaveURL(url);
+}
+
+async function fallarUnaEscritura(page: Page, ruta: string): Promise<void> {
+  await page.route(ruta, async route => {
+    if (route.request().method() === 'POST' || route.request().method() === 'PUT') {
+      await route.fulfill({ status: 503, contentType: 'application/json',
+        body: JSON.stringify({ detail: 'Fallo controlado E2E' }) });
+    } else await route.continue();
+  }, { times: 1 });
+}
+
 async function esperarPaso(page: Page, paso: string): Promise<void> {
   await expect(page.getByTestId(`paso-${paso}`)).toBeVisible();
 }
@@ -52,6 +72,9 @@ async function sinViolacionesCriticas(page: Page, contexto: string): Promise<voi
 }
 
 test.describe('Flujo crítico de planta', () => {
+  // page.route no intercepta peticiones asumidas por un service worker.
+  // Solo este grupo simula fallos HTTP; las demás pruebas mantienen la PWA.
+  test.use({ serviceWorkers: 'block' });
   test.afterEach(async ({ page }) => {
     if (ordenId === null) {
       return;
@@ -131,6 +154,16 @@ test.describe('Flujo crítico de planta', () => {
       // Alta mínima: solo nombre y peso por bulto.
       await page.getByTestId('bodega-nombre').fill('Papa UI E2E');
       await page.getByTestId('bodega-peso').fill('48');
+      await cancelarSalida(page, page.getByRole('link', { name: 'Ir a Fórmula de producción' }));
+      await expect(page.getByTestId('bodega-nombre')).toHaveValue('Papa UI E2E');
+      await fallarUnaEscritura(page, '**/api/v1/bodega/referencias-papa');
+      const falloReferencia = page.waitForResponse(r =>
+        r.url().endsWith('/api/v1/bodega/referencias-papa') && r.request().method() === 'POST',
+        { timeout: 15_000 });
+      await page.getByTestId('guardar-referencia').click();
+      expect((await falloReferencia).status()).toBe(503);
+      await cancelarSalida(page, page.getByRole('link', { name: 'Ir a Fórmula de producción' }));
+      await expect(page.getByTestId('bodega-peso')).toHaveValue('48');
       await page.getByTestId('guardar-referencia').click();
       await expect(page.getByText('Papa UI E2E').first()).toBeVisible();
       await sinViolacionesCriticas(page, 'bodega de papa');
@@ -224,6 +257,8 @@ test.describe('Flujo crítico de planta', () => {
       await page.getByTestId('formula-papa-referencia-0').selectOption({ label: REFERENCIA_PAPA });
       await page.getByTestId('formula-papa-bultos-0').fill('10');
       await expect(page.getByTestId('formula-papa-guardar')).toBeEnabled();
+      await cancelarSalida(page, page.getByRole('link', { name: 'Volver a Fórmula de producción' }));
+      await expect(page.getByTestId('formula-papa-nombre')).toHaveValue('Fórmula UI E2E');
       await page.getByTestId('formula-papa-guardar').click();
       await expect(page).toHaveURL(/\/formula-produccion\/formulas\/\d+/);
 
@@ -248,8 +283,15 @@ test.describe('Flujo crítico de planta', () => {
       await expect(page.getByTestId('formula-papa-total')).toHaveText('50');
       await sinViolacionesCriticas(page, 'editor de fórmula');
 
+      // El reparto modifica datos editables: cancelar conserva la mezcla.
+      const volver = page.getByRole('link', { name: 'Volver a Fórmula de producción' });
+      await cancelarSalida(page, volver);
+      await expect(page.getByTestId('formula-papa-total')).toHaveText('50');
+      page.once('dialog', dialog => dialog.accept());
+      await volver.click();
+      await expect(page).toHaveURL(/\/formula-produccion/);
+
       // Bandeja de órdenes: la orden creada aparece con la fórmula lista.
-      await page.goto('/formula-produccion');
       await page.getByTestId('seccion-ordenes').click();
       await expect(page.getByTestId('bodega-orden-' + ordenId).first()).toBeVisible();
       await expect(page.getByText('Lista').first()).toBeVisible();
@@ -257,6 +299,16 @@ test.describe('Flujo crítico de planta', () => {
       await expect(page).toHaveURL(/vista=con_formula/);
       await expect(page.getByTestId('bodega-orden-' + ordenId).first()).toBeVisible();
       await sinViolacionesCriticas(page, 'bandeja de fórmula');
+    });
+
+    await test.step('conservar notas de fórmula de orden al cancelar la salida', async () => {
+      await page.goto(`/formula-produccion/ordenes/${ordenId}`);
+      await page.locator('textarea').fill('Nota pendiente E2E');
+      const volver = page.getByRole('link', { name: 'Volver a Fórmula de producción' });
+      await cancelarSalida(page, volver);
+      await expect(page.locator('textarea')).toHaveValue('Nota pendiente E2E');
+      page.once('dialog', dialog => dialog.accept());
+      await volver.click();
     });
 
     await test.step('iniciar la producción', async () => {
@@ -280,6 +332,8 @@ test.describe('Flujo crítico de planta', () => {
 
       await esperarPaso(page, 'temperatura');
       await page.getByTestId('temperatura-180').click();
+      await cancelarSalida(page, page.getByRole('link', { name: 'Salir del registro' }));
+      await esperarPaso(page, 'temperatura');
       await continuar(page, 'continuar-horno');
 
       await esperarPaso(page, 'personal_zona_humeda');
@@ -305,6 +359,14 @@ test.describe('Flujo crítico de planta', () => {
       await esperarPaso(page, 'desperdicio');
       await page.getByTestId('sin-desperdicio').click();
 
+      await esperarPaso(page, 'resumen');
+      await fallarUnaEscritura(page, `**/api/v1/ordenes/${ordenId}/registros-horno`);
+      const falloTanda = page.waitForResponse(r =>
+        r.url().endsWith(`/api/v1/ordenes/${ordenId}/registros-horno`) && r.request().method() === 'POST',
+        { timeout: 15_000 });
+      await page.getByTestId('guardar-tanda').click();
+      expect((await falloTanda).status()).toBe(503);
+      await cancelarSalida(page, page.getByRole('link', { name: 'Salir del registro' }));
       await esperarPaso(page, 'resumen');
       await page.getByTestId('guardar-tanda').click();
       await expect(page).toHaveURL(/\/horno$/);
@@ -343,10 +405,33 @@ test.describe('Flujo crítico de planta', () => {
       await continuar(page, 'continuar-saborizado');
 
       await esperarPaso(page, 'resumen');
+      await fallarUnaEscritura(page, `**/api/v1/ordenes/${ordenId}/recepciones`);
+      const falloRecepcion = page.waitForResponse(r =>
+        r.url().endsWith(`/api/v1/ordenes/${ordenId}/recepciones`) && r.request().method() === 'POST',
+        { timeout: 15_000 });
+      await page.getByTestId('registrar-recepcion').click();
+      expect((await falloRecepcion).status()).toBe(503);
+      await cancelarSalida(page, page.getByRole('link', { name: 'Salir del registro' }));
+      await expect(page.getByText('25 kg').first()).toBeVisible();
       await page.getByTestId('registrar-recepcion').click();
       await expect(page.getByText(/Recepciones ya registradas \(1\)/)).toBeVisible();
       await expect(page.getByTestId('saborizado-orden-completa')).toBeVisible();
       await expect(page.getByTestId('registrar-recepcion')).toHaveCount(0);
+
+      // Cambiar la corrección sin guardar también exige descartar explícitamente.
+      await page.getByRole('button', { name: 'Corregir', exact: true }).click();
+      await continuar(page, 'continuar-saborizado');
+      await esperarPaso(page, 'sabor');
+      await continuar(page, 'continuar-saborizado');
+      await esperarPaso(page, 'cantidad_sabor');
+      await page.getByTestId('tecla-1').click();
+      await expect(page.getByTestId('teclado-valor')).toHaveText('21');
+      page.once('dialog', dialog => dialog.dismiss());
+      await page.getByRole('button', { name: 'Cancelar corrección' }).click();
+      await expect(page.getByTestId('teclado-valor')).toHaveText('21');
+      page.once('dialog', dialog => dialog.accept());
+      await page.getByRole('button', { name: 'Cancelar corrección' }).click();
+      await expect(page.getByTestId('saborizado-orden-completa')).toBeVisible();
 
       await page.goto(`/ordenes/${ordenId}`);
       await page.getByTestId('tab-saborizado').click();
@@ -400,4 +485,23 @@ test('protege selecciones del asistente de órdenes', async ({ page }) => {
   page.once('dialog', (dialog) => dialog.accept());
   await page.getByRole('link', { name: 'Salir del asistente' }).click();
   await expect(page).toHaveURL(/\/ordenes$/);
+});
+
+test('bodega conserva el borrador al cancelar una sustitución o un descarte', async ({ page }) => {
+  await iniciarSesion(page);
+  await page.goto('/bodega');
+  const fila = page.getByRole('row').filter({ hasText: REFERENCIA_PAPA }).first();
+  await fila.getByRole('button', { name: 'Corregir referencia' }).click();
+  await page.getByTestId('bodega-nombre').fill('Borrador ficticio sin guardar');
+  page.once('dialog', dialog => dialog.dismiss());
+  await fila.getByRole('button', { name: 'Corregir referencia' }).click();
+  await expect(page.getByTestId('bodega-nombre')).toHaveValue('Borrador ficticio sin guardar');
+  page.once('dialog', dialog => dialog.dismiss());
+  await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await expect(page.getByTestId('bodega-nombre')).toHaveValue('Borrador ficticio sin guardar');
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await expect(page.getByTestId('bodega-nombre')).toHaveValue('');
+  await page.getByRole('link', { name: 'Ir a Fórmula de producción' }).click();
+  await expect(page).toHaveURL(/\/formula-produccion$/);
 });

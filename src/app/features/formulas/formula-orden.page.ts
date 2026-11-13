@@ -6,6 +6,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import type { Observable} from 'rxjs';
 import { EMPTY, Subject, debounceTime, switchMap } from 'rxjs';
 
+import { seguirCambios } from '../../core/guards/cambios.guard';
+
 import type { OrdenBodega, ReferenciaPapa } from '../../core/modelos/bodega.model';
 import type {
   EstadoFormula,
@@ -46,6 +48,7 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
 @Component({
   selector: 'app-formula-orden',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[attr.inert]': 'guardando() ? "" : null' },
   imports: [
     RouterLink,
     FormsModule,
@@ -475,6 +478,19 @@ export class FormulaOrdenPage {
     return proy.total_bultos_por_tanda > 0;
   });
 
+  private readonly proteccion = seguirCambios(
+    () => [this.filas(), this.notas],
+    () => this.guardando(),
+  );
+
+  operacionPendiente(): boolean {
+    return this.proteccion.ocupado();
+  }
+
+  cambiosPendientes(): boolean {
+    return this.proteccion.pendientes();
+  }
+
   constructor() {
     this.cambios.pipe(debounceTime(300), switchMap(() => this.solicitarProyeccion())).subscribe({
       next: (proyeccion) => {
@@ -507,6 +523,7 @@ export class FormulaOrdenPage {
               }))
             : [{ referencia_papa_id: null, bultos_por_tanda: 1 }],
         );
+        this.proteccion.aceptar();
         this.cargando.set(false);
         if (this.editable()) {
           this.programarProyeccion();
@@ -636,6 +653,7 @@ export class FormulaOrdenPage {
             })),
           );
           this.advertencias.set(formula.advertencias);
+          this.proteccion.aceptar();
           this.guardando.set(false);
           this.avisos.exito('Fórmula guardada. Operarios y supervisor notificados.');
           this.programarProyeccion();

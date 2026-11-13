@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
+import { seguirCambios } from '../../core/guards/cambios.guard';
+
 import type { ReferenciaPapa } from '../../core/modelos/bodega.model';
 import type { ItemCatalogo } from '../../core/modelos/catalogos.model';
 import type { DetalleOrden, RegistroHornoGuardar } from '../../core/modelos/produccion.model';
@@ -51,6 +53,7 @@ type PasoTanda =
 @Component({
   selector: 'app-horno-asistente',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[attr.inert]': 'enviando() ? "" : null' },
   imports: [
     RouterLink,
     FormsModule,
@@ -1242,6 +1245,23 @@ export class HornoAsistentePage {
     }
   });
 
+  private readonly proteccion = seguirCambios(
+    () => [this.inicio().getTime(), this.referenciaPapaId(),
+      this.mezcla().map(fila => [fila.referencia_id, fila.bultos]), this.bultos(),
+      this.temperatura(), this.operariosSeleccion(), this.operariosZonaHumeda(),
+      this.aceiteInicial(), this.aceiteFinal(), this.hayDesperdicio(),
+      this.tipoDesperdicioId(), this.cantidadDesperdicio()],
+    () => this.enviando(),
+  );
+
+  operacionPendiente(): boolean {
+    return this.proteccion.ocupado();
+  }
+
+  cambiosPendientes(): boolean {
+    return this.proteccion.pendientes();
+  }
+
   constructor() {
     queueMicrotask(() => this.cargar());
   }
@@ -1280,6 +1300,7 @@ export class HornoAsistentePage {
         }
         // El reloj de la tanda arranca al abrir el registro.
         this.inicio.set(new Date());
+        this.proteccion.aceptar();
         this.cargando.set(false);
       },
       error: () => this.cargando.set(false),
@@ -1481,6 +1502,7 @@ export class HornoAsistentePage {
     this.enviando.set(true);
     this.ordenes.crearRegistroHorno(Number(this.id()), datos).subscribe({
       next: (registro) => {
+        this.proteccion.aceptar();
         this.enviando.set(false);
         this.avisos.exito(`Tanda registrada: ${registro.kg_crudos_calculados} kg de papa cruda.`);
         void this.router.navigate(['/horno']);
