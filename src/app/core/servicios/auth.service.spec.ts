@@ -1,6 +1,6 @@
-import { provideHttpClient } from '@angular/common/http';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import type { CodigoRol, RespuestaLogin, Usuario } from '../modelos/identidad.model';
@@ -121,5 +121,50 @@ describe('AuthService', () => {
     expect(servicio.usuario()).toBeNull();
     expect(servicio.sesionVerificada()).toBeTrue();
     expect(navegar).not.toHaveBeenCalled();
+  });
+  it('cierra por inactividad aunque haya consultas automáticas', fakeAsync(() => {
+    spyOn(router, 'navigate').and.resolveTo(true);
+    servicio.iniciarSesion({ nombre_usuario: 'ana', password: 'x' }).subscribe();
+    http.expectOne('/api/v1/auth/login').flush({
+      expira_en_segundos: 28800,
+      inactividad_segundos: 60,
+      usuario: usuario('admin'),
+    });
+    tick(30_000);
+    TestBed.inject(HttpClient).get('/api/v1/notificaciones').subscribe();
+    http.expectOne('/api/v1/notificaciones').flush([]);
+    tick(30_000);
+    http.expectOne('/api/v1/auth/logout').flush(null);
+    expect(servicio.usuario()).toBeNull();
+    tick(4_000);
+  }));
+
+  it('renueva por interacción y evita latidos en cada tecla', fakeAsync(() => {
+    spyOn(router, 'navigate').and.resolveTo(true);
+    servicio.iniciarSesion({ nombre_usuario: 'ana', password: 'x' }).subscribe();
+    http.expectOne('/api/v1/auth/login').flush({
+      expira_en_segundos: 28800,
+      inactividad_segundos: 120,
+      usuario: usuario('admin'),
+    });
+    tick(40_000);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'a' }));
+    http.expectOne('/api/v1/auth/actividad').flush(null);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'b' }));
+    http.expectNone('/api/v1/auth/actividad');
+    tick(80_000);
+    expect(servicio.usuario()).not.toBeNull();
+    tick(40_000);
+    http.expectOne('/api/v1/auth/logout').flush(null);
+    expect(servicio.usuario()).toBeNull();
+    tick(4_000);
+  }));
+
+  it('evita cierres duplicados mientras el servidor responde', () => {
+    spyOn(router, 'navigate').and.resolveTo(true);
+    servicio.cerrarSesion();
+    servicio.cerrarSesion();
+    http.expectOne('/api/v1/auth/logout').flush(null);
+    http.expectNone('/api/v1/auth/logout');
   });
 });
