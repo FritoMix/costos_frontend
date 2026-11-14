@@ -126,14 +126,23 @@ for (const pagina of [HornoListaPage, SaborizadoListaPage] as Type<unknown>[]) {
       fixture.destroy();
     });
 
-    it('no permite iniciar órdenes sin fórmula y cancela lecturas al salir', () => {
+    it('consulta la fórmula activa al iniciar y cancela lecturas al salir', () => {
       const fixture = TestBed.createComponent(pagina);
       responder([{ ...fila, formula_estado: 'sin_formula' }]);
       fixture.detectChanges();
       expect(
         (fixture.nativeElement.querySelector('[data-testid="tomar-orden-1"]') as HTMLButtonElement)
           .disabled,
-      ).toBeTrue();
+      ).toBeFalse();
+      const boton = fixture.nativeElement.querySelector('[data-testid="tomar-orden-1"]') as HTMLButtonElement;
+      boton.click();
+      boton.click();
+      const inicio = http.expectOne('/api/v1/ordenes/1/iniciar');
+      expect(inicio.request.method).toBe('POST');
+      inicio.flush({ detail: 'Este producto no tiene una fórmula activa.' }, { status: 400, statusText: 'Bad Request' });
+      responder([{ ...fila, formula_estado: 'sin_formula' }]);
+      fixture.detectChanges();
+      expect(boton.disabled).toBeFalse();
       (
         fixture.nativeElement.querySelector(
           '[data-testid="actualizar-operaciones"]',

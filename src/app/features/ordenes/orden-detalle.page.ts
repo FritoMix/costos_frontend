@@ -1,5 +1,7 @@
+import type { HttpErrorResponse } from '@angular/common/http';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 
 import type { DetalleOrden } from '../../core/modelos/produccion.model';
@@ -38,6 +40,9 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
       <app-cargando texto="Cargando expediente de la orden…" />
     } @else if (detalle(); as datos) {
       <div class="pagina-contenido max-w-7xl mx-auto">
+        @if (errorInicio(); as mensaje) {
+          <p role="alert" data-testid="error-iniciar-orden" class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">{{ mensaje }}</p>
+        }
         <!-- Encabezado Principal Despejado -->
         <header class="flex flex-col md:flex-row md:items-center justify-between gap-5 pb-4 border-b border-slate-200/80">
           <div>
@@ -88,12 +93,13 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
                   variante="primario"
                   (click)="iniciar()"
                   testId="iniciar-orden"
-                  [deshabilitado]="esperandoFormula()"
+                  [deshabilitado]="iniciando()"
+                  [cargando]="iniciando()"
                 >
                   <span class="flex items-center gap-2">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" /></svg>
                     @if (esperandoFormula()) {
-                      Esperando fórmula de Bodega
+                      Aplicar fórmula activa e iniciar
                     } @else {
                       {{ auth.esOperarioHorno() || auth.esOperarioSaborizado() ? 'Tomar e Iniciar Producción' : 'Iniciar Producción' }}
                     }
@@ -347,7 +353,7 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
                   @if (datos.orden.formula_estado === 'sin_formula') {
                     <div class="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3">
                       <p class="text-sm font-bold text-amber-900">
-                        Bodega está definiendo la fórmula. La producción no puede iniciar todavía.
+                        Esta orden aún no tiene una fórmula copiada. Al iniciar se buscará la fórmula activa del producto y se comprobará su compatibilidad con el horno y las horas programadas.
                       </p>
                     </div>
                   } @else if (datos.formula) {
@@ -593,11 +599,14 @@ export class OrdenDetallePage {
   readonly id = input.required<string>();
 
   private readonly servicio = inject(OrdenesService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly avisos = inject(NotificacionesService);
   private readonly router = inject(Router);
   protected readonly auth = inject(AuthService);
 
   protected readonly cargando = signal(true);
+  protected readonly iniciando = signal(false);
+  protected readonly errorInicio = signal<string | null>(null);
   protected readonly detalle = signal<DetalleOrden | null>(null);
   protected readonly confirmacion = signal<'cancelar' | 'eliminar' | null>(null);
   protected readonly tabActiva = signal<TabDetalle>('resumen');
@@ -621,7 +630,7 @@ export class OrdenDetallePage {
    * y saborizado: son quienes están en la máquina y toman la orden que van
    * a trabajar. El backend aplica exactamente la misma regla.
    */
-  /** Las órdenes nuevas no pueden iniciar hasta que Bodega defina la fórmula. */
+  /** La API intentará recuperar la plantilla activa si aún no hay copia en la orden. */
   protected readonly esperandoFormula = computed(
     () =>
       !!this.detalle()?.orden.formula_obligatoria &&
@@ -684,9 +693,22 @@ export class OrdenDetallePage {
   }
 
   protected iniciar(): void {
-    this.servicio.iniciar(Number(this.id())).subscribe(() => {
-      this.avisos.exito('La orden pasó a En producción.');
-      this.cargar();
+    if (this.iniciando()) return;
+    this.iniciando.set(true);
+    this.errorInicio.set(null);
+    this.servicio.iniciar(Number(this.id())).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.iniciando.set(false);
+        this.avisos.exito('La orden pasó a En producción.');
+        this.cargar();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.iniciando.set(false);
+        const detalle = (error.error as { detail?: unknown } | null)?.detail;
+        this.errorInicio.set(error.status === 400 && typeof detalle === 'string'
+          ? detalle
+          : 'No se confirmó el inicio. Actualiza la orden antes de volver a intentarlo.');
+      },
     });
   }
 

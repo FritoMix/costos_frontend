@@ -25,10 +25,20 @@ interface Orden {
 }
 
 async function login(ctx: APIRequestContext, usuario = USER, password = PASS) {
-  const respuesta = await ctx.post(`${API}/auth/login`, {
-    data: { nombre_usuario: usuario, password },
-  });
-  expect(respuesta.status()).toBe(200);
+  // El proxy conserva su límite de producción. La suite añade varias sesiones
+  // seguidas desde una misma IP: ante 429 respeta la espera, sin relajar el límite.
+  for (let intento = 0; intento < 6; intento++) {
+    const respuesta = await ctx.post(`${API}/auth/login`, {
+      data: { nombre_usuario: usuario, password },
+    });
+    if (respuesta.status() !== 429 || intento === 5) {
+      expect(respuesta.status()).toBe(200);
+      return;
+    }
+    const indicado = Number(respuesta.headers()['retry-after']);
+    const espera = Number.isFinite(indicado) && indicado > 0 ? indicado : 6;
+    await new Promise(resolve => setTimeout(resolve, espera * 1000));
+  }
 }
 
 async function datos(ctx: APIRequestContext) {
@@ -232,4 +242,49 @@ test.describe('Concurrencia en PostgreSQL y experiencia de operarios', () => {
       await limpiar(request, ids);
     }
   });
+
+  test('recupera la fórmula activada con el detalle de la orden ya abierto', async ({ page }) => {
+    const ctx = page.request;
+    await login(ctx);
+    const cuerpo = await datos(ctx);
+    const lista = await ctx.get(`${API}/bodega/formulas-papa?producto_id=${cuerpo.producto_id}`);
+    expect(lista.status()).toBe(200);
+    const formulas = (await lista.json()) as { id: number; activa: boolean }[];
+    const formula = formulas.find(f => f.activa)!;
+    expect(formula).toBeTruthy();
+    const ids = new Set<number>();
+    try {
+      expect((await ctx.post(`${API}/bodega/formulas-papa/${formula.id}/desactivar`)).status()).toBe(200);
+      const orden = await crear(ctx, cuerpo);
+      ids.add(orden.id);
+      await page.goto(`/ordenes/${orden.id}`);
+      const iniciar = page.getByTestId('iniciar-orden');
+      await expect(iniciar).toBeEnabled();
+      const rechazado = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith(`/ordenes/${orden.id}/iniciar`));
+      await iniciar.click();
+      expect((await rechazado).status()).toBe(400);
+      await expect(page.getByTestId('error-iniciar-orden')).toContainText('producto no tiene una fórmula activa');
+      await expect(iniciar).toBeEnabled();
+
+      // Bodega activa la fórmula desde otra sesión; el operario mantiene el detalle abierto.
+      expect((await ctx.post(`${API}/bodega/formulas-papa/${formula.id}/activar`)).status()).toBe(200);
+      const confirmado = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith(`/ordenes/${orden.id}/iniciar`));
+      await iniciar.click();
+      expect((await confirmado).status()).toBe(200);
+      await expect(iniciar).toHaveCount(0);
+      await expect(page.getByTestId('error-iniciar-orden')).toHaveCount(0);
+      const respuesta = await ctx.get(`${API}/ordenes/${orden.id}`);
+      const detalle = await respuesta.json();
+      expect(detalle.orden.estado).toBe('en_produccion');
+      expect(detalle.formula.referencias.length).toBeGreaterThan(0);
+      const segunda = await ctx.post(`${API}/ordenes/${orden.id}/iniciar`);
+      expect(segunda.status()).toBe(200);
+      const despues = await (await ctx.get(`${API}/ordenes/${orden.id}`)).json();
+      expect(despues.formula.referencias).toHaveLength(detalle.formula.referencias.length);
+    } finally {
+      expect((await ctx.post(`${API}/bodega/formulas-papa/${formula.id}/activar`)).status()).toBe(200);
+      await limpiar(ctx, ids);
+    }
+  });
+
 });
