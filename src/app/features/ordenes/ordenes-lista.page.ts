@@ -28,7 +28,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
     EtiquetaEstadoComponent,
   ],
   template: `
-    <div class="space-y-6">
+    <div class="pagina-contenido">
       <header class="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div class="flex items-center gap-2">

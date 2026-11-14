@@ -37,7 +37,7 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
     @if (cargando()) {
       <app-cargando texto="Cargando expediente de la orden…" />
     } @else if (detalle(); as datos) {
-      <div class="space-y-8 max-w-7xl mx-auto">
+      <div class="pagina-contenido max-w-7xl mx-auto">
         <!-- Encabezado Principal Despejado -->
         <header class="flex flex-col md:flex-row md:items-center justify-between gap-5 pb-4 border-b border-slate-200/80">
           <div>

@@ -7,7 +7,7 @@ import { RouterLink } from '@angular/router';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink],
   template: `
-    <div class="mx-auto max-w-6xl space-y-8">
+    <div class="pagina-contenido mx-auto max-w-6xl">
       <header class="border-b border-slate-200/80 pb-5">
         <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Catálogos Maestros</h1>
         <p class="mt-1.5 text-sm text-slate-500 font-medium max-w-3xl leading-relaxed">

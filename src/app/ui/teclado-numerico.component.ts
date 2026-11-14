@@ -14,6 +14,7 @@ import { ChangeDetectionStrategy, Component, input, model } from '@angular/core'
 @Component({
   selector: 'app-teclado-numerico',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'block min-w-0' },
   template: `
     <div class="mx-auto max-w-sm">
       <!-- Visor -->

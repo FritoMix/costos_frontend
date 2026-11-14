@@ -55,7 +55,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
     EtiquetaEstadoComponent,
   ],
   template: `
-    <div class="space-y-6" data-testid="formula-ordenes-bandeja">
+    <div class="pagina-contenido" data-testid="formula-ordenes-bandeja">
       <header class="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
@@ -113,7 +113,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
       </div>
 
       @if (seccion() === 'formulas') {
-        <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-4">
           <p class="max-w-2xl text-sm font-medium text-slate-500">
             Una fórmula activa por producto. Al crear una orden, el supervisor ve la activa y la
             orden nace con esa mezcla.
@@ -194,7 +194,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
                   {{ formula.total_kg_fritos_estimados | number: '1.0-2' }} kg fritos
                 </p>
 
-                <div class="mt-4 flex flex-wrap items-center gap-2">
+                <div class="mt-6 flex flex-wrap items-center gap-3 border-t border-sky-100 pt-5">
                   <a
                     [routerLink]="['/formula-produccion', 'formulas', formula.id]"
                     [queryParams]="{ seccion: 'formulas' }"
@@ -265,7 +265,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
 
       <!-- Filtros -->
       <section class="rounded-3xl border border-sky-100/90 bg-white/85 p-5 shadow-xs">
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
           <label class="block">
             <span class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Desde</span>
             <input

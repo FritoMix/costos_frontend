@@ -25,7 +25,7 @@ import { CargandoComponent } from '../../ui/cargando.component';
     CargandoComponent,
   ],
   template: `
-    <div class="mx-auto max-w-6xl space-y-8">
+    <div class="pagina-contenido mx-auto max-w-6xl">
       <!-- Encabezado Espacioso -->
       <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>

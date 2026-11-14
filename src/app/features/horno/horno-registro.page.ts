@@ -43,7 +43,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
     @if (cargando()) {
       <app-cargando texto="Cargando estación de fritura…" />
     } @else if (detalle(); as datos) {
-      <div class="mx-auto max-w-3xl space-y-6">
+      <div class="pagina-contenido mx-auto max-w-3xl">
         <header>
           <a
             routerLink="/horno"

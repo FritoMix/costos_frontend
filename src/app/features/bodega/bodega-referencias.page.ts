@@ -41,7 +41,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
     ConfirmarComponent,
   ],
   template: `
-    <div class="mx-auto max-w-6xl space-y-8">
+    <div class="pagina-contenido mx-auto max-w-6xl">
       <header
         class="flex flex-col gap-4 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-center sm:justify-between"
       >
@@ -167,7 +167,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                 </label>
               </div>
 
-              <div class="flex items-center gap-3 pt-1">
+              <div class="acciones-formulario">
                 <app-boton
                   tipo="submit"
                   variante="primario"
@@ -355,7 +355,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
               No hay hornos activos. Configura un horno y su capacidad de bultos por hora.
             </div>
           } @else {
-            <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 2xl:grid-cols-4">
               <div>
                 <label class="etiqueta text-xs font-bold text-slate-700" for="horno-proyeccion"
                   >Horno</label

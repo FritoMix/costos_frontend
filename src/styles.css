@@ -99,6 +99,37 @@
 }
 
 @layer components {
+  .contenido-ruta > router-outlet + * {
+    display: block;
+    min-width: 0;
+  }
+
+  /* Ritmo compartido: gap real, incluso con componentes y contenido condicional. */
+  .pagina-contenido {
+    @apply flex min-w-0 flex-col gap-6 sm:gap-8;
+  }
+
+  /* Separa las acciones de los campos y deja que se distribuyan en móvil. */
+  .acciones-formulario {
+    @apply flex flex-wrap items-center gap-3 border-t border-sky-100 pt-5;
+  }
+
+  @media (width < 40rem) {
+    .acciones-formulario > app-boton,
+    .acciones-formulario > a,
+    .acciones-formulario > a > app-boton,
+    .acciones-formulario > app-boton > button,
+    .acciones-formulario > a > app-boton > button {
+      width: 100%;
+    }
+    .acciones-formulario > a {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 2.75rem;
+    }
+  }
+
   /* Jerarquía Tipográfica y de Diseño del Sistema */
   .titulo-pagina {
     @apply text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900;

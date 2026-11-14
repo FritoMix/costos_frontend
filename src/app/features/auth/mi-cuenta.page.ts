@@ -13,7 +13,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, TarjetaComponent, BotonComponent],
   template: `
-    <div class="mx-auto max-w-2xl space-y-6">
+    <div class="pagina-contenido mx-auto max-w-2xl">
       <header>
         <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Mi Cuenta & Credenciales</h1>
         <p class="mt-1 text-sm text-slate-500 font-medium">
@@ -22,13 +22,13 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
       </header>
 
       <app-tarjeta titulo="Identidad del Operador">
-        <div class="flex items-center gap-4 pb-4 mb-4 border-b border-slate-100">
+        <div class="flex flex-wrap items-center gap-4 pb-4 mb-4 border-b border-slate-100">
           <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-marca-700 text-white font-mono text-xl font-black shadow-sm">
             {{ iniciales(auth.usuario()?.nombre_completo ?? '') }}
           </div>
           <div>
             <h2 class="text-lg font-black text-slate-900">{{ auth.usuario()?.nombre_completo }}</h2>
-            <div class="flex items-center gap-2 mt-1">
+            <div class="flex flex-wrap items-center gap-2 mt-1">
               <span class="inline-flex items-center gap-1 rounded-md bg-marca-50 px-2 py-0.5 text-xs font-bold text-marca-800 border border-marca-200/60">
                 {{ etiquetaRol() }}
               </span>
@@ -83,7 +83,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
               <p class="error-campo">La contraseña nueva debe tener al menos 8 caracteres.</p>
             }
           </div>
-          <div class="pt-2">
+          <div class="acciones-formulario">
             <app-boton tipo="submit" variante="primario" [cargando]="enviando()">
               Actualizar Contraseña
             </app-boton>
