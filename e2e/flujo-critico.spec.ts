@@ -110,6 +110,10 @@ test.describe('Flujo crítico de planta', () => {
     // Al entrar, vuelve a la ruta que había pedido (no a la de por defecto).
     // Se llena el formulario en la misma URL para no perder `volverA`.
     await page.getByTestId('login-usuario').fill(USUARIO);
+    await page.getByTestId('login-password').fill('incorrecta-e2e');
+    await page.getByTestId('login-submit').click();
+    await expect(page.getByRole('alert').filter({ hasText: 'Revisa el usuario' })).toBeVisible();
+    await expect(page).toHaveURL(/volverA=(%2F|\/)ordenes/);
     await page.getByTestId('login-password').fill(PASSWORD);
     await page.getByTestId('login-submit').click();
     await expect(page).toHaveURL(/\/ordenes$/);

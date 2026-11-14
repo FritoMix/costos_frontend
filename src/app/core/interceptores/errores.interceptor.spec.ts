@@ -119,4 +119,14 @@ describe('erroresInterceptor', () => {
     );
     expect(auth.limpiarLocal).not.toHaveBeenCalled();
   });
+  it('un login rechazado conserva volverA y no simula una sesión expirada', () => {
+    router.url = '/entrar?volverA=%2Fordenes';
+    http.post('/api/v1/auth/login', {}).subscribe({ error: () => undefined });
+    controlador
+      .expectOne('/api/v1/auth/login')
+      .flush({ detail: 'Credenciales incorrectas' }, { status: 401, statusText: 'Unauthorized' });
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(auth.limpiarLocal).not.toHaveBeenCalled();
+    expect(avisos.error).toHaveBeenCalledWith('Credenciales incorrectas');
+  });
 });

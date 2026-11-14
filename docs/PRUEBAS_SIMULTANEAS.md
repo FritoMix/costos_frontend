@@ -1,7 +1,7 @@
 # Concurrencia y experiencia operativa
 
 Estas pruebas solo se ejecutan contra el stack HTTP local desechable de E2E.
-El archivo `e2e/concurrencia.spec.ts` rechaza destinos externos; no requiere
+El archivo `e2e/operacion-concurrente.spec.ts` rechaza destinos externos; no requiere
 credenciales de producción ni carga Supabase o Render. No confundir el único
 worker de Playwright con una única solicitud: los casos abren navegadores y
 peticiones simultáneas de forma explícita dentro de cada prueba.
@@ -54,3 +54,9 @@ El límite de acceso de Nginx se conserva. Un 429 con cuerpo HTML y sin Retry-Af
 ahora se explica como exceso de intentos, y el login muestra un aviso persistente
 sin borrar las credenciales escritas. Esto también cubre el caso de varios
 usuarios detrás de una misma IP: deben esperar si alcanzan el límite del proxy.
+
+Un rechazo de credenciales (401 en /auth/login) ya no se trata como expiración de
+una sesión de trabajo: conserva volverA. El E2E de enlace directo prueba un
+intento incorrecto seguido de uno correcto y verifica el regreso a órdenes.
+La prueba masiva corre después del flujo principal para no acumular accesos
+artificiales al inicio de la suite bajo el mismo límite de IP de Nginx.
