@@ -58,6 +58,7 @@ function extraerMensaje(error: HttpErrorResponse): string {
     const segundos = Number(error.headers.get('Retry-After'));
     if (segundos > 0)
       return `Demasiados intentos. Espera ${Math.ceil(segundos)} segundos y vuelve a intentar.`;
+    return 'Demasiados intentos. Espera un momento y vuelve a intentarlo.';
   }
   const detalle = (error.error as { detail?: string } | null)?.detail;
   if (typeof detalle === 'string' && detalle.trim()) {

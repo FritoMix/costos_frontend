@@ -49,3 +49,8 @@ caso se cancelan y eliminan mediante la API al terminar.
 
 Las activaciones, desactivaciones y eliminaciones del catálogo de fórmulas
 se serializan en la interfaz, con aviso de progreso y bloqueo de dobles envíos.
+
+El límite de acceso de Nginx se conserva. Un 429 con cuerpo HTML y sin Retry-After
+ahora se explica como exceso de intentos, y el login muestra un aviso persistente
+sin borrar las credenciales escritas. Esto también cubre el caso de varios
+usuarios detrás de una misma IP: deben esperar si alcanzan el límite del proxy.

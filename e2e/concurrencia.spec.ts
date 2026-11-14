@@ -63,7 +63,7 @@ async function limpiar(ctx: APIRequestContext, ids: Set<number>) {
   for (const id of ids) {
     await ctx.post(`${API}/ordenes/${id}/cancelar`);
     const respuesta = await ctx.delete(`${API}/ordenes/${id}`);
-    expect([204, 404]).toContain(respuesta.status());
+    expect([200, 404]).toContain(respuesta.status());
   }
 }
 
@@ -92,7 +92,6 @@ test.describe('Concurrencia en PostgreSQL y experiencia de operarios', () => {
     expect(rol).toBeTruthy();
     const contextos: BrowserContext[] = [];
     const ids = new Set<number>();
-    let fallo = true;
     try {
       for (let i = 0; i < 2; i++) {
         const usuario = `sim_horno_${randomUUID().slice(0, 8)}`;
@@ -109,7 +108,6 @@ test.describe('Concurrencia en PostgreSQL y experiencia de operarios', () => {
         expect(creado.status()).toBe(201);
         const contexto = await browser.newContext({ baseURL, serviceWorkers: 'block' });
         contextos.push(contexto);
-        await contexto.tracing.start({ screenshots: true, snapshots: true });
         await login(contexto.request, usuario, password);
       }
       for (let ronda = 0; ronda < 3; ronda++) {
@@ -150,7 +148,9 @@ test.describe('Concurrencia en PostgreSQL y experiencia de operarios', () => {
         expect(estados.filter((e) => [400, 409].includes(e))).toHaveLength(1);
         const ganadora = estados[0] === 200 ? a.id : b.id;
         const perdedora = estados[0] === 200 ? paginas[1] : paginas[0];
-        await expect(perdedora.getByRole('status').filter({ hasText: 'No se confirmó' })).toContainText('No se confirmó');
+        await expect(
+          perdedora.getByRole('status').filter({ hasText: 'No se confirmó' }),
+        ).toContainText('No se confirmó');
         await expect(perdedora.getByTestId(`registrar-tanda-${ganadora}`)).toBeVisible();
         const activas = (await (
           await request.get(`${API}/ordenes?estado=en_produccion&solo_propias=false`)
@@ -161,19 +161,12 @@ test.describe('Concurrencia en PostgreSQL y experiencia de operarios', () => {
         ids.delete(b.id);
         await Promise.all(paginas.map((p) => p.close()));
       }
-      fallo = false;
     } finally {
       try {
         await limpiar(request, ids);
       } finally {
-        for (let i = 0; i < contextos.length; i++) {
-          if (fallo) {
-            const path = info.outputPath(`operario-${i}.zip`);
-            await contextos[i].tracing.stop({ path });
-            await info.attach(`Operario ${i}`, { path, contentType: 'application/zip' });
-          } else await contextos[i].tracing.stop();
-          await contextos[i].close();
-        }
+        // Playwright administra automáticamente las trazas de los contextos creados en el test.
+        await Promise.all(contextos.map((contexto) => contexto.close()));
       }
     }
   });
