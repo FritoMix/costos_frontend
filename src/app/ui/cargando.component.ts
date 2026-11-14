@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 @Component({
   selector: 'app-cargando',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'block min-w-0' },
   template: `
     <div class="flex flex-col items-center justify-center gap-3 px-6 py-12 text-slate-500" role="status">
       <div class="relative flex h-10 w-10 items-center justify-center">

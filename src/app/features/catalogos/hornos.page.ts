@@ -27,7 +27,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
     ConfirmarComponent,
   ],
   template: `
-    <div class="mx-auto max-w-6xl space-y-8">
+    <div class="pagina-contenido mx-auto max-w-6xl">
       <!-- Encabezado Espacioso -->
       <header
         class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5"
@@ -53,7 +53,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
             {{ volverTexto() }}
           </a>
           <h1
-            class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3"
+            class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex flex-wrap items-center gap-3"
           >
             <span>Líneas y Hornos de Fritura</span>
             <span
@@ -331,7 +331,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
             </div>
 
             <!-- Acciones -->
-            <div class="flex items-center gap-3 pt-3 border-t border-slate-100">
+            <div class="acciones-formulario">
               <app-boton tipo="submit" variante="primario" [cargando]="enviando()">
                 {{ editando() ? 'Guardar Cambios' : 'Registrar Horno' }}
               </app-boton>

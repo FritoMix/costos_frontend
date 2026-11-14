@@ -90,6 +90,15 @@ jobs:
           E2E_SKIP_WEBSERVER: "1"
         run: npm run test:e2e
 
+      - name: Publicar capturas de revisión del diseño
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: revision-diseno
+          path: test-results/**/diseno-*.png
+          retention-days: 14
+          if-no-files-found: ignore
+
       - name: Medir lecturas concurrentes en el stack desechable
         run: |
           mkdir -p loadtest-results

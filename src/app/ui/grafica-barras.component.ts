@@ -19,6 +19,7 @@ export interface BarraDato {
 @Component({
   selector: 'app-grafica-barras',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'block min-w-0' },
   imports: [DecimalPipe],
   template: `
     @if (datos().length === 0) {

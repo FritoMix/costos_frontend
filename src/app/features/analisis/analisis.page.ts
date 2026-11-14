@@ -38,7 +38,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
     GraficaBarrasComponent,
   ],
   template: `
-    <div class="space-y-8" data-testid="analisis-page">
+    <div class="pagina-contenido" data-testid="analisis-page">
       <!-- Encabezado Principal Espacioso -->
       <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
         <div>
@@ -78,7 +78,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
         subtitulo="Personaliza el período y las líneas operativas para calcular los indicadores"
       >
         <form [formGroup]="formulario" class="space-y-6">
-          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             <div>
               <label class="etiqueta" for="desde">Fecha Desde</label>
               <input id="desde" type="date" class="campo" formControlName="fecha_desde" />

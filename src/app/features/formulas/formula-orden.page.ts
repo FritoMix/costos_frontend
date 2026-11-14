@@ -61,7 +61,7 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
     FormulaResumenComponent,
   ],
   template: `
-    <div class="space-y-8 sm:space-y-10" data-testid="formula-orden">
+    <div class="pagina-contenido" data-testid="formula-orden">
       <header class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
           <a

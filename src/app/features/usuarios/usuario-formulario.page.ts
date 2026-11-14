@@ -18,7 +18,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
   host: { '[attr.inert]': 'enviando() ? "" : null' },
   imports: [ReactiveFormsModule, RouterLink, TarjetaComponent, BotonComponent, CargandoComponent],
   template: `
-    <div class="mx-auto max-w-2xl space-y-6">
+    <div class="pagina-contenido mx-auto max-w-2xl">
       <header>
         <a
           routerLink="/usuarios"

@@ -39,7 +39,7 @@ const ICONO_FORMULA =
     DecimalPipe,
   ],
   template: `
-    <div class="space-y-6 anim-pagina">
+    <div class="pagina-contenido anim-pagina">
       <!-- Hero de bienvenida futurista en Azul Zafiro y Cyan -->
       <div class="relative overflow-hidden rounded-3xl p-5 sm:p-8 text-white shadow-xl"
            style="background: linear-gradient(135deg, #0c4a6e 0%, #075985 40%, #0284c7 80%, #0369a1 100%);

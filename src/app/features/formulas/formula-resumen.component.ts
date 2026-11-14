@@ -21,6 +21,7 @@ const ETIQUETAS_ESTADO: Record<EstadoFormula, { texto: string; clases: string }>
 @Component({
   selector: 'app-formula-resumen',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'block min-w-0' },
   imports: [DecimalPipe],
   template: `
     <div class="space-y-4" data-testid="formula-resumen">

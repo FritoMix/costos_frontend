@@ -9,6 +9,7 @@ export type TamanoBoton = 'normal' | 'grande' | 'pequeno';
 @Component({
   selector: 'app-boton',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'inline-flex max-w-full align-middle', '[class.w-full]': 'anchoCompleto()' },
   template: `
     <button
       [type]="tipo()"

@@ -47,7 +47,7 @@ interface FilaPlantilla {
     ConfirmarComponent,
   ],
   template: `
-    <div class="mx-auto max-w-4xl space-y-8 sm:space-y-10" data-testid="formula-papa-form">
+    <div class="pagina-contenido mx-auto max-w-4xl" data-testid="formula-papa-form">
       <header class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
           <a

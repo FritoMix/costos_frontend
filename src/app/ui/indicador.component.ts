@@ -9,6 +9,7 @@ export type TonoIndicador = 'neutral' | 'marca' | 'verde' | 'azul' | 'ambar' | '
 @Component({
   selector: 'app-indicador',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'block min-w-0' },
   imports: [DecimalPipe],
   template: `
     <div
