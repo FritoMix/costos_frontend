@@ -1,6 +1,9 @@
-import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import type { HttpErrorResponse } from '@angular/common/http';
+import { DatePipe, DecimalPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import type { Subscription } from 'rxjs';
 import { forkJoin } from 'rxjs';
 
 import type { Orden } from '../../core/modelos/produccion.model';
@@ -20,6 +23,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
   imports: [
     RouterLink,
     DecimalPipe,
+    DatePipe,
     TarjetaComponent,
     BotonComponent,
     CargandoComponent,
@@ -33,18 +37,25 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
             <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Operación de Hornos</h1>
             <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
               <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              En Vivo
+              {{ ultimaActualizacion() ? 'Actualizado ' + (ultimaActualizacion() | date: 'HH:mm:ss') : 'Consultando' }}
             </span>
           </div>
           <p class="mt-1 text-sm text-slate-500 font-medium">
             Selecciona la orden activa en tu línea para registrar bultos crudos, temperaturas y niveles de aceite.
           </p>
         </div>
+        <app-boton variante="secundario" (click)="cargar()" [cargando]="cargando()"
+          [deshabilitado]="tomando() !== null" testId="actualizar-operaciones">Actualizar</app-boton>
       </header>
+      @if (avisoOperacion()) {
+        <p role="status" class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          {{ avisoOperacion() }}
+        </p>
+      }
 
       <!-- Órdenes pendientes: el operario las toma y arranca la producción
            sin tener que esperar a que el supervisor las inicie. -->
-      @if (!cargando() && pendientes().length > 0) {
+      @if (!cargando() && !error() && pendientes().length > 0) {
         <section class="overflow-hidden rounded-3xl border border-amber-200/80 bg-amber-50/40">
           <header class="flex items-center gap-2 border-b border-amber-200/60 px-5 py-3.5">
             <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500 text-sm text-white">📥</span>
@@ -91,8 +102,8 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                   <app-boton
                     variante="primario"
                     (click)="tomar(orden)"
-                    [cargando]="tomando() === orden.id"
-                    [deshabilitado]="orden.formula_estado === 'sin_formula'"
+                    [cargando]="tomando() === orden.id" [testId]="'tomar-orden-' + orden.id"
+                    [deshabilitado]="tomando() !== null || orden.formula_estado === 'sin_formula'"
                   >
                     Tomar e iniciar
                   </app-boton>
@@ -105,11 +116,16 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
 
       @if (cargando()) {
         <app-cargando texto="Consultando órdenes en producción…" />
+      } @else if (error()) {
+        <section role="alert" class="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-rose-900">
+          <p>{{ error() }}</p>
+          <app-boton variante="secundario" (click)="cargar()">Reintentar</app-boton>
+        </section>
       } @else if (ordenes().length === 0) {
         <app-tarjeta [sinRelleno]="true">
           <app-estado-vacio
             titulo="No hay órdenes en producción"
-            descripcion="Cuando el supervisor autorice e inicie una orden en tu línea de fritura, aparecerá aquí inmediatamente."
+            descripcion="Cuando el supervisor autorice e inicie una orden en tu línea de fritura, podrás verla al actualizar esta lista."
           />
         </app-tarjeta>
       } @else {
@@ -194,29 +210,44 @@ export class HornoListaPage {
   /** Id de la orden que se está tomando ahora mismo (para el botón). */
   protected readonly tomando = signal<number | null>(null);
 
+  private readonly destroyRef = inject(DestroyRef);
+  private lectura?: Subscription;
+  protected readonly error = signal<string | null>(null);
+  protected readonly avisoOperacion = signal<string | null>(null);
+  protected readonly ultimaActualizacion = signal<Date | null>(null);
+
   constructor() {
     this.cargar();
   }
 
-  private cargar(): void {
+  protected cargar(): void {
+    if (this.tomando() !== null) return;
+    this.lectura?.unsubscribe();
+    this.error.set(null);
     this.cargando.set(true);
-    forkJoin({
+    this.lectura = forkJoin({
       enProduccion: this.servicio.listar({ estado: 'en_produccion', soloPropias: false }),
       pendientes: this.servicio.listar({ estado: 'pendiente', soloPropias: false }),
-    }).subscribe({
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: ({ enProduccion, pendientes }) => {
+        this.ultimaActualizacion.set(new Date());
         this.ordenes.set(enProduccion);
         this.pendientes.set(pendientes);
         this.cargando.set(false);
       },
-      error: () => this.cargando.set(false),
+      error: () => {
+        this.cargando.set(false);
+        this.error.set('No se pudo cargar la lista. Revisa la conexión y vuelve a intentarlo.');
+      },
     });
   }
 
   /** Toma la orden y arranca la producción. */
   protected tomar(orden: Orden): void {
+    if (this.tomando() !== null || this.cargando() || orden.formula_estado === 'sin_formula') return;
+    this.avisoOperacion.set(null);
     this.tomando.set(orden.id);
-    this.servicio.iniciar(orden.id).subscribe({
+    this.servicio.iniciar(orden.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.tomando.set(null);
         this.avisos.exito(`Orden ${orden.numero_orden} iniciada. Ya puedes registrar tandas.`);
@@ -224,7 +255,11 @@ export class HornoListaPage {
       },
       // El mensaje de error (por ejemplo, "ese horno ya tiene una orden en
       // producción") lo muestra el interceptor.
-      error: () => this.tomando.set(null),
+      error: (respuesta: HttpErrorResponse) => {
+        this.tomando.set(null);
+        this.avisoOperacion.set('No se confirmó el inicio. Revisa la lista antes de volver a intentarlo.');
+        if ([400, 404, 409].includes(respuesta.status)) this.cargar();
+      },
     });
   }
 }

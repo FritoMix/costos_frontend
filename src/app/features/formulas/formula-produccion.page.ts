@@ -1,6 +1,8 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import type { Subscription } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { HttpErrorResponse } from '@angular/common/http';
 
@@ -79,6 +81,9 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
         </div>
       </header>
 
+      @if (cambiandoEstado() !== null) {
+        <p role="status" class="text-sm font-semibold text-sky-700">Procesando el cambio de fórmula…</p>
+      }
       <!-- Secciones del módulo -->
       <div
         class="flex flex-wrap items-center gap-2 rounded-2xl border border-sky-100/90 bg-white p-1.5 shadow-2xs"
@@ -201,6 +206,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
                       variante="secundario"
                       tamano="pequeno"
                       [cargando]="cambiandoEstado() === formula.id"
+                      [deshabilitado]="cambiandoEstado() !== null"
                       [testId]="'formula-papa-desactivar-' + formula.id"
                       (click)="desactivarFormula(formula)"
                     >
@@ -211,6 +217,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
                       variante="acento"
                       tamano="pequeno"
                       [cargando]="cambiandoEstado() === formula.id"
+                      [deshabilitado]="cambiandoEstado() !== null"
                       [testId]="'formula-papa-activar-' + formula.id"
                       (click)="activarFormula(formula)"
                     >
@@ -220,6 +227,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
                       variante="texto"
                       tamano="pequeno"
                       (click)="pedirEliminarFormula(formula)"
+                      [deshabilitado]="cambiandoEstado() !== null"
                     >
                       Eliminar
                     </app-boton>
@@ -564,6 +572,10 @@ export class FormulaProduccionPage {
     ];
   });
 
+  private readonly destroyRef = inject(DestroyRef);
+  private lecturaOrdenes?: Subscription;
+  private lecturaFormulas?: Subscription;
+
   constructor() {
     // Los filtros se reflejan en la URL para poder volver a la misma vista.
     const parametros = this.ruta.snapshot.queryParamMap;
@@ -608,9 +620,10 @@ export class FormulaProduccionPage {
   }
 
   protected cargarFormulas(): void {
+    this.lecturaFormulas?.unsubscribe();
     this.cargandoFormulas.set(true);
     this.errorFormulas.set(null);
-    this.formulasPapa.listar().subscribe({
+    this.lecturaFormulas = this.formulasPapa.listar().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (formulas) => {
         this.formulas.set(formulas);
         this.cargandoFormulas.set(false);
@@ -627,8 +640,9 @@ export class FormulaProduccionPage {
   }
 
   protected activarFormula(formula: FormulaPapa): void {
+    if (this.cambiandoEstado() !== null) return;
     this.cambiandoEstado.set(formula.id);
-    this.formulasPapa.activar(formula.id).subscribe({
+    this.formulasPapa.activar(formula.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (activada) => {
         this.cambiandoEstado.set(null);
         this.avisos.exito(
@@ -641,8 +655,9 @@ export class FormulaProduccionPage {
   }
 
   protected desactivarFormula(formula: FormulaPapa): void {
+    if (this.cambiandoEstado() !== null) return;
     this.cambiandoEstado.set(formula.id);
-    this.formulasPapa.desactivar(formula.id).subscribe({
+    this.formulasPapa.desactivar(formula.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.cambiandoEstado.set(null);
         this.avisos.exito('Fórmula desactivada. Las órdenes nuevas pedirán a Bodega.');
@@ -653,21 +668,24 @@ export class FormulaProduccionPage {
   }
 
   protected pedirEliminarFormula(formula: FormulaPapa): void {
+    if (this.cambiandoEstado() !== null) return;
     this.formulaEliminar.set(formula);
   }
 
   protected eliminarFormula(): void {
     const formula = this.formulaEliminar();
-    if (!formula) {
+    if (!formula || this.cambiandoEstado() !== null) {
       return;
     }
-    this.formulasPapa.eliminar(formula.id).subscribe({
+    this.cambiandoEstado.set(formula.id);
+    this.formulaEliminar.set(null);
+    this.formulasPapa.eliminar(formula.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
-        this.formulaEliminar.set(null);
+        this.cambiandoEstado.set(null);
         this.avisos.exito('Fórmula eliminada del catálogo.');
         this.cargarFormulas();
       },
-      error: () => this.formulaEliminar.set(null),
+      error: () => this.cambiandoEstado.set(null),
     });
   }
 
@@ -706,6 +724,7 @@ export class FormulaProduccionPage {
   }
 
   protected cargar(): void {
+    this.lecturaOrdenes?.unsubscribe();
     this.cargando.set(true);
     this.error.set(null);
     this.sincronizarUrl();
@@ -719,7 +738,7 @@ export class FormulaProduccionPage {
       solo_sin_formula: this.filtroSoloSinFormula || undefined,
     };
 
-    this.bodega.listarOrdenes(filtros).subscribe({
+    this.lecturaOrdenes = this.bodega.listarOrdenes(filtros).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (ordenes) => {
         this.ordenes.set(ordenes);
         this.ultimaActualizacion.set(new Date());
