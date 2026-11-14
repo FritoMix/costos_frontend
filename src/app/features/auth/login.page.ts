@@ -1,3 +1,4 @@
+import type { HttpErrorResponse } from '@angular/common/http';
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -79,6 +80,11 @@ import { BotonComponent } from '../../ui/boton.component';
             </div>
           </div>
 
+          @if (errorEntrada()) {
+            <p role="alert" class="mb-4 rounded-xl border border-rose-300/40 bg-rose-950/40 p-3 text-sm font-semibold text-rose-100">
+              {{ errorEntrada() }}
+            </p>
+          }
           <form [formGroup]="formulario" (ngSubmit)="entrar()" class="space-y-5 escalona">
             <!-- Campo Usuario -->
             <div>
@@ -219,6 +225,7 @@ export class LoginPage {
   protected readonly appNombre = environment.appNombre;
   protected readonly empresa = environment.empresa;
   protected readonly enviando = signal(false);
+  protected readonly errorEntrada = signal<string | null>(null);
   protected readonly mostrarPassword = signal(false);
 
   protected readonly formulario = this.fb.nonNullable.group({
@@ -244,13 +251,21 @@ export class LoginPage {
 
     this.alarma.prepararTrasInteraccion();
 
+    this.errorEntrada.set(null);
     this.enviando.set(true);
     this.auth.iniciarSesion(this.formulario.getRawValue()).subscribe({
       next: () => {
         this.enviando.set(false);
         void this.router.navigateByUrl(this.destinoTrasEntrar());
       },
-      error: () => this.enviando.set(false),
+      error: (error: HttpErrorResponse) => {
+        this.enviando.set(false);
+        this.errorEntrada.set(error.status === 429
+          ? 'Demasiados intentos de acceso desde esta red. Espera un momento y vuelve a intentarlo.'
+          : error.status === 401
+            ? 'Revisa el usuario y la contraseña e inténtalo nuevamente.'
+            : 'No se pudo confirmar el acceso. Revisa la conexión y vuelve a intentarlo.');
+      },
     });
   }
 

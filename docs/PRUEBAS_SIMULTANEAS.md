@@ -1,0 +1,66 @@
+# Concurrencia y experiencia operativa
+
+Estas pruebas solo se ejecutan contra el stack HTTP local desechable de E2E.
+El archivo `e2e/operacion-concurrente.spec.ts` rechaza destinos externos; no requiere
+credenciales de producción ni carga Supabase o Render. No confundir el único
+worker de Playwright con una única solicitud: los casos abren navegadores y
+peticiones simultáneas de forma explícita dentro de cada prueba.
+
+## Casos reproducibles
+
+- Dos cuentas distintas de operario de horno, cada una con su navegador y sesión,
+  intentan iniciar órdenes diferentes para el mismo horno. Una barrera de red
+  libera ambas peticiones juntas. Se repite tres veces. Solo una debe iniciar;
+  la otra ve un aviso y la lista actualizada desde la API. Se verifica que solo
+  existe una orden en producción para ese horno.
+- Ocho solicitudes de creación con la misma clave de idempotencia se lanzan
+  simultáneamente: deben devolver una sola orden. Se repite el patrón para una
+  tanda y una recepción, verificando un único registro y un total de 25 kg.
+- Pruebas unitarias mantienen pendientes las respuestas HTTP para comprobar
+  doble clic, intento de iniciar otra orden, controles deshabilitados, conflicto
+  409, error de lectura, reintento y cancelación de peticiones al salir.
+- Los filtros rápidos de la bandeja de bodega cancelan lecturas anteriores;
+  una respuesta antigua no puede reemplazar la selección más reciente.
+
+## Problemas corregidos
+
+Horno y saborizado no tenían una barrera en el handler para envíos solapados.
+Ahora solo permiten un inicio pendiente y deshabilitan el resto de botones.
+Saborizado tampoco bloqueaba el inicio de órdenes sin fórmula desde su lista.
+Un fallo de lectura podía mostrarse como una lista vacía; se sustituye por un
+estado de error con reintento. Los conflictos de inicio actualizan la lista y
+muestran un aviso persistente, además del mensaje general de la API.
+
+La etiqueta "En Vivo" se mostraba sin actualización automática. Ahora se indica
+la hora de la última carga correcta y se ofrece un botón Actualizar. No se promete
+sondeo en tiempo real. Las lecturas y acciones se cancelan al destruir la pantalla.
+
+La bandeja de fórmulas podía recibir respuestas fuera de orden; cancela la lectura
+anterior al recargar órdenes o fórmulas y libera recursos al salir.
+
+## Límites
+
+No certifica la ausencia total de errores ni la capacidad con muchos usuarios.
+El entorno contiene datos ficticios y los conflictos se provocan de forma
+controlada. Las sesiones y los procesos deben verificarse también en el piloto
+operativo. Los navegadores adicionales conservan trazas cuando falla el caso.
+Los usuarios ficticios se descartan junto con la base Docker; las órdenes del
+caso se cancelan y eliminan mediante la API al terminar.
+
+Las activaciones, desactivaciones y eliminaciones del catálogo de fórmulas
+se serializan en la interfaz, con aviso de progreso y bloqueo de dobles envíos.
+
+El límite de acceso de Nginx se conserva. Un 429 con cuerpo HTML y sin Retry-After
+ahora se explica como exceso de intentos, y el login muestra un aviso persistente
+sin borrar las credenciales escritas. Esto también cubre el caso de varios
+usuarios detrás de una misma IP: deben esperar si alcanzan el límite del proxy.
+
+Un rechazo de credenciales (401 en /auth/login) ya no se trata como expiración de
+una sesión de trabajo: conserva volverA. El E2E de enlace directo prueba un
+intento incorrecto seguido de uno correcto y verifica el regreso a órdenes.
+La prueba masiva corre después del flujo principal para no acumular accesos
+artificiales al inicio de la suite bajo el mismo límite de IP de Nginx.
+
+Tras recargar, las órdenes pendientes del horno ya ocupado muestran ese motivo
+y bloquean Tomar e iniciar. Actualizar permite revisar cuándo queda disponible;
+la API sigue siendo la autoridad ante cambios de otros usuarios.

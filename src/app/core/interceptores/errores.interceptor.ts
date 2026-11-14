@@ -28,7 +28,10 @@ export const erroresInterceptor: HttpInterceptorFn = (peticion, siguiente) => {
         // cookie ya no sirve, no hace falta molestar al usuario con un
         // aviso rojo. En ese caso NO navegamos aquí: el guard de sesión ya
         // redirige al login con `volverA` y una navegación extra la pisaría.
-        if (peticion.url.endsWith('/auth/yo')) {
+        if (peticion.url.endsWith('/auth/login')) {
+          // Credenciales rechazadas: conservar la ruta volverA del formulario.
+          avisos.error(mensaje);
+        } else if (peticion.url.endsWith('/auth/yo')) {
           auth.limpiarLocal(false);
         } else {
           // La sesión se venció a mitad de una acción: se avisa y se vuelve
@@ -58,6 +61,7 @@ function extraerMensaje(error: HttpErrorResponse): string {
     const segundos = Number(error.headers.get('Retry-After'));
     if (segundos > 0)
       return `Demasiados intentos. Espera ${Math.ceil(segundos)} segundos y vuelve a intentar.`;
+    return 'Demasiados intentos. Espera un momento y vuelve a intentarlo.';
   }
   const detalle = (error.error as { detail?: string } | null)?.detail;
   if (typeof detalle === 'string' && detalle.trim()) {

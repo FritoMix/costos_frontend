@@ -109,4 +109,24 @@ describe('erroresInterceptor', () => {
       'No se pudo contactar al servidor. Revisa la conexión e intenta de nuevo.',
     );
   });
+  it('explica un 429 del proxy aunque llegue como HTML sin Retry-After', () => {
+    http.post('/api/v1/auth/login', {}).subscribe({ error: () => undefined });
+    controlador
+      .expectOne('/api/v1/auth/login')
+      .flush('<html>Too many requests</html>', { status: 429, statusText: 'Too Many Requests' });
+    expect(avisos.error).toHaveBeenCalledWith(
+      'Demasiados intentos. Espera un momento y vuelve a intentarlo.',
+    );
+    expect(auth.limpiarLocal).not.toHaveBeenCalled();
+  });
+  it('un login rechazado conserva volverA y no simula una sesión expirada', () => {
+    router.url = '/entrar?volverA=%2Fordenes';
+    http.post('/api/v1/auth/login', {}).subscribe({ error: () => undefined });
+    controlador
+      .expectOne('/api/v1/auth/login')
+      .flush({ detail: 'Credenciales incorrectas' }, { status: 401, statusText: 'Unauthorized' });
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(auth.limpiarLocal).not.toHaveBeenCalled();
+    expect(avisos.error).toHaveBeenCalledWith('Credenciales incorrectas');
+  });
 });
