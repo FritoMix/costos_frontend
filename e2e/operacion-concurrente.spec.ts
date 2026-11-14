@@ -25,10 +25,20 @@ interface Orden {
 }
 
 async function login(ctx: APIRequestContext, usuario = USER, password = PASS) {
-  const respuesta = await ctx.post(`${API}/auth/login`, {
-    data: { nombre_usuario: usuario, password },
-  });
-  expect(respuesta.status()).toBe(200);
+  // El proxy conserva su límite de producción. La suite añade varias sesiones
+  // seguidas desde una misma IP: ante 429 respeta la espera, sin relajar el límite.
+  for (let intento = 0; intento < 6; intento++) {
+    const respuesta = await ctx.post(`${API}/auth/login`, {
+      data: { nombre_usuario: usuario, password },
+    });
+    if (respuesta.status() !== 429 || intento === 5) {
+      expect(respuesta.status()).toBe(200);
+      return;
+    }
+    const indicado = Number(respuesta.headers()['retry-after']);
+    const espera = Number.isFinite(indicado) && indicado > 0 ? indicado : 6;
+    await new Promise(resolve => setTimeout(resolve, espera * 1000));
+  }
 }
 
 async function datos(ctx: APIRequestContext) {
