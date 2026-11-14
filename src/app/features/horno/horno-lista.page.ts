@@ -85,7 +85,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                 <div class="flex flex-wrap items-center gap-2">
                   @if (orden.formula_estado === 'sin_formula') {
                     <span class="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-800">
-                      Esperando fórmula de Bodega
+                      Fórmula por verificar al iniciar
                     </span>
                   } @else if (orden.formula_estado === 'lista') {
                     <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800">
@@ -106,7 +106,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                     variante="primario"
                     (click)="tomar(orden)"
                     [cargando]="tomando() === orden.id" [testId]="'tomar-orden-' + orden.id"
-                    [deshabilitado]="tomando() !== null || orden.formula_estado === 'sin_formula' || hornosOcupados().has(orden.horno.id)"
+                    [deshabilitado]="tomando() !== null || hornosOcupados().has(orden.horno.id)"
                   >
                     Tomar e iniciar
                   </app-boton>
@@ -248,7 +248,7 @@ export class HornoListaPage {
 
   /** Toma la orden y arranca la producción. */
   protected tomar(orden: Orden): void {
-    if (this.tomando() !== null || this.cargando() || orden.formula_estado === 'sin_formula'
+    if (this.tomando() !== null || this.cargando()
       || this.hornosOcupados().has(orden.horno.id)) return;
     this.avisoOperacion.set(null);
     this.tomando.set(orden.id);

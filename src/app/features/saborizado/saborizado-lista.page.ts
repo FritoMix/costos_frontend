@@ -90,11 +90,11 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                     <span class="text-xs font-semibold text-amber-700">Horno ocupado por otra orden.</span>
                   }
                   <app-boton variante="primario" (click)="tomar(orden)" [cargando]="tomando() === orden.id" [testId]="'tomar-orden-' + orden.id"
-                    [deshabilitado]="tomando() !== null || orden.formula_estado === 'sin_formula' || hornosOcupados().has(orden.horno.id)">
+                    [deshabilitado]="tomando() !== null || hornosOcupados().has(orden.horno.id)">
                     Tomar e iniciar
                   </app-boton>
                   @if (orden.formula_estado === 'sin_formula') {
-                    <span class="text-xs font-semibold text-amber-700">Bodega debe definir la fórmula.</span>
+                    <span class="text-xs font-semibold text-amber-700">Al iniciar se buscará la fórmula activa del producto.</span>
                   }
                 </div>
               </li>
@@ -234,7 +234,7 @@ export class SaborizadoListaPage {
 
   /** Toma la orden y arranca la producción. */
   protected tomar(orden: Orden): void {
-    if (this.tomando() !== null || this.cargando() || orden.formula_estado === 'sin_formula'
+    if (this.tomando() !== null || this.cargando()
       || this.hornosOcupados().has(orden.horno.id)) return;
     this.avisoOperacion.set(null);
     this.tomando.set(orden.id);
