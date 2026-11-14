@@ -150,7 +150,7 @@ test.describe('Concurrencia en PostgreSQL y experiencia de operarios', () => {
         expect(estados.filter((e) => [400, 409].includes(e))).toHaveLength(1);
         const ganadora = estados[0] === 200 ? a.id : b.id;
         const perdedora = estados[0] === 200 ? paginas[1] : paginas[0];
-        await expect(perdedora.getByRole('status')).toContainText('No se confirmó');
+        await expect(perdedora.getByRole('status').filter({ hasText: 'No se confirmó' })).toContainText('No se confirmó');
         await expect(perdedora.getByTestId(`registrar-tanda-${ganadora}`)).toBeVisible();
         const activas = (await (
           await request.get(`${API}/ordenes?estado=en_produccion&solo_propias=false`)

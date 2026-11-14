@@ -36,8 +36,8 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
           <div class="flex items-center gap-2">
             <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Estación de Saborizado</h1>
             <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
-              <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              {{ ultimaActualizacion() ? 'Actualizado ' + (ultimaActualizacion() | date: 'HH:mm:ss') : 'Consultando' }}
+              <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+              {{ ultimaActualizacion() ? 'Actualizado ' + (ultimaActualizacion() | date: 'HH:mm:ss') : (error() ? 'Sin actualizar' : 'Consultando') }}
             </span>
           </div>
           <p class="mt-1 text-sm text-slate-500 font-medium">
