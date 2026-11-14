@@ -60,3 +60,7 @@ una sesión de trabajo: conserva volverA. El E2E de enlace directo prueba un
 intento incorrecto seguido de uno correcto y verifica el regreso a órdenes.
 La prueba masiva corre después del flujo principal para no acumular accesos
 artificiales al inicio de la suite bajo el mismo límite de IP de Nginx.
+
+Tras recargar, las órdenes pendientes del horno ya ocupado muestran ese motivo
+y bloquean Tomar e iniciar. Actualizar permite revisar cuándo queda disponible;
+la API sigue siendo la autoridad ante cambios de otros usuarios.

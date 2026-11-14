@@ -1,6 +1,6 @@
 import type { HttpErrorResponse } from '@angular/common/http';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { Subscription } from 'rxjs';
@@ -99,11 +99,14 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                   <a [routerLink]="['/ordenes', orden.id]" class="text-xs font-bold text-slate-500 hover:text-slate-800">
                     Ver detalle
                   </a>
+                  @if (hornosOcupados().has(orden.horno.id)) {
+                    <span class="text-xs font-semibold text-amber-700">Horno ocupado por otra orden.</span>
+                  }
                   <app-boton
                     variante="primario"
                     (click)="tomar(orden)"
                     [cargando]="tomando() === orden.id" [testId]="'tomar-orden-' + orden.id"
-                    [deshabilitado]="tomando() !== null || orden.formula_estado === 'sin_formula'"
+                    [deshabilitado]="tomando() !== null || orden.formula_estado === 'sin_formula' || hornosOcupados().has(orden.horno.id)"
                   >
                     Tomar e iniciar
                   </app-boton>
@@ -205,6 +208,7 @@ export class HornoListaPage {
 
   protected readonly cargando = signal(true);
   protected readonly ordenes = signal<Orden[]>([]);
+  protected readonly hornosOcupados = computed(() => new Set(this.ordenes().map(o => o.horno.id)));
   /** Órdenes que aún nadie ha arrancado: el operario puede tomarlas. */
   protected readonly pendientes = signal<Orden[]>([]);
   /** Id de la orden que se está tomando ahora mismo (para el botón). */
@@ -244,7 +248,8 @@ export class HornoListaPage {
 
   /** Toma la orden y arranca la producción. */
   protected tomar(orden: Orden): void {
-    if (this.tomando() !== null || this.cargando() || orden.formula_estado === 'sin_formula') return;
+    if (this.tomando() !== null || this.cargando() || orden.formula_estado === 'sin_formula'
+      || this.hornosOcupados().has(orden.horno.id)) return;
     this.avisoOperacion.set(null);
     this.tomando.set(orden.id);
     this.servicio.iniciar(orden.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({

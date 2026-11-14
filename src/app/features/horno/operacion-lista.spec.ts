@@ -14,7 +14,7 @@ const fila = {
   estado: 'pendiente',
   producto: { nombre_comercial: 'Papa ficticia' },
   categoria: { nombre: 'Papa' },
-  horno: { nombre: 'Horno ficticio' },
+  horno: { id: 1, nombre: 'Horno ficticio' },
   turno: { nombre: 'Mañana' },
   cantidad_programada: 100,
   horas_produccion: 1,
@@ -32,11 +32,13 @@ for (const pagina of [HornoListaPage, SaborizadoListaPage] as Type<unknown>[]) {
     });
     afterEach(() => http.verify());
 
-    function responder(pendientes = [fila]) {
+    function responder(pendientes = [fila], activas: (typeof fila)[] = []) {
       const solicitudes = http.match((r) => r.url === '/api/v1/ordenes');
       expect(solicitudes.length).toBe(2);
       for (const solicitud of solicitudes) {
-        solicitud.flush(solicitud.request.params.get('estado') === 'pendiente' ? pendientes : []);
+        solicitud.flush(
+          solicitud.request.params.get('estado') === 'pendiente' ? pendientes : activas,
+        );
       }
     }
 
@@ -95,6 +97,25 @@ for (const pagina of [HornoListaPage, SaborizadoListaPage] as Type<unknown>[]) {
       expect(fixture.nativeElement.querySelector('[role="status"]').textContent).toContain(
         'No se confirmó',
       );
+      expect(
+        (
+          fixture.nativeElement.querySelector(
+            '[data-testid="actualizar-operaciones"]',
+          ) as HTMLButtonElement
+        ).disabled,
+      ).toBeFalse();
+      fixture.destroy();
+    });
+
+    it('indica y bloquea un horno ocupado sin impedir actualizar la lista', () => {
+      const fixture = TestBed.createComponent(pagina);
+      responder([fila], [{ ...fila, id: 2, estado: 'en_produccion' }]);
+      fixture.detectChanges();
+      expect(
+        (fixture.nativeElement.querySelector('[data-testid="tomar-orden-1"]') as HTMLButtonElement)
+          .disabled,
+      ).toBeTrue();
+      expect(fixture.nativeElement.textContent).toContain('Horno ocupado por otra orden');
       expect(
         (
           fixture.nativeElement.querySelector(
