@@ -215,121 +215,12 @@
 
               <!-- 3. Mezcla de la fórmula -->
               @case ('mezcla') {
-                <div class="anim-entrada space-y-3">
-                  @if (mezclaCompleta()) {
-                    <div
-                      class="rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/70 px-5 py-6 text-center"
-                      data-testid="horno-formula-completa"
-                    >
-                      <p class="text-sm font-bold text-emerald-900">
-                        La fórmula de esta orden ya se cumplió.
-                      </p>
-                      <p class="mt-1 text-xs font-medium text-emerald-800">
-                        No se puede registrar otra tanda con esta mezcla.
-                      </p>
-                    </div>
-                  } @else {
-                    @for (fila of mezcla(); track fila.referencia_id; let indice = $index) {
-                      <div
-                        class="rounded-2xl border-2 px-4 py-3.5 text-left transition-all duration-150"
-                        [class]="
-                          fila.bultos > 0
-                            ? 'border-marca-500 bg-marca-50/60 shadow-sm ring-4 ring-marca-500/10'
-                            : 'border-slate-200 bg-white'
-                        "
-                      >
-                        <div class="flex items-center justify-between gap-2">
-                          <div class="min-w-0">
-                            <p class="font-bold text-slate-900">{{ fila.nombre }}</p>
-                            <p class="text-xs font-semibold text-slate-500">
-                              Plan {{ fila.bultos_por_tanda }} bultos · producido
-                              {{ fila.producido | number: '1.0-0' }} · restante
-                              {{ fila.restante | number: '1.0-0' }}
-                            </p>
-                          </div>
-                          @if (fila.restante <= 0) {
-                            <span
-                              class="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800"
-                            >
-                              Completa
-                            </span>
-                          }
-                        </div>
-
-                        <div class="mt-3 flex items-center gap-2.5">
-                          <button
-                            type="button"
-                            class="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-black text-slate-600 transition hover:border-marca-400 hover:text-marca-700 active:scale-95 disabled:opacity-40"
-                            [disabled]="fila.bultos <= 0 || fila.restante <= 0"
-                            (click)="ajustarBultos(indice, -1)"
-                            [attr.aria-label]="'Quitar un bulto de ' + fila.nombre"
-                          >
-                            −
-                          </button>
-                          <input
-                            type="number"
-                            inputmode="numeric"
-                            min="0"
-                            [max]="fila.restante"
-                            [ngModel]="fila.bultos"
-                            (ngModelChange)="fijarBultos(indice, $any($event))"
-                            [disabled]="fila.restante <= 0"
-                            class="h-11 w-24 rounded-xl border border-slate-200 bg-white text-center font-mono text-lg font-extrabold text-slate-900 disabled:bg-slate-100"
-                            [attr.aria-label]="'Bultos de ' + fila.nombre + ' en la tanda'"
-                            [attr.data-testid]="'horno-mezcla-' + fila.referencia_id"
-                          />
-                          <button
-                            type="button"
-                            class="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-black text-slate-600 transition hover:border-marca-400 hover:text-marca-700 active:scale-95 disabled:opacity-40"
-                            [disabled]="fila.bultos >= fila.restante"
-                            (click)="ajustarBultos(indice, 1)"
-                            [attr.aria-label]="'Agregar un bulto de ' + fila.nombre"
-                          >
-                            +
-                          </button>
-                          <span
-                            class="ml-auto text-right font-mono text-xs font-bold text-slate-500"
-                          >
-                            {{ kgFila(fila) | number: '1.0-2' }} kg fritos
-                          </span>
-                        </div>
-                      </div>
-                    }
-
-                    <div class="rounded-2xl bg-slate-50 p-4">
-                      <div
-                        class="flex items-center justify-between text-sm font-bold text-slate-800"
-                      >
-                        <span>Total de la tanda</span>
-                        <span class="font-mono" data-testid="horno-total-tanda">
-                          {{ totalBultosMezcla() }} bultos
-                          @if (formula()?.capacidad_bultos_hora; as capacidad) {
-                            <span class="text-xs font-semibold text-slate-400">
-                              / {{ capacidad }} por hora
-                            </span>
-                          }
-                        </span>
-                      </div>
-                      <div class="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
-                        <div
-                          class="h-full rounded-full transition-all duration-300"
-                          [class]="barraMezcla().clase"
-                          [style.width.%]="barraMezcla().porcentaje"
-                        ></div>
-                      </div>
-                      <p class="mt-2 text-xs font-semibold text-slate-500">
-                        {{ kgCrudosMezcla() | number: '1.0-2' }} kg crudos ·
-                        {{ kgFritosMezcla() | number: '1.0-2' }} kg fritos estimados
-                      </p>
-                      @if (totalBultosMezcla() > capacidadMezcla()) {
-                        <p class="mt-2 text-xs font-bold text-rose-700">
-                          El horno admite máximo {{ capacidadMezcla() }} bultos por hora. Ajusta la
-                          mezcla antes de continuar.
-                        </p>
-                      }
-                    </div>
-                  }
-                </div>
+                <app-paso-mezcla-horno
+                  [filas]="mezcla()"
+                  [capacidad]="formula()?.capacidad_bultos_hora ?? null"
+                  [completa]="mezclaCompleta()"
+                  (bultosCambiados)="fijarBultos($event.indice, $event.bultos)"
+                />
               }
 
               <!-- 3. Bultos -->
@@ -594,130 +485,13 @@
 
               <!-- 8. Resumen -->
               @case ('resumen') {
-                <div class="anim-entrada">
-                  <dl
-                    class="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200"
-                  >
-                    <div class="flex items-center justify-between gap-4 px-5 py-3">
-                      <dt class="text-sm font-semibold text-slate-500">Horario</dt>
-                      <dd class="text-sm font-extrabold text-slate-900 tabular-nums">
-                        {{ horaInicio() }} → {{ horaFin() }}
-                      </dd>
-                    </div>
-                    @if (hayFormula()) {
-                      <div class="flex items-start justify-between gap-4 px-5 py-3">
-                        <dt class="text-sm font-semibold text-slate-500">Mezcla de la fórmula</dt>
-                        <dd class="text-right text-sm font-extrabold text-slate-900">
-                          @for (fila of mezcla(); track fila.referencia_id) {
-                            @if (fila.bultos > 0) {
-                              <span class="block"> {{ fila.nombre }} · {{ fila.bultos }} bts </span>
-                            }
-                          }
-                        </dd>
-                      </div>
-                      <div class="flex items-center justify-between gap-4 px-5 py-3">
-                        <dt class="text-sm font-semibold text-slate-500">Papa cruda</dt>
-                        <dd class="text-sm font-extrabold text-slate-900">
-                          {{ totalBultosMezcla() }} bultos
-                          <span class="font-medium text-slate-500"
-                            >({{ kgCrudosMezcla() | number: '1.0-2' }} kg)</span
-                          >
-                        </dd>
-                      </div>
-                      <div class="flex items-center justify-between gap-4 px-5 py-3">
-                        <dt class="text-sm font-semibold text-slate-500">Kg fritos estimados</dt>
-                        <dd class="text-sm font-extrabold text-amber-800">
-                          {{ kgFritosMezcla() | number: '1.0-2' }} kg
-                        </dd>
-                      </div>
-                    } @else {
-                      <div class="flex items-center justify-between gap-4 px-5 py-3">
-                        <dt class="text-sm font-semibold text-slate-500">Referencia de papa</dt>
-                        <dd class="text-sm font-extrabold text-slate-900">
-                          {{ referenciaSeleccionada()?.nombre ?? '—' }}
-                        </dd>
-                      </div>
-                      <div class="flex items-center justify-between gap-4 px-5 py-3">
-                        <dt class="text-sm font-semibold text-slate-500">Tipo de papa</dt>
-                        <dd class="text-sm font-extrabold text-slate-900">
-                          {{ referenciaSeleccionada()?.tipo ?? '—' }}
-                        </dd>
-                      </div>
-                      <div class="flex items-center justify-between gap-4 px-5 py-3">
-                        <dt class="text-sm font-semibold text-slate-500">Papa cruda</dt>
-                        <dd class="text-sm font-extrabold text-slate-900">
-                          {{ numero(bultos()) | number: '1.0-2' }} bultos
-                          <span class="font-medium text-slate-500"
-                            >({{ kgCrudos() | number: '1.0-2' }} kg)</span
-                          >
-                        </dd>
-                      </div>
-                      <div class="flex items-center justify-between gap-4 px-5 py-3">
-                        <dt class="text-sm font-semibold text-slate-500">Rendimiento de fritura</dt>
-                        <dd class="text-sm font-extrabold text-slate-900">
-                          @if (referenciaSeleccionada()!.rendimiento_fritura_pct !== null) {
-                            {{
-                              referenciaSeleccionada()!.rendimiento_fritura_pct | number: '1.2-2'
-                            }}
-                            %
-                          } @else {
-                            —
-                          }
-                        </dd>
-                      </div>
-                      <div class="flex items-center justify-between gap-4 px-5 py-3">
-                        <dt class="text-sm font-semibold text-slate-500">Kg fritos estimados</dt>
-                        <dd class="text-sm font-extrabold text-amber-800">
-                          @if (referenciaSeleccionada()!.rendimiento_fritura_pct !== null) {
-                            {{ kgFritos() | number: '1.0-2' }} kg
-                          } @else {
-                            —
-                          }
-                        </dd>
-                      </div>
-                    }
-                    <div class="flex items-center justify-between gap-4 px-5 py-3">
-                      <dt class="text-sm font-semibold text-slate-500">Temperatura</dt>
-                      <dd class="text-sm font-extrabold text-slate-900">
-                        {{ numero(temperatura()) }} °C
-                      </dd>
-                    </div>
-                    <div class="flex items-center justify-between gap-4 px-5 py-3">
-                      <dt class="text-sm font-semibold text-slate-500">Zona húmeda</dt>
-                      <dd class="text-sm font-extrabold text-slate-900">
-                        {{ operariosZonaHumeda() }}
-                        {{ operariosZonaHumeda() === 1 ? 'persona' : 'personas' }}
-                      </dd>
-                    </div>
-                    <div class="flex items-center justify-between gap-4 px-5 py-3">
-                      <dt class="text-sm font-semibold text-slate-500">Selección de papa freída</dt>
-                      <dd class="text-sm font-extrabold text-slate-900">
-                        {{ operariosSeleccion() }}
-                        {{ operariosSeleccion() === 1 ? 'persona' : 'personas' }}
-                      </dd>
-                    </div>
-                    <div class="flex items-center justify-between gap-4 px-5 py-3">
-                      <dt class="text-sm font-semibold text-slate-500">Aceite</dt>
-                      <dd class="text-sm font-extrabold text-slate-900">
-                        {{ numero(aceiteInicial()) }} → {{ numero(aceiteFinal()) }} cm
-                        <span class="font-medium text-slate-500"
-                          >({{ consumoCm() | number: '1.0-2' }} cm)</span
-                        >
-                      </dd>
-                    </div>
-                    <div class="flex items-center justify-between gap-4 bg-slate-50/70 px-5 py-3">
-                      <dt class="text-sm font-semibold text-slate-500">Desperdicio</dt>
-                      <dd class="text-sm font-extrabold text-slate-900">
-                        @if (tipoDesperdicioId() && numero(cantidadDesperdicio()) > 0) {
-                          {{ nombreDesperdicio() }} ·
-                          {{ numero(cantidadDesperdicio()) | number: '1.0-2' }} kg
-                        } @else {
-                          <span class="text-emerald-700">Sin desperdicio</span>
-                        }
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
+                <app-paso-resumen-horno
+                  [datos]="datosTanda()"
+                  [referencia]="referenciaSeleccionada()"
+                  [horaInicio]="horaInicio()"
+                  [horaFin]="horaFin()"
+                  [nombreDesperdicio]="nombreDesperdicio()"
+                />
               }
             }
           </div>
