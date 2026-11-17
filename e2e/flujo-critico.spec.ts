@@ -268,6 +268,7 @@ test.describe('Flujo crítico de planta', () => {
 
       // La URL cambia al empezar la animación: esperar a que salga el formulario
       // anterior evita seleccionar dos botones durante la transición de nueva a editar.
+      await expect(page.getByRole('heading', { name: 'Nueva fórmula', exact: true })).toHaveCount(0);
       await expect(page.getByTestId('formula-papa-form')).toHaveCount(1);
       await expect(page.getByRole('heading', { name: 'Editar fórmula', exact: true })).toBeVisible();
       // Se elimina (nace inactiva) para no dejar basura en la corrida.
