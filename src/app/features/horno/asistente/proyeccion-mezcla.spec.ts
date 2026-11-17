@@ -80,13 +80,15 @@ describe('Proyecciones de mezcla: conservar cálculos de vista', () => {
 });
 
 describe('Paso de mezcla sin estado propio', () => {
-  it('emite cambios de botones y entrada sin alterar las filas del coordinador', () => {
+  it('emite cambios de botones y entrada sin alterar las filas del coordinador', async () => {
     const fixture = TestBed.createComponent(PasoMezclaHornoComponent);
     const filas = [fila()];
     fixture.componentRef.setInput('filas', filas);
     fixture.componentRef.setInput('capacidad', 50);
     const cambios: { indice: number; bultos: number | string | null }[] = [];
     fixture.componentInstance.bultosCambiados.subscribe((cambio) => cambios.push(cambio));
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
     const vista = fixture.nativeElement as HTMLElement;
     const botones = vista.querySelectorAll('button');
@@ -107,13 +109,15 @@ describe('Paso de mezcla sin estado propio', () => {
     expect(vista.querySelector('[data-testid="horno-total-tanda"]')?.textContent).toContain('2.5');
     fixture.destroy();
   });
-  it('muestra advertencia de capacidad y bloquea los controles agotados', () => {
+  it('muestra advertencia de capacidad y bloquea los controles agotados', async () => {
     const fixture = TestBed.createComponent(PasoMezclaHornoComponent);
     fixture.componentRef.setInput('filas', [
       fila({ bultos: 0, restante: 0 }),
       fila({ referencia_id: 8 }),
     ]);
     fixture.componentRef.setInput('capacidad', 5);
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
     const vista = fixture.nativeElement as HTMLElement;
     expect(vista.textContent).toContain('El horno admite máximo 5');
