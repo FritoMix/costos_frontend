@@ -1,0 +1,795 @@
+<div class="mx-auto w-full max-w-xl">
+  @if (cargando()) {
+    <app-cargando texto="Preparando el registro…" />
+  } @else if (detalle(); as datos) {
+    @if (bloqueadaPorFormula()) {
+      <div
+        class="rounded-3xl border border-amber-200 bg-white p-8 text-center shadow-xl shadow-amber-200/20"
+        data-testid="horno-sin-formula"
+      >
+        <div
+          class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-2xl"
+        >
+          📝
+        </div>
+        <h2 class="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">
+          Bodega debe definir la fórmula antes de registrar tandas
+        </h2>
+        <p class="mx-auto mt-2 max-w-md text-sm font-medium text-slate-500">
+          La orden #{{ datos.orden.numero_orden }} todavía no tiene la mezcla de papa. Cuando Bodega
+          la guarde, podrás registrar la primera tanda.
+        </p>
+        <div class="mt-6 flex flex-wrap justify-center gap-3">
+          <a
+            routerLink="/horno"
+            class="inline-flex items-center justify-center rounded-xl bg-marca-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-marca-700 active:scale-95"
+          >
+            Volver a órdenes
+          </a>
+          <a
+            [routerLink]="['/ordenes', datos.orden.id]"
+            class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-marca-300 hover:text-marca-800 active:scale-95"
+          >
+            Ver orden
+          </a>
+        </div>
+      </div>
+    } @else if (ordenCompleta()) {
+      <div
+        class="rounded-3xl border border-emerald-200 bg-white p-8 text-center shadow-xl shadow-emerald-200/20"
+        data-testid="horno-orden-completa"
+      >
+        <div
+          class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-2xl font-black text-emerald-700"
+        >
+          ✓
+        </div>
+        <h2 class="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">
+          Producción de horno completa
+        </h2>
+        <p class="mx-auto mt-2 max-w-md text-sm font-medium text-slate-500">
+          @if (minutosDisponibles() === 0) {
+            Esta orden ya tiene registradas sus
+            {{ datos.orden.horas_produccion }}
+            {{ datos.orden.horas_produccion === 1 ? 'hora' : 'horas' }}
+            de producción en horno. No se pueden agregar más tandas.
+          } @else {
+            Solo quedan {{ textoMinutosDisponibles() }} de producción y cada tanda dura una hora. No
+            se puede agregar otra tanda.
+          }
+        </p>
+        <div class="mt-6 flex flex-wrap justify-center gap-3">
+          <a
+            routerLink="/horno"
+            class="inline-flex items-center justify-center rounded-xl bg-marca-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-marca-700 active:scale-95"
+          >
+            Volver a órdenes
+          </a>
+          <a
+            [routerLink]="['/ordenes', datos.orden.id]"
+            class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-marca-300 hover:text-marca-800 active:scale-95"
+          >
+            Ver orden
+          </a>
+        </div>
+      </div>
+    } @else {
+      <div
+        class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-300/30"
+      >
+        <!-- Cabecera: progreso -->
+        <header class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 sm:px-7">
+          <a
+            routerLink="/horno"
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-95"
+            aria-label="Salir del registro"
+          >
+            <svg
+              class="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </a>
+          <div class="relative h-3 flex-1 overflow-hidden rounded-full bg-slate-200/90">
+            <div
+              class="h-full rounded-full bg-gradient-to-r from-marca-400 to-marca-600 transition-all duration-500 ease-out"
+              [style.width.%]="progreso()"
+            ></div>
+          </div>
+          <span class="shrink-0 text-xs font-extrabold text-slate-400 tabular-nums">
+            {{ indicePaso() + 1 }} / {{ totalPasos() }}
+          </span>
+        </header>
+
+        <!-- Contexto de la orden -->
+        <div class="border-b border-slate-100 bg-slate-50/60 px-5 py-2.5 text-center sm:px-7">
+          <p class="truncate text-xs font-bold text-slate-500">
+            {{ datos.orden.producto.nombre_comercial }} ·
+            <span class="text-marca-700">{{ datos.orden.horno.nombre }}</span> ·
+            <span class="font-mono">#{{ datos.orden.numero_orden }}</span>
+          </p>
+          @if (minutosDisponibles() !== null) {
+            <p class="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Producción: {{ datos.orden.horas_produccion }} h · disponibles:
+              {{ textoMinutosDisponibles() }}
+            </p>
+          }
+        </div>
+
+        <!-- Cuerpo -->
+        <div class="px-5 py-8 sm:px-8" [attr.data-testid]="'paso-' + pasoActual()">
+          <div class="mx-auto max-w-md text-center">
+            <span class="text-[11px] font-extrabold uppercase tracking-widest text-marca-500">
+              {{ etiquetaPaso() }} · Paso {{ indicePaso() + 1 }}
+            </span>
+            <h2
+              class="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 text-balance sm:text-[26px]"
+            >
+              {{ tituloPaso() }}
+            </h2>
+            @if (subtituloPaso()) {
+              <p class="mx-auto mt-2 max-w-sm text-sm font-medium text-slate-500">
+                {{ subtituloPaso() }}
+              </p>
+            }
+          </div>
+
+          <div class="mt-7">
+            @switch (pasoActual()) {
+              <!-- 1. Horario automático -->
+              @case ('horario') {
+                <app-paso-horario-horno
+                  [horaInicio]="horaInicio()"
+                  [horaFin]="horaFin()"
+                  [ajustes]="ajustes"
+                  (atrasar)="atrasarInicio($event)"
+                  (reiniciar)="reiniciarHora()"
+                />
+              }
+
+              <!-- 2. Referencia de papa -->
+              @case ('referencia_papa') {
+                <div class="anim-entrada mx-auto max-w-md">
+                  @if (referenciasDisponibles().length === 0) {
+                    <div
+                      class="rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/70 px-5 py-6 text-center"
+                    >
+                      <p class="text-sm font-bold text-amber-900">
+                        No hay referencias configuradas para producir.
+                      </p>
+                      <p class="mt-1 text-xs font-medium text-amber-800">
+                        Bodega debe registrar el tipo, el peso por bulto, el rendimiento de fritura
+                        y la participación de al menos una referencia activa.
+                      </p>
+                    </div>
+                  } @else {
+                    <div class="space-y-3">
+                      @for (referencia of referenciasDisponibles(); track referencia.id) {
+                        <button
+                          type="button"
+                          [attr.data-testid]="'referencia-papa-' + referencia.id"
+                          (click)="referenciaPapaId.set(referencia.id)"
+                          [class]="claseFila(referenciaPapaId() === referencia.id)"
+                        >
+                          <span
+                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-lime-100 text-xl"
+                            >🥔</span
+                          >
+                          <span class="min-w-0 flex-1 text-left">
+                            <span class="block font-bold text-slate-900">{{
+                              referencia.nombre
+                            }}</span>
+                            <span class="block text-xs font-semibold text-slate-500">
+                              @if (referencia.tipo) {
+                                {{ referencia.tipo }} ·
+                              }
+                              {{ referencia.peso_promedio_bulto_kg | number: '1.2-2' }} kg/bulto
+                            </span>
+                            @if (referencia.rendimiento_fritura_pct !== null) {
+                              <span class="block text-[11px] font-semibold text-amber-700">
+                                Rendimiento
+                                {{ referencia.rendimiento_fritura_pct | number: '1.2-2' }} %
+                              </span>
+                            }
+                          </span>
+                          @if (referenciaPapaId() === referencia.id) {
+                            <span
+                              class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-marca-600 text-xs font-black text-white"
+                              >✓</span
+                            >
+                          } @else {
+                            <span
+                              class="block h-6 w-6 shrink-0 rounded-full border-2 border-slate-300"
+                            ></span>
+                          }
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- 3. Mezcla de la fórmula -->
+              @case ('mezcla') {
+                <div class="anim-entrada space-y-3">
+                  @if (mezclaCompleta()) {
+                    <div
+                      class="rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/70 px-5 py-6 text-center"
+                      data-testid="horno-formula-completa"
+                    >
+                      <p class="text-sm font-bold text-emerald-900">
+                        La fórmula de esta orden ya se cumplió.
+                      </p>
+                      <p class="mt-1 text-xs font-medium text-emerald-800">
+                        No se puede registrar otra tanda con esta mezcla.
+                      </p>
+                    </div>
+                  } @else {
+                    @for (fila of mezcla(); track fila.referencia_id; let indice = $index) {
+                      <div
+                        class="rounded-2xl border-2 px-4 py-3.5 text-left transition-all duration-150"
+                        [class]="
+                          fila.bultos > 0
+                            ? 'border-marca-500 bg-marca-50/60 shadow-sm ring-4 ring-marca-500/10'
+                            : 'border-slate-200 bg-white'
+                        "
+                      >
+                        <div class="flex items-center justify-between gap-2">
+                          <div class="min-w-0">
+                            <p class="font-bold text-slate-900">{{ fila.nombre }}</p>
+                            <p class="text-xs font-semibold text-slate-500">
+                              Plan {{ fila.bultos_por_tanda }} bultos · producido
+                              {{ fila.producido | number: '1.0-0' }} · restante
+                              {{ fila.restante | number: '1.0-0' }}
+                            </p>
+                          </div>
+                          @if (fila.restante <= 0) {
+                            <span
+                              class="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800"
+                            >
+                              Completa
+                            </span>
+                          }
+                        </div>
+
+                        <div class="mt-3 flex items-center gap-2.5">
+                          <button
+                            type="button"
+                            class="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-black text-slate-600 transition hover:border-marca-400 hover:text-marca-700 active:scale-95 disabled:opacity-40"
+                            [disabled]="fila.bultos <= 0 || fila.restante <= 0"
+                            (click)="ajustarBultos(indice, -1)"
+                            [attr.aria-label]="'Quitar un bulto de ' + fila.nombre"
+                          >
+                            −
+                          </button>
+                          <input
+                            type="number"
+                            inputmode="numeric"
+                            min="0"
+                            [max]="fila.restante"
+                            [ngModel]="fila.bultos"
+                            (ngModelChange)="fijarBultos(indice, $any($event))"
+                            [disabled]="fila.restante <= 0"
+                            class="h-11 w-24 rounded-xl border border-slate-200 bg-white text-center font-mono text-lg font-extrabold text-slate-900 disabled:bg-slate-100"
+                            [attr.aria-label]="'Bultos de ' + fila.nombre + ' en la tanda'"
+                            [attr.data-testid]="'horno-mezcla-' + fila.referencia_id"
+                          />
+                          <button
+                            type="button"
+                            class="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-black text-slate-600 transition hover:border-marca-400 hover:text-marca-700 active:scale-95 disabled:opacity-40"
+                            [disabled]="fila.bultos >= fila.restante"
+                            (click)="ajustarBultos(indice, 1)"
+                            [attr.aria-label]="'Agregar un bulto de ' + fila.nombre"
+                          >
+                            +
+                          </button>
+                          <span
+                            class="ml-auto text-right font-mono text-xs font-bold text-slate-500"
+                          >
+                            {{ kgFila(fila) | number: '1.0-2' }} kg fritos
+                          </span>
+                        </div>
+                      </div>
+                    }
+
+                    <div class="rounded-2xl bg-slate-50 p-4">
+                      <div
+                        class="flex items-center justify-between text-sm font-bold text-slate-800"
+                      >
+                        <span>Total de la tanda</span>
+                        <span class="font-mono" data-testid="horno-total-tanda">
+                          {{ totalBultosMezcla() }} bultos
+                          @if (formula()?.capacidad_bultos_hora; as capacidad) {
+                            <span class="text-xs font-semibold text-slate-400">
+                              / {{ capacidad }} por hora
+                            </span>
+                          }
+                        </span>
+                      </div>
+                      <div class="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
+                        <div
+                          class="h-full rounded-full transition-all duration-300"
+                          [class]="barraMezcla().clase"
+                          [style.width.%]="barraMezcla().porcentaje"
+                        ></div>
+                      </div>
+                      <p class="mt-2 text-xs font-semibold text-slate-500">
+                        {{ kgCrudosMezcla() | number: '1.0-2' }} kg crudos ·
+                        {{ kgFritosMezcla() | number: '1.0-2' }} kg fritos estimados
+                      </p>
+                      @if (totalBultosMezcla() > capacidadMezcla()) {
+                        <p class="mt-2 text-xs font-bold text-rose-700">
+                          El horno admite máximo {{ capacidadMezcla() }} bultos por hora. Ajusta la
+                          mezcla antes de continuar.
+                        </p>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- 3. Bultos -->
+              @case ('bultos') {
+                <div class="anim-entrada">
+                  @if (tecladoBultosAbierto()) {
+                    <app-teclado-numerico [(valor)]="bultos" unidad="bultos de papa cruda" />
+                  } @else {
+                    <!-- Visor: el mismo lenguaje visual del teclado numérico -->
+                    <div
+                      class="mx-auto max-w-md rounded-3xl border border-slate-200 bg-slate-50/70 px-5 py-6 text-center"
+                    >
+                      <p class="text-6xl font-extrabold text-slate-900 tabular-nums">
+                        {{ bultos() || '0' }}
+                      </p>
+                      <span
+                        class="mt-1 block text-xs font-extrabold uppercase tracking-widest text-slate-400"
+                      >
+                        bultos de papa cruda
+                      </span>
+                    </div>
+
+                    <!-- Un toque y listo: la tanda siempre va entre 30 y 55 bultos -->
+                    <div class="mx-auto mt-4 flex max-w-md flex-wrap justify-center gap-2.5">
+                      @for (b of bultosComunes; track b) {
+                        <button
+                          type="button"
+                          [attr.data-testid]="'bultos-' + b"
+                          (click)="bultos.set(b)"
+                          [class]="claseValor(bultos() === b, 'text-2xl')"
+                        >
+                          {{ b }}
+                        </button>
+                      }
+                    </div>
+                  }
+
+                  <div class="mt-4 flex justify-center">
+                    <button
+                      type="button"
+                      (click)="alternarTecladoBultos()"
+                      class="rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-500 transition hover:bg-slate-100 hover:text-marca-700"
+                    >
+                      {{ tecladoBultosAbierto() ? 'Ver cantidades habituales' : 'Otra cantidad' }}
+                    </button>
+                  </div>
+
+                  @if (referenciaSeleccionada(); as ref) {
+                    @if (numero(bultos()) > 0) {
+                      <div
+                        class="mx-auto mt-4 grid max-w-md grid-cols-2 gap-3"
+                        data-testid="horno-preview"
+                      >
+                        <div
+                          class="rounded-2xl border border-lime-200 bg-lime-50/80 px-4 py-3 text-center"
+                        >
+                          <span
+                            class="block text-[10px] font-extrabold uppercase tracking-wider text-lime-700"
+                            >Kg crudos</span
+                          >
+                          <span
+                            class="mt-0.5 block font-mono text-lg font-black text-lime-900"
+                            data-testid="horno-kg-crudos"
+                          >
+                            {{ kgCrudos() | number: '1.0-2' }}
+                          </span>
+                          <span class="block text-[10px] font-semibold text-lime-700">
+                            {{ numero(bultos()) | number: '1.0-0' }} ×
+                            {{ ref.peso_promedio_bulto_kg | number: '1.2-2' }} kg
+                          </span>
+                        </div>
+                        <div
+                          class="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-center"
+                        >
+                          <span
+                            class="block text-[10px] font-extrabold uppercase tracking-wider text-amber-700"
+                            >Kg fritos est.</span
+                          >
+                          <span
+                            class="mt-0.5 block font-mono text-lg font-black text-amber-900"
+                            data-testid="horno-kg-fritos"
+                          >
+                            {{ kgFritos() | number: '1.0-2' }}
+                          </span>
+                          <span class="block text-[10px] font-semibold text-amber-700">
+                            @if (ref.rendimiento_fritura_pct !== null) {
+                              Rendimiento {{ ref.rendimiento_fritura_pct | number: '1.2-2' }} %
+                            } @else {
+                              Sin rendimiento configurado
+                            }
+                          </span>
+                        </div>
+                      </div>
+                      <p class="mt-2 text-center text-[11px] font-medium text-slate-400">
+                        Vista previa. El sistema guarda el cálculo definitivo al confirmar la tanda.
+                      </p>
+                    }
+                  }
+                </div>
+              }
+
+              <!-- 3. Temperatura -->
+              @case ('temperatura') {
+                <div class="anim-entrada">
+                  @if (tecladoTemperaturaAbierto()) {
+                    <app-teclado-numerico [(valor)]="temperatura" unidad="grados centígrados" />
+                  } @else {
+                    <div
+                      class="mx-auto max-w-md rounded-3xl border border-slate-200 bg-slate-50/70 px-5 py-6 text-center"
+                    >
+                      <p class="text-6xl font-extrabold text-slate-900 tabular-nums">
+                        {{ temperatura() || '0' }}
+                      </p>
+                      <span
+                        class="mt-1 block text-xs font-extrabold uppercase tracking-widest text-slate-400"
+                      >
+                        grados centígrados
+                      </span>
+                    </div>
+
+                    <!-- El aceite de freído trabaja entre 165 y 190 °C -->
+                    <div class="mx-auto mt-4 flex max-w-md flex-wrap justify-center gap-2.5">
+                      @for (t of temperaturasComunes; track t) {
+                        <button
+                          type="button"
+                          [attr.data-testid]="'temperatura-' + t"
+                          (click)="temperatura.set(t)"
+                          [class]="claseValor(temperatura() === t, 'text-xl')"
+                        >
+                          {{ t }}
+                        </button>
+                      }
+                    </div>
+                  }
+
+                  <div class="mt-4 flex justify-center">
+                    <button
+                      type="button"
+                      (click)="alternarTecladoTemperatura()"
+                      class="rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-500 transition hover:bg-slate-100 hover:text-marca-700"
+                    >
+                      {{
+                        tecladoTemperaturaAbierto()
+                          ? 'Ver temperaturas habituales'
+                          : 'Otra temperatura'
+                      }}
+                    </button>
+                  </div>
+                </div>
+              }
+
+              <!-- 4. Personal de zona húmeda -->
+              @case ('personal_zona_humeda') {
+                <app-paso-personal-horno
+                  [opciones]="personalZonaHumeda"
+                  area="en zona húmeda"
+                  prefijoTestId="personal-zona-"
+                  [(valor)]="operariosZonaHumeda"
+                />
+              }
+
+              <!-- 5. Personal de selección de papa freída -->
+              @case ('personal_seleccion') {
+                <app-paso-personal-horno
+                  [opciones]="personalSeleccion"
+                  area="en selección"
+                  prefijoTestId="personal-seleccion-"
+                  [(valor)]="operariosSeleccion"
+                />
+              }
+
+              <!-- 5 y 6. Niveles de aceite -->
+              @case ('aceite_inicial') {
+                <app-paso-aceite-horno [(valor)]="aceiteInicial" />
+              }
+              @case ('aceite_final') {
+                <app-paso-aceite-horno [(valor)]="aceiteFinal" [consumoCm]="consumoCm()" />
+              }
+
+              <!-- 7. Desperdicio -->
+              @case ('desperdicio') {
+                <div class="anim-entrada mx-auto max-w-sm">
+                  @if (!hayDesperdicio()) {
+                    <div class="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        data-testid="sin-desperdicio"
+                        (click)="continuar()"
+                        [class]="claseTarjetaGrande(false)"
+                      >
+                        <span
+                          class="mb-1 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-2xl"
+                          >✅</span
+                        >
+                        <span class="text-base font-extrabold text-slate-900">Sin desperdicio</span>
+                        <span class="text-xs font-medium text-slate-500">Tanda limpia</span>
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="si-desperdicio"
+                        (click)="hayDesperdicio.set(true)"
+                        [class]="claseTarjetaGrande(false)"
+                      >
+                        <span
+                          class="mb-1 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-2xl"
+                          >⚠️</span
+                        >
+                        <span class="text-base font-extrabold text-slate-900">Sí hubo</span>
+                        <span class="text-xs font-medium text-slate-500">Registrar merma</span>
+                      </button>
+                    </div>
+                  } @else {
+                    <div class="space-y-3">
+                      @for (tipo of tiposDesperdicio(); track tipo.id) {
+                        <button
+                          type="button"
+                          (click)="tipoDesperdicioId.set(tipo.id)"
+                          [class]="claseFila(tipoDesperdicioId() === tipo.id)"
+                        >
+                          <span class="min-w-0 flex-1 text-left font-bold text-slate-900">{{
+                            tipo.nombre
+                          }}</span>
+                          @if (tipoDesperdicioId() === tipo.id) {
+                            <span
+                              class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-marca-600 text-xs font-black text-white"
+                              >✓</span
+                            >
+                          } @else {
+                            <span
+                              class="block h-6 w-6 shrink-0 rounded-full border-2 border-slate-300"
+                            ></span>
+                          }
+                        </button>
+                      } @empty {
+                        <p
+                          class="rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/60 px-5 py-6 text-center text-sm font-semibold text-amber-800"
+                        >
+                          No hay tipos de desperdicio configurados.
+                        </p>
+                      }
+
+                      @if (tipoDesperdicioId()) {
+                        <div class="pt-2">
+                          <app-teclado-numerico
+                            [(valor)]="cantidadDesperdicio"
+                            unidad="kg de desperdicio"
+                          />
+                        </div>
+                      }
+
+                      <button
+                        type="button"
+                        (click)="quitarDesperdicio()"
+                        class="w-full text-center text-xs font-bold text-slate-400 hover:text-slate-600"
+                      >
+                        En realidad no hubo desperdicio
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- 8. Resumen -->
+              @case ('resumen') {
+                <div class="anim-entrada">
+                  <dl
+                    class="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200"
+                  >
+                    <div class="flex items-center justify-between gap-4 px-5 py-3">
+                      <dt class="text-sm font-semibold text-slate-500">Horario</dt>
+                      <dd class="text-sm font-extrabold text-slate-900 tabular-nums">
+                        {{ horaInicio() }} → {{ horaFin() }}
+                      </dd>
+                    </div>
+                    @if (hayFormula()) {
+                      <div class="flex items-start justify-between gap-4 px-5 py-3">
+                        <dt class="text-sm font-semibold text-slate-500">Mezcla de la fórmula</dt>
+                        <dd class="text-right text-sm font-extrabold text-slate-900">
+                          @for (fila of mezcla(); track fila.referencia_id) {
+                            @if (fila.bultos > 0) {
+                              <span class="block"> {{ fila.nombre }} · {{ fila.bultos }} bts </span>
+                            }
+                          }
+                        </dd>
+                      </div>
+                      <div class="flex items-center justify-between gap-4 px-5 py-3">
+                        <dt class="text-sm font-semibold text-slate-500">Papa cruda</dt>
+                        <dd class="text-sm font-extrabold text-slate-900">
+                          {{ totalBultosMezcla() }} bultos
+                          <span class="font-medium text-slate-500"
+                            >({{ kgCrudosMezcla() | number: '1.0-2' }} kg)</span
+                          >
+                        </dd>
+                      </div>
+                      <div class="flex items-center justify-between gap-4 px-5 py-3">
+                        <dt class="text-sm font-semibold text-slate-500">Kg fritos estimados</dt>
+                        <dd class="text-sm font-extrabold text-amber-800">
+                          {{ kgFritosMezcla() | number: '1.0-2' }} kg
+                        </dd>
+                      </div>
+                    } @else {
+                      <div class="flex items-center justify-between gap-4 px-5 py-3">
+                        <dt class="text-sm font-semibold text-slate-500">Referencia de papa</dt>
+                        <dd class="text-sm font-extrabold text-slate-900">
+                          {{ referenciaSeleccionada()?.nombre ?? '—' }}
+                        </dd>
+                      </div>
+                      <div class="flex items-center justify-between gap-4 px-5 py-3">
+                        <dt class="text-sm font-semibold text-slate-500">Tipo de papa</dt>
+                        <dd class="text-sm font-extrabold text-slate-900">
+                          {{ referenciaSeleccionada()?.tipo ?? '—' }}
+                        </dd>
+                      </div>
+                      <div class="flex items-center justify-between gap-4 px-5 py-3">
+                        <dt class="text-sm font-semibold text-slate-500">Papa cruda</dt>
+                        <dd class="text-sm font-extrabold text-slate-900">
+                          {{ numero(bultos()) | number: '1.0-2' }} bultos
+                          <span class="font-medium text-slate-500"
+                            >({{ kgCrudos() | number: '1.0-2' }} kg)</span
+                          >
+                        </dd>
+                      </div>
+                      <div class="flex items-center justify-between gap-4 px-5 py-3">
+                        <dt class="text-sm font-semibold text-slate-500">Rendimiento de fritura</dt>
+                        <dd class="text-sm font-extrabold text-slate-900">
+                          @if (referenciaSeleccionada()!.rendimiento_fritura_pct !== null) {
+                            {{
+                              referenciaSeleccionada()!.rendimiento_fritura_pct | number: '1.2-2'
+                            }}
+                            %
+                          } @else {
+                            —
+                          }
+                        </dd>
+                      </div>
+                      <div class="flex items-center justify-between gap-4 px-5 py-3">
+                        <dt class="text-sm font-semibold text-slate-500">Kg fritos estimados</dt>
+                        <dd class="text-sm font-extrabold text-amber-800">
+                          @if (referenciaSeleccionada()!.rendimiento_fritura_pct !== null) {
+                            {{ kgFritos() | number: '1.0-2' }} kg
+                          } @else {
+                            —
+                          }
+                        </dd>
+                      </div>
+                    }
+                    <div class="flex items-center justify-between gap-4 px-5 py-3">
+                      <dt class="text-sm font-semibold text-slate-500">Temperatura</dt>
+                      <dd class="text-sm font-extrabold text-slate-900">
+                        {{ numero(temperatura()) }} °C
+                      </dd>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 px-5 py-3">
+                      <dt class="text-sm font-semibold text-slate-500">Zona húmeda</dt>
+                      <dd class="text-sm font-extrabold text-slate-900">
+                        {{ operariosZonaHumeda() }}
+                        {{ operariosZonaHumeda() === 1 ? 'persona' : 'personas' }}
+                      </dd>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 px-5 py-3">
+                      <dt class="text-sm font-semibold text-slate-500">Selección de papa freída</dt>
+                      <dd class="text-sm font-extrabold text-slate-900">
+                        {{ operariosSeleccion() }}
+                        {{ operariosSeleccion() === 1 ? 'persona' : 'personas' }}
+                      </dd>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 px-5 py-3">
+                      <dt class="text-sm font-semibold text-slate-500">Aceite</dt>
+                      <dd class="text-sm font-extrabold text-slate-900">
+                        {{ numero(aceiteInicial()) }} → {{ numero(aceiteFinal()) }} cm
+                        <span class="font-medium text-slate-500"
+                          >({{ consumoCm() | number: '1.0-2' }} cm)</span
+                        >
+                      </dd>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 bg-slate-50/70 px-5 py-3">
+                      <dt class="text-sm font-semibold text-slate-500">Desperdicio</dt>
+                      <dd class="text-sm font-extrabold text-slate-900">
+                        @if (tipoDesperdicioId() && numero(cantidadDesperdicio()) > 0) {
+                          {{ nombreDesperdicio() }} ·
+                          {{ numero(cantidadDesperdicio()) | number: '1.0-2' }} kg
+                        } @else {
+                          <span class="text-emerald-700">Sin desperdicio</span>
+                        }
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Navegación -->
+        <footer
+          class="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-5 py-4 sm:px-7"
+        >
+          <app-boton
+            variante="secundario"
+            (click)="atras()"
+            [deshabilitado]="indicePaso() === 0"
+            testId="horno-atras"
+          >
+            Atrás
+          </app-boton>
+
+          @if (pasoActual() === 'resumen') {
+            <app-boton
+              variante="primario"
+              tamano="grande"
+              (click)="guardar()"
+              [cargando]="enviando()"
+              testId="guardar-tanda"
+            >
+              Guardar tanda
+            </app-boton>
+          } @else {
+            <app-boton
+              variante="primario"
+              tamano="grande"
+              (click)="continuar()"
+              [deshabilitado]="!pasoValido()"
+              testId="continuar-horno"
+            >
+              Continuar
+            </app-boton>
+          }
+        </footer>
+      </div>
+    }
+
+    <!-- Tandas ya registradas en esta orden -->
+    @if (datos.registros_horno.length > 0) {
+      <div class="mt-5 rounded-2xl border border-slate-200 bg-white px-5 py-4">
+        <p class="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+          Tandas ya registradas ({{ datos.registros_horno.length }})
+        </p>
+        <ul class="mt-2 space-y-1">
+          @for (registro of datos.registros_horno; track registro.id) {
+            <li class="flex items-center justify-between gap-3 text-sm">
+              <span class="min-w-0 truncate font-semibold text-slate-700">
+                {{ registro.cantidad_bultos | number: '1.0-2' }} bultos
+                @if (registro.referencias.length > 0) {
+                  <span class="font-medium text-slate-500">
+                    ·
+                    @for (fila of registro.referencias; track fila.referencia_papa_id) {
+                      {{ fila.nombre }} {{ fila.cantidad_bultos | number: '1.0-0' }} bts
+                    }
+                  </span>
+                } @else if (registro.referencia_papa; as referencia) {
+                  <span class="font-medium text-slate-500">· {{ referencia.nombre }}</span>
+                }
+              </span>
+              <span class="font-medium text-slate-500">
+                {{ registro.kg_crudos_calculados | number: '1.0-0' }} kg crudos
+              </span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  }
+</div>

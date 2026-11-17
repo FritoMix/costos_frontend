@@ -129,7 +129,7 @@ test.describe('Flujo crítico de planta', () => {
 
   });
 
-  test('login, orden, horno, saborizado, análisis y exportación', async ({ page }) => {
+  test('login, orden, horno, saborizado, análisis y exportación', async ({ page }, info) => {
     await test.step('login con credenciales de entorno', async () => {
       await page.goto('/entrar');
       await expect(page.getByTestId('login-usuario')).toBeVisible();
@@ -347,6 +347,7 @@ test.describe('Flujo crítico de planta', () => {
 
       await esperarPaso(page, 'personal_zona_humeda');
       await page.getByTestId('personal-zona-5').click();
+      await page.screenshot({ path: info.outputPath('diseno-horno-personal.png'), fullPage: true, animations: 'disabled' });
       await continuar(page, 'continuar-horno');
 
       await esperarPaso(page, 'personal_seleccion');
@@ -363,6 +364,7 @@ test.describe('Flujo crítico de planta', () => {
       await page.getByTestId('tecla-4').click();
       await page.getByTestId('tecla-5').click();
       await expect(page.getByTestId('teclado-valor')).toHaveText('45');
+      await page.screenshot({ path: info.outputPath('diseno-horno-aceite.png'), fullPage: true, animations: 'disabled' });
       await continuar(page, 'continuar-horno');
 
       await esperarPaso(page, 'desperdicio');
