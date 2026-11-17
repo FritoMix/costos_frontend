@@ -72,9 +72,10 @@ describe('erroresInterceptor', () => {
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
-  it('deja los 422 al formulario, sin aviso global', () => {
+  it('muestra los 422 sin cerrar la sesión ni consumir el error del formulario', () => {
+    let recibido = 0;
     http.post('/api/v1/ordenes', {}).subscribe({
-      error: () => undefined,
+      error: (error: HttpErrorResponse) => (recibido = error.status),
     });
 
     controlador
@@ -84,7 +85,10 @@ describe('erroresInterceptor', () => {
         { status: 422, statusText: 'Unprocessable Entity' },
       );
 
-    expect(avisos.error).not.toHaveBeenCalled();
+    expect(avisos.error).toHaveBeenCalledOnceWith('La cantidad es obligatoria');
+    expect(recibido).toBe(422);
+    expect(auth.limpiarLocal).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('muestra el detalle de un error 500', () => {

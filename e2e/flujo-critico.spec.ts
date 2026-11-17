@@ -43,11 +43,11 @@ async function cancelarSalida(page: Page, enlace: Locator): Promise<void> {
   await expect(page).toHaveURL(url);
 }
 
-async function fallarUnaEscritura(page: Page, ruta: string): Promise<void> {
+async function fallarUnaEscritura(page: Page, ruta: string, estado = 503): Promise<void> {
   await page.route(ruta, async route => {
     if (route.request().method() === 'POST' || route.request().method() === 'PUT') {
-      await route.fulfill({ status: 503, contentType: 'application/json',
-        body: JSON.stringify({ detail: 'Fallo controlado E2E' }) });
+      await route.fulfill({ status: estado, contentType: 'application/json',
+        body: JSON.stringify({ detail: estado === 422 ? 'Cantidad de bultos: Usa como máximo 2 decimales.' : 'Fallo controlado E2E' }) });
     } else await route.continue();
   }, { times: 1 });
 }
@@ -369,12 +369,14 @@ test.describe('Flujo crítico de planta', () => {
       await page.getByTestId('sin-desperdicio').click();
 
       await esperarPaso(page, 'resumen');
-      await fallarUnaEscritura(page, `**/api/v1/ordenes/${ordenId}/registros-horno`);
+      await fallarUnaEscritura(page, `**/api/v1/ordenes/${ordenId}/registros-horno`, 422);
       const falloTanda = page.waitForResponse(r =>
         r.url().endsWith(`/api/v1/ordenes/${ordenId}/registros-horno`) && r.request().method() === 'POST',
         { timeout: 15_000 });
       await page.getByTestId('guardar-tanda').click();
-      expect((await falloTanda).status()).toBe(503);
+      expect((await falloTanda).status()).toBe(422);
+      await expect(page.locator('app-avisos')).toContainText('Cantidad de bultos: Usa como máximo 2 decimales.');
+      await expect(page.getByTestId('guardar-tanda')).toBeEnabled();
       await cancelarSalida(page, page.getByRole('link', { name: 'Salir del registro' }));
       await esperarPaso(page, 'resumen');
       await page.getByTestId('guardar-tanda').click();
