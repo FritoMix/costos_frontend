@@ -43,8 +43,9 @@ export const erroresInterceptor: HttpInterceptorFn = (peticion, siguiente) => {
             queryParams: destino === '/entrar' ? {} : { volverA: destino },
           });
         }
-      } else if (error.status !== 422) {
-        // El 422 lo muestra el propio formulario, campo por campo.
+      } else {
+        // Los formularios conservan sus datos, pero no todos muestran el 422.
+        // Dar siempre una explicación visible para evitar rechazos silenciosos.
         avisos.error(mensaje);
       }
 
