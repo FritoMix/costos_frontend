@@ -103,8 +103,10 @@ jobs:
         run: |
           mkdir -p loadtest-results
           chmod 777 loadtest-results
-          docker run --rm --network host \
-            -e BASE_URL=http://127.0.0.1:4200 \
+          # Cliente independiente de Playwright: no hereda su ráfaga de logins.
+          # Mantiene Nginx y todos sus límites delante de la API.
+          docker run --rm --network datacontrol-e2e_default \
+            -e BASE_URL=http://front:80 \
             -e LOADTEST_DISPOSABLE=1 \
             -e ADMIN_PASS="$E2E_ADMIN_PASS" \
             -e VUS=10 -e DURATION=30s \
