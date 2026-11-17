@@ -266,6 +266,10 @@ test.describe('Flujo crítico de planta', () => {
       await page.getByTestId('formula-papa-guardar').click();
       await expect(page).toHaveURL(/\/formula-produccion\/formulas\/\d+/);
 
+      // La URL cambia al empezar la animación: esperar a que salga el formulario
+      // anterior evita seleccionar dos botones durante la transición de nueva a editar.
+      await expect(page.getByTestId('formula-papa-form')).toHaveCount(1);
+      await expect(page.getByRole('heading', { name: 'Editar fórmula', exact: true })).toBeVisible();
       // Se elimina (nace inactiva) para no dejar basura en la corrida.
       await page.getByTestId('formula-papa-eliminar').click();
       await page.getByRole('button', { name: 'Sí, eliminar' }).click();
