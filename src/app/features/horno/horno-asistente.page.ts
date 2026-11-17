@@ -1,9 +1,11 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
+import { PasoMezclaHornoComponent } from './asistente/paso-mezcla.component';
+import { PasoResumenHornoComponent } from './asistente/paso-resumen.component';
+import { cambiarBultosMezcla } from './asistente/proyeccion-mezcla';
 import { PasoHorarioHornoComponent } from './asistente/paso-horario.component';
 import { PasoPersonalHornoComponent } from './asistente/paso-personal.component';
 import { PasoAceiteHornoComponent } from './asistente/paso-aceite.component';
@@ -51,11 +53,12 @@ import { TecladoNumericoComponent } from '../../ui/teclado-numerico.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.inert]': 'enviando() ? "" : null' },
   imports: [
+    PasoMezclaHornoComponent,
+    PasoResumenHornoComponent,
     PasoHorarioHornoComponent,
     PasoPersonalHornoComponent,
     PasoAceiteHornoComponent,
     RouterLink,
-    FormsModule,
     DecimalPipe,
     BotonComponent,
     CargandoComponent,
@@ -120,38 +123,6 @@ export class HornoAsistentePage {
   protected readonly capacidadMezcla = computed(() =>
     Number(this.formula()?.capacidad_bultos_hora ?? Infinity),
   );
-  protected readonly totalBultosMezcla = computed(() =>
-    this.mezcla().reduce((acc, fila) => acc + fila.bultos, 0),
-  );
-  protected readonly kgCrudosMezcla = computed(() =>
-    this.mezcla().reduce(
-      (acc, fila) => acc + calcularKgCrudosPreview(fila.bultos, fila.peso_promedio_bulto_kg),
-      0,
-    ),
-  );
-  protected readonly kgFritosMezcla = computed(() =>
-    this.mezcla().reduce(
-      (acc, fila) =>
-        acc +
-        calcularKgFritosPreview(
-          calcularKgCrudosPreview(fila.bultos, fila.peso_promedio_bulto_kg),
-          fila.rendimiento_fritura_pct,
-        ),
-      0,
-    ),
-  );
-  protected readonly barraMezcla = computed(() => {
-    const capacidad = this.formula()?.capacidad_bultos_hora;
-    const total = this.totalBultosMezcla();
-    if (!capacidad) {
-      return { porcentaje: 0, clase: 'bg-emerald-400' };
-    }
-    if (total > capacidad) {
-      return { porcentaje: 100, clase: 'bg-rose-500' };
-    }
-    const porcentaje = Math.min(100, (total / capacidad) * 100);
-    return { porcentaje, clase: porcentaje >= 90 ? 'bg-amber-400' : 'bg-emerald-400' };
-  });
   protected readonly mezclaCompleta = computed(
     () => this.hayFormula() && this.mezcla().every((fila) => fila.restante <= 0),
   );
@@ -234,7 +205,7 @@ export class HornoAsistentePage {
     () => this.tiposDesperdicio().find((t) => t.id === this.tipoDesperdicioId())?.nombre ?? '',
   );
 
-  private readonly datosTanda = computed<DatosTandaHorno>(() => ({
+  protected readonly datosTanda = computed<DatosTandaHorno>(() => ({
     conFormula: this.hayFormula(),
     referenciaPapaId: this.referenciaPapaId(),
     mezcla: this.mezcla(),
@@ -325,35 +296,7 @@ export class HornoAsistentePage {
 
   /** Fija los bultos de una fila respetando el restante planificado. */
   protected fijarBultos(indice: number, bultos: number | string | null): void {
-    const valor = Number(bultos);
-    this.mezcla.update((filas) =>
-      filas.map((fila, posicion) => {
-        if (posicion !== indice) {
-          return fila;
-        }
-        const acotado = Math.max(0, Math.min(fila.restante, Number.isFinite(valor) ? valor : 0));
-        return { ...fila, bultos: acotado };
-      }),
-    );
-  }
-
-  protected ajustarBultos(indice: number, delta: number): void {
-    const fila = this.mezcla()[indice];
-    if (fila) {
-      this.fijarBultos(indice, fila.bultos + delta);
-    }
-  }
-
-  /** Kg fritos de una fila con el snapshot de la fórmula. */
-  protected kgFila(fila: {
-    bultos: number;
-    peso_promedio_bulto_kg: number;
-    rendimiento_fritura_pct: number | null;
-  }): number {
-    return calcularKgFritosPreview(
-      calcularKgCrudosPreview(fila.bultos, fila.peso_promedio_bulto_kg),
-      fila.rendimiento_fritura_pct,
-    );
+    this.mezcla.update((filas) => cambiarBultosMezcla(filas, indice, bultos));
   }
 
   // --- Utilidades ----------------------------------------------------------

@@ -1,8 +1,8 @@
 # Asistente de horno: responsabilidades y reglas
 
-## Alcance del primer bloque
+## Alcance de los dos primeros bloques
 
-Esta extracción mantiene el comportamiento y el contrato de la tanda. No cambia permisos, cálculos del backend, duración ni condiciones de avance. Se comienza con el constructor de solicitudes, las validaciones de pasos y tres componentes de presentación. Los pasos de mezcla, referencia, bultos, temperatura, desperdicio y resumen quedan para una extracción posterior.
+Esta extracción mantiene el comportamiento y el contrato de la tanda. No cambia permisos, cálculos del backend, duración ni condiciones de avance. El primer bloque extrajo el constructor de solicitudes, las validaciones y los pasos de horario, personal y aceite. El segundo separa mezcla y resumen, con proyecciones compartidas y cambios de bultos sin mutar los datos. Referencia, bultos, temperatura y desperdicio siguen en la plantilla principal.
 
 ## Dónde cambiar cada cosa
 
@@ -16,6 +16,9 @@ Esta extracción mantiene el comportamiento y el contrato de la tanda. No cambia
 | `asistente/paso-horario.component.*` | Mostrar inicio y fin; emitir ajustes de minutos y reinicio de hora. |
 | `asistente/paso-personal.component.*` | Mostrar opciones y emitir selección; reutilizado para ambas áreas de personal. |
 | `asistente/paso-aceite.component.*` | Capturar el nivel y mostrar el consumo que recibe del coordinador. |
+| `asistente/paso-mezcla.component.*` | Mostrar las referencias, límites y totales; emitir cambios de bultos al coordinador. |
+| `asistente/paso-resumen.component.*` | Presentar la confirmación de fórmula o tanda histórica; no guarda ni modifica datos. |
+| `asistente/proyeccion-mezcla.ts` | Totales y barra de capacidad compartidos; actualización de una fila sin mutación. |
 
 Los componentes de presentación no inyectan servicios HTTP ni reciben el componente padre. El estado persiste en el coordinador al ir adelante o atrás. Los hijos usan Inputs, Models y Outputs tipados con OnPush. No se añade un estado global.
 
@@ -32,8 +35,8 @@ Los componentes de presentación no inyectan servicios HTTP ni reciben el compon
 
 ## Evidencia
 
-`asistente/reglas-tanda.spec.ts` comprueba recorridos, límites y cuerpos HTTP de ambos formatos, incluido cambio de día y desperdicio. `asistente/pasos-presentacion.spec.ts` comprueba eventos, controles y selección de los componentes extraídos. `e2e/flujo-critico.spec.ts` recorre el asistente con API y PostgreSQL reales, conserva las comprobaciones de cambios sin guardar y errores, y genera capturas de personal y aceite en el artefacto `revision-diseno`.
+`asistente/reglas-tanda.spec.ts` comprueba recorridos, límites y cuerpos HTTP de ambos formatos, incluido cambio de día y desperdicio. `asistente/pasos-presentacion.spec.ts` comprueba eventos, controles y selección de los componentes extraídos. `e2e/flujo-critico.spec.ts` recorre el asistente con API y PostgreSQL reales, conserva las comprobaciones de cambios sin guardar y errores, y genera capturas de personal, aceite, mezcla y resumen en el artefacto `revision-diseno`. Mezcla y resumen se revisan también a 390 px. `asistente/proyeccion-mezcla.spec.ts` cubre referencias múltiples, rendimiento opcional, redondeo, límites, eventos y ambos tipos de resumen. El E2E cambia bultos, avanza y vuelve para verificar la conservación de estado.
 
 ## Continuación prevista
 
-Extraer mezcla y resumen antes de introducir un contenedor adicional de estado: comparten las proyecciones de producción y merecen una revisión específica. Después se podrá abordar el servicio de órdenes del backend en un PR independiente, manteniendo una sola transacción por operación de negocio.
+Mezcla y resumen ya están separados. Las extracciones restantes se pueden realizar en otro bloque si facilitan cambios concretos. A continuación se podrá abordar el servicio de órdenes del backend en un PR independiente, manteniendo una sola transacción por operación de negocio.

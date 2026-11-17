@@ -1,0 +1,113 @@
+<div class="anim-entrada">
+  <dl class="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200">
+    <div class="flex items-center justify-between gap-4 px-5 py-3">
+      <dt class="text-sm font-semibold text-slate-500">Horario</dt>
+      <dd class="text-sm font-extrabold text-slate-900 tabular-nums">
+        {{ horaInicio() }} → {{ horaFin() }}
+      </dd>
+    </div>
+    @if (datos().conFormula) {
+      <div class="flex items-start justify-between gap-4 px-5 py-3">
+        <dt class="text-sm font-semibold text-slate-500">Mezcla de la fórmula</dt>
+        <dd class="text-right text-sm font-extrabold text-slate-900">
+          @for (fila of datos().mezcla; track fila.referencia_id) {
+            @if (fila.bultos > 0) {
+              <span class="block"> {{ fila.nombre }} · {{ fila.bultos }} bts </span>
+            }
+          }
+        </dd>
+      </div>
+      <div class="flex items-center justify-between gap-4 px-5 py-3">
+        <dt class="text-sm font-semibold text-slate-500">Papa cruda</dt>
+        <dd class="text-sm font-extrabold text-slate-900">
+          {{ totales().bultos }} bultos
+          <span class="font-medium text-slate-500"
+            >({{ totales().kgCrudos | number: '1.0-2' }} kg)</span
+          >
+        </dd>
+      </div>
+      <div class="flex items-center justify-between gap-4 px-5 py-3">
+        <dt class="text-sm font-semibold text-slate-500">Kg fritos estimados</dt>
+        <dd class="text-sm font-extrabold text-amber-800">
+          {{ totales().kgFritos | number: '1.0-2' }} kg
+        </dd>
+      </div>
+    } @else {
+      <div class="flex items-center justify-between gap-4 px-5 py-3">
+        <dt class="text-sm font-semibold text-slate-500">Referencia de papa</dt>
+        <dd class="text-sm font-extrabold text-slate-900">
+          {{ referencia()?.nombre ?? '—' }}
+        </dd>
+      </div>
+      <div class="flex items-center justify-between gap-4 px-5 py-3">
+        <dt class="text-sm font-semibold text-slate-500">Tipo de papa</dt>
+        <dd class="text-sm font-extrabold text-slate-900">
+          {{ referencia()?.tipo ?? '—' }}
+        </dd>
+      </div>
+      <div class="flex items-center justify-between gap-4 px-5 py-3">
+        <dt class="text-sm font-semibold text-slate-500">Papa cruda</dt>
+        <dd class="text-sm font-extrabold text-slate-900">
+          {{ numero(datos().bultos) | number: '1.0-2' }} bultos
+          <span class="font-medium text-slate-500">({{ kgCrudos() | number: '1.0-2' }} kg)</span>
+        </dd>
+      </div>
+      <div class="flex items-center justify-between gap-4 px-5 py-3">
+        <dt class="text-sm font-semibold text-slate-500">Rendimiento de fritura</dt>
+        <dd class="text-sm font-extrabold text-slate-900">
+          @if (referencia()!.rendimiento_fritura_pct !== null) {
+            {{ referencia()!.rendimiento_fritura_pct | number: '1.2-2' }}
+            %
+          } @else {
+            —
+          }
+        </dd>
+      </div>
+      <div class="flex items-center justify-between gap-4 px-5 py-3">
+        <dt class="text-sm font-semibold text-slate-500">Kg fritos estimados</dt>
+        <dd class="text-sm font-extrabold text-amber-800">
+          @if (referencia()!.rendimiento_fritura_pct !== null) {
+            {{ kgFritos() | number: '1.0-2' }} kg
+          } @else {
+            —
+          }
+        </dd>
+      </div>
+    }
+    <div class="flex items-center justify-between gap-4 px-5 py-3">
+      <dt class="text-sm font-semibold text-slate-500">Temperatura</dt>
+      <dd class="text-sm font-extrabold text-slate-900">{{ numero(datos().temperatura) }} °C</dd>
+    </div>
+    <div class="flex items-center justify-between gap-4 px-5 py-3">
+      <dt class="text-sm font-semibold text-slate-500">Zona húmeda</dt>
+      <dd class="text-sm font-extrabold text-slate-900">
+        {{ datos().operariosZonaHumeda }}
+        {{ datos().operariosZonaHumeda === 1 ? 'persona' : 'personas' }}
+      </dd>
+    </div>
+    <div class="flex items-center justify-between gap-4 px-5 py-3">
+      <dt class="text-sm font-semibold text-slate-500">Selección de papa freída</dt>
+      <dd class="text-sm font-extrabold text-slate-900">
+        {{ datos().operariosSeleccion }}
+        {{ datos().operariosSeleccion === 1 ? 'persona' : 'personas' }}
+      </dd>
+    </div>
+    <div class="flex items-center justify-between gap-4 px-5 py-3">
+      <dt class="text-sm font-semibold text-slate-500">Aceite</dt>
+      <dd class="text-sm font-extrabold text-slate-900">
+        {{ numero(datos().aceiteInicial) }} → {{ numero(datos().aceiteFinal) }} cm
+        <span class="font-medium text-slate-500">({{ consumoCm() | number: '1.0-2' }} cm)</span>
+      </dd>
+    </div>
+    <div class="flex items-center justify-between gap-4 bg-slate-50/70 px-5 py-3">
+      <dt class="text-sm font-semibold text-slate-500">Desperdicio</dt>
+      <dd class="text-sm font-extrabold text-slate-900">
+        @if (datos().tipoDesperdicioId && numero(datos().cantidadDesperdicio) > 0) {
+          {{ nombreDesperdicio() }} · {{ numero(datos().cantidadDesperdicio) | number: '1.0-2' }} kg
+        } @else {
+          <span class="text-emerald-700">Sin desperdicio</span>
+        }
+      </dd>
+    </div>
+  </dl>
+</div>

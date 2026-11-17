@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { test, expect, type Page, type Locator } from '@playwright/test';
+import { test, expect, type Page, type Locator, type TestInfo } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
 /**
@@ -50,6 +50,18 @@ async function fallarUnaEscritura(page: Page, ruta: string, estado = 503): Promi
         body: JSON.stringify({ detail: estado === 422 ? 'Cantidad de bultos: Usa como máximo 2 decimales.' : 'Fallo controlado E2E' }) });
     } else await route.continue();
   }, { times: 1 });
+}
+
+async function capturarPasoHorno(page: Page, info: TestInfo, nombre: string): Promise<void> {
+  const original = page.viewportSize()!;
+  await page.screenshot({ path: info.outputPath(`diseno-horno-${nombre}.png`), fullPage: true, animations: 'disabled' });
+  try {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: info.outputPath(`diseno-horno-${nombre}-movil.png`), fullPage: true, animations: 'disabled' });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  } finally {
+    await page.setViewportSize(original);
+  }
 }
 
 async function esperarPaso(page: Page, paso: string): Promise<void> {
@@ -336,6 +348,16 @@ test.describe('Flujo crítico de planta', () => {
       await esperarPaso(page, 'mezcla');
       await expect(page.getByTestId('horno-total-tanda')).toContainText('40');
       await expect(page.getByTestId('horno-mezcla-' + referenciaPapaId)).toBeVisible();
+      const bultosMezcla = page.getByTestId('horno-mezcla-' + referenciaPapaId);
+      await bultosMezcla.fill('39');
+      await expect(page.getByTestId('horno-total-tanda')).toContainText('39');
+      await continuar(page, 'continuar-horno');
+      await esperarPaso(page, 'temperatura');
+      await page.getByTestId('horno-atras').click();
+      await esperarPaso(page, 'mezcla');
+      await expect(bultosMezcla).toHaveValue('39');
+      await bultosMezcla.fill('40');
+      await capturarPasoHorno(page, info, 'mezcla');
       await sinViolacionesCriticas(page, 'mezcla de horno');
       await continuar(page, 'continuar-horno');
 
@@ -371,6 +393,8 @@ test.describe('Flujo crítico de planta', () => {
       await page.getByTestId('sin-desperdicio').click();
 
       await esperarPaso(page, 'resumen');
+      await expect(page.locator('app-paso-resumen-horno')).toContainText('40 bultos');
+      await capturarPasoHorno(page, info, 'resumen');
       await fallarUnaEscritura(page, `**/api/v1/ordenes/${ordenId}/registros-horno`, 422);
       const falloTanda = page.waitForResponse(r =>
         r.url().endsWith(`/api/v1/ordenes/${ordenId}/registros-horno`) && r.request().method() === 'POST',
