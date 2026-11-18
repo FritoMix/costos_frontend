@@ -14,6 +14,7 @@ import type {
   RecepcionGuardar,
   RegistroHorno,
   RegistroHornoGuardar,
+  ResumenInicioProduccion,
 } from '../modelos/produccion.model';
 
 /** Acceso a /api/v1/ordenes: ordenes, tandas de horno y recepciones. */
@@ -71,6 +72,10 @@ export class OrdenesService {
     };
     if (opciones.estado) params['estado'] = opciones.estado;
     return this.http.get<PaginaOrdenes>(`${this.base}/pagina`, { params });
+  }
+
+  resumenInicio(): Observable<ResumenInicioProduccion> {
+    return this.http.get<ResumenInicioProduccion>(`${this.base}/resumen-inicio`);
   }
 
   detalle(id: number): Observable<DetalleOrden> {
