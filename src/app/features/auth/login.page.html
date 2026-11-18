@@ -1,0 +1,107 @@
+<main class="grid min-h-dvh bg-white text-marca-950 lg:grid-cols-[47fr_53fr]">
+  <aside class="flex flex-col justify-center gap-6 bg-marca-100 px-6 py-5 sm:px-10 lg:gap-10 lg:p-12">
+    <div class="flex items-center gap-4">
+      <img src="/logo.png" alt="FritoMix" class="h-12 w-16 object-contain lg:h-16 lg:w-20" />
+      <p class="border-l border-marca-300 pl-4 text-xl font-extrabold tracking-tight lg:text-3xl">
+        {{ appNombre }}
+      </p>
+    </div>
+    <div class="hidden lg:block">
+      <img
+        src="/login-planta.webp"
+        alt="Imagen ilustrativa de una línea de producción de pasabocas"
+        width="730"
+        height="455"
+        class="h-auto w-full rounded-2xl object-cover"
+      />
+      <h2 class="mt-6 text-3xl font-extrabold tracking-tight">Control de producción</h2>
+      <p class="mt-2 text-slate-700">Órdenes, horno y saborizado en un solo lugar.</p>
+    </div>
+  </aside>
+
+  <section class="flex items-center justify-center px-6 py-10 sm:px-10 lg:py-16" aria-labelledby="titulo-login">
+    <div class="w-full max-w-md">
+      <h1 id="titulo-login" class="text-3xl font-extrabold tracking-tight sm:text-4xl">Iniciar sesión</h1>
+      <p class="mt-2 text-slate-600">Ingresa con tu cuenta de {{ appNombre }}.</p>
+
+      @if (errorEntrada()) {
+        <p role="alert" class="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+          {{ errorEntrada() }}
+        </p>
+      }
+
+      <form [formGroup]="formulario" (ngSubmit)="entrar()" class="mt-8 space-y-6">
+        <div>
+          <label class="etiqueta" for="usuario">Usuario</label>
+          <input
+            id="usuario"
+            data-testid="login-usuario"
+            type="text"
+            class="mt-2 min-h-12 w-full"
+            placeholder="Escribe tu usuario"
+            formControlName="nombre_usuario"
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
+            maxlength="50"
+            [class.campo-invalido]="invalido('nombre_usuario')"
+            [attr.aria-invalid]="invalido('nombre_usuario')"
+            [attr.aria-describedby]="invalido('nombre_usuario') ? 'error-usuario' : null"
+          />
+          @if (invalido('nombre_usuario')) {
+            <p id="error-usuario" class="error-campo">Escribe tu nombre de usuario.</p>
+          }
+        </div>
+
+        <div>
+          <label class="etiqueta" for="password">Contraseña</label>
+          <div class="relative mt-2">
+            <input
+              id="password"
+              data-testid="login-password"
+              [type]="mostrarPassword() ? 'text' : 'password'"
+              class="min-h-12 w-full pr-14!"
+              placeholder="Escribe tu contraseña"
+              formControlName="password"
+              autocomplete="current-password"
+              maxlength="1024"
+              [class.campo-invalido]="invalido('password')"
+              [attr.aria-invalid]="invalido('password')"
+              [attr.aria-describedby]="invalido('password') ? 'error-password' : null"
+            />
+            <button
+              type="button"
+              (click)="toggleMostrarPassword()"
+              class="absolute inset-y-0 right-0 my-0.5 mr-0.5 grid w-12 place-items-center rounded-lg text-marca-900 hover:bg-marca-50 focus-visible:outline-2 focus-visible:outline-marca-600"
+              [attr.aria-label]="mostrarPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+              [attr.aria-pressed]="mostrarPassword()"
+            >
+              <svg aria-hidden="true" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                <circle cx="12" cy="12" r="3" />
+                @if (mostrarPassword()) {
+                  <path d="m3 3 18 18" />
+                }
+              </svg>
+            </button>
+          </div>
+          @if (invalido('password')) {
+            <p id="error-password" class="error-campo">Escribe tu contraseña.</p>
+          }
+        </div>
+
+        <app-boton
+          tipo="submit"
+          tamano="grande"
+          [anchoCompleto]="true"
+          [cargando]="enviando()"
+          testId="login-submit"
+        >
+          Entrar
+        </app-boton>
+      </form>
+
+      <p class="mt-6 text-sm text-slate-600">Si necesitas acceso, contacta al administrador.</p>
+    </div>
+  </section>
+</main>
