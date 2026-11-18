@@ -152,7 +152,7 @@ test.describe('Flujo crítico de planta', () => {
       await page.getByTestId('login-submit').click();
 
       await expect(page).toHaveURL(/\/inicio/);
-      await expect(page.getByRole('heading', { name: /Hola,/ })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Resumen de producción' })).toBeVisible();
       await sinViolacionesCriticas(page, 'inicio');
     });
 

@@ -19,8 +19,7 @@ interface OpcionMenu {
 }
 
 /**
- * Marco de la aplicación: Barra lateral en Azul Cálido Zafiro con glassmorphism,
- * cabecera clara y luminosa con acentos azul turquesa.
+ * Navegación y cabecera de DATACONTROL.
  */
 @Component({
   selector: 'app-shell',
@@ -28,7 +27,7 @@ interface OpcionMenu {
   imports: [RouterOutlet, RouterLink, RouterLinkActive, AvisosComponent, CampanaAvisosComponent, DatePipe],
   animations: [animacionRuta],
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-calido-50 via-sky-50/40 to-blue-50/30 flex flex-col lg:flex-row font-sans text-slate-800">
+    <div class="min-h-screen bg-slate-50 flex flex-col lg:flex-row font-sans text-slate-800">
       <!-- Mobile Backdrop Overlay -->
       @if (menuAbierto()) {
         <div
@@ -38,104 +37,43 @@ interface OpcionMenu {
         </div>
       }
 
-      <!-- Menú lateral Azul Cálido Zafiro -->
       <aside
-        class="fixed inset-y-0 left-0 z-50 flex w-72 flex-col transition-transform duration-300 ease-in-out lg:static lg:w-68 lg:shrink-0 lg:translate-x-0 shadow-2xl lg:shadow-xl"
-        style="background: linear-gradient(180deg, #0c4a6e 0%, #075985 40%, #0369a1 80%, #0284c7 100%); border-right: 1px solid rgba(255,255,255,0.15);"
+        class="fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-sky-200 bg-marca-100 text-marca-950 transition-transform duration-300 lg:visible lg:sticky lg:top-0 lg:h-dvh lg:w-64 lg:shrink-0 lg:translate-x-0"
         [class.-translate-x-full]="!menuAbierto()"
         [class.translate-x-0]="menuAbierto()"
+        [class.invisible]="!menuAbierto()"
       >
-        <!-- Logo & Marca -->
-        <div class="flex items-center justify-between px-5 py-4" style="border-bottom: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.12);">
-          <div class="flex items-center gap-3">
-            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white p-1 shadow-lg ring-2 ring-sky-300/30">
-              <img src="/logo.png" alt="Pasabocas Frito Mix" class="h-full w-full object-contain" />
-            </div>
-            <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <p class="text-sm font-black tracking-wider text-white uppercase">{{ appNombre }}</p>
-                <span class="rounded-lg px-1.5 py-0.5 text-[9px] font-bold text-sky-200 border border-sky-300/30" style="background: rgba(255,255,255,0.15);">PROD</span>
-              </div>
-              <p class="text-xs font-medium text-sky-200/80">Pasabocas Frito Mix</p>
-            </div>
+        <div class="flex items-center justify-between gap-2 px-5 py-5">
+          <div>
+            <p class="text-xl font-extrabold tracking-tight">{{ appNombre }}</p>
+            <p class="text-sm text-marca-800">FritoMix</p>
           </div>
-          <!-- Close button on mobile -->
-          <button
-            type="button"
-            class="rounded-lg p-1.5 text-sky-200/70 hover:bg-white/10 hover:text-white lg:hidden transition-all duration-200"
-            (click)="menuAbierto.set(false)"
-            aria-label="Cerrar menú"
-          >
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <button type="button" class="rounded-lg p-2 hover:bg-marca-200 lg:hidden"
+            (click)="menuAbierto.set(false)" aria-label="Cerrar menú">✕</button>
         </div>
 
-        <!-- Indicador de estado de planta -->
-        <div class="mx-4 mt-4 mb-2 flex items-center justify-between rounded-2xl px-3.5 py-2.5" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);">
-          <div class="flex items-center gap-2.5">
-            <span class="relative flex h-2.5 w-2.5">
-              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75"></span>
-              <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" style="box-shadow: 0 0 8px rgba(52,211,153,0.7);"></span>
-            </span>
-            <span class="text-xs font-bold text-white">Planta Operativa</span>
-          </div>
-          <span class="text-[11px] font-mono font-semibold text-sky-100/90">{{ fechaActual | date: 'HH:mm' }}</span>
-        </div>
-
-        <!-- Navegación -->
-        <nav class="flex-1 space-y-1 px-3.5 py-3 overflow-y-auto">
-          <p class="px-3 pt-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-widest text-sky-200/60">Módulos</p>
+        <nav aria-label="Módulos" class="flex-1 space-y-1 overflow-y-auto p-3">
           @for (opcion of menuVisible(); track opcion.ruta) {
             <a
               [routerLink]="opcion.ruta"
               [attr.data-testid]="'nav' + opcion.ruta.replace('/', '-')"
               routerLinkActive="active-link"
+              ariaCurrentWhenActive="page"
               [routerLinkActiveOptions]="{ exact: opcion.ruta === '/inicio' }"
               (click)="menuAbierto.set(false)"
-              class="group flex items-center gap-3.5 rounded-2xl px-3.5 py-2.5 text-sm font-medium text-sky-100/90 transition-all duration-200 hover:text-white"
-              style="position: relative;"
+              class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium hover:bg-marca-200/70"
             >
-              <span
-                class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                style="background: rgba(255,255,255,0.12);"
-              ></span>
-              <span class="relative flex h-5 w-5 shrink-0 items-center justify-center text-sky-200/70 group-hover:text-white group-[.active-link]:text-white transition-colors duration-200" [innerHTML]="obtenerSvgIcono(opcion.icono)"></span>
-              <span class="relative truncate">{{ opcion.texto }}</span>
+              <span aria-hidden="true" class="flex size-5 shrink-0 items-center justify-center" [innerHTML]="obtenerSvgIcono(opcion.icono)"></span>
+              <span>{{ opcion.texto }}</span>
             </a>
           }
         </nav>
 
-        <!-- Perfil de Usuario en Barra Lateral -->
-        <div class="p-4" style="border-top: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.08);">
-          <div class="flex items-center gap-3 rounded-2xl p-3" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12);">
-            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white font-extrabold text-xs text-marca-700 shadow-sm">
-              {{ inicialesUsuario() }}
-            </div>
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-xs font-bold text-white">{{ auth.usuario()?.nombre_completo }}</p>
-              <p class="truncate text-[11px] font-semibold text-sky-200">{{ etiquetaRol() }}</p>
-            </div>
-          </div>
-          <div class="mt-3 grid grid-cols-2 gap-2">
-            <a
-              routerLink="/mi-cuenta"
-              (click)="menuAbierto.set(false)"
-              class="flex items-center justify-center rounded-xl px-2.5 py-2 text-xs font-semibold text-white hover:bg-white/20 transition-all duration-200 shadow-2xs"
-              style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);"
-            >
-              Mi cuenta
-            </a>
-            <button
-              type="button"
-              (click)="auth.cerrarSesion()"
-              class="flex items-center justify-center rounded-xl px-2.5 py-2 text-xs font-semibold text-rose-100 hover:bg-rose-600/30 transition-all duration-200 shadow-2xs"
-              style="background: rgba(225,29,72,0.2); border: 1px solid rgba(255,255,255,0.2);"
-            >
-              Salir
-            </button>
-          </div>
+        <div class="border-t border-marca-200 p-3">
+          <a routerLink="/mi-cuenta" (click)="menuAbierto.set(false)"
+            class="block rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-marca-200">Mi cuenta</a>
+          <button type="button" (click)="auth.cerrarSesion()"
+            class="w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-rose-800 hover:bg-rose-50">Salir</button>
         </div>
       </aside>
 
@@ -143,8 +81,8 @@ interface OpcionMenu {
       <div class="flex min-w-0 flex-1 flex-col">
         <!-- Barra Superior Clara con Glassmorphism -->
         <header
-          class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-sky-100/90 px-3.5 sm:px-6 lg:px-8"
-          style="background: rgba(244,249,253,0.85); backdrop-filter: blur(16px) saturate(1.3);"
+          class="sticky bg-white top-0 z-30 flex h-16 items-center justify-between border-b border-sky-100/90 px-3.5 sm:px-6 lg:px-8"
+
         >
           <div class="flex items-center gap-2.5 sm:gap-4">
             <button
@@ -181,6 +119,10 @@ interface OpcionMenu {
 
             <div class="flex items-center gap-2 sm:gap-2.5">
               <app-campana-avisos />
+              <a routerLink="/mi-cuenta" aria-label="Mi cuenta"
+                class="grid size-9 shrink-0 place-items-center rounded-full bg-marca-700 text-xs font-bold text-white">
+                {{ inicialesUsuario() }}
+              </a>
               <span class="hidden rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 px-3 py-1.5 text-xs font-bold text-sky-900 border border-sky-200/80 sm:inline-block">
                 {{ etiquetaRol() }}
               </span>
@@ -200,14 +142,10 @@ interface OpcionMenu {
     <app-avisos />
   `,
   styles: `
-    :host ::ng-deep .active-link {
-      background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%) !important;
-      color: white !important;
-      font-weight: 700 !important;
-      box-shadow: 0 4px 16px rgba(56,189,248,0.35), 0 0 0 1px rgba(255,255,255,0.2) inset;
-    }
-    :host ::ng-deep .active-link span {
-      color: white !important;
+    .active-link {
+      background: #bae6fd;
+      color: #08283e;
+      font-weight: 700;
     }
   `,
 })
