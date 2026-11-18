@@ -1,4 +1,4 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, DOCUMENT, formatDate } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,11 +8,12 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, from, map, mergeMap, of, toArray } from 'rxjs';
+import { catchError, finalize, from, map, mergeMap, of, toArray } from 'rxjs';
 import { RouterLink } from '@angular/router';
 
 import type { ReferenciaPapa } from '../../core/modelos/bodega.model';
 import type { TotalesOrden, Orden } from '../../core/modelos/produccion.model';
+import { AnaliticaService } from '../../core/servicios/analitica.service';
 import { AuthService } from '../../core/servicios/auth.service';
 import { BodegaService } from '../../core/servicios/bodega.service';
 import type { Notificacion } from '../../core/modelos/notificacion.model';
@@ -23,12 +24,6 @@ import { CargandoComponent } from '../../ui/cargando.component';
 import { EstadoVacioComponent } from '../../ui/estado-vacio.component';
 import { EtiquetaEstadoComponent } from '../../ui/etiqueta-estado.component';
 import { TarjetaComponent } from '../../ui/tarjeta.component';
-
-interface AccesoRapido {
-  ruta: string;
-  titulo: string;
-  descripcion: string;
-}
 
 @Component({
   selector: 'app-inicio',
@@ -45,6 +40,10 @@ interface AccesoRapido {
   templateUrl: './inicio.page.html',
 })
 export class InicioPage {
+  private readonly analitica = inject(AnaliticaService);
+  private readonly documento = inject(DOCUMENT);
+  protected readonly descargandoInforme = signal(false);
+  protected readonly errorInforme = signal(false);
   private readonly ordenes = inject(OrdenesService);
   private readonly bodega = inject(BodegaService);
   private readonly catalogos = inject(CatalogosService);
@@ -176,95 +175,30 @@ export class InicioPage {
     this.cargando.set(false);
   }
 
-  protected accesos(): AccesoRapido[] {
-    switch (this.auth.rol()) {
-      case 'supervisor':
-        return [
-          {
-            ruta: '/ordenes/nueva',
-            titulo: 'Nueva Orden',
-            descripcion: 'Crear y programar una orden de producción con lotes de producto.',
-          },
-          {
-            ruta: '/ordenes',
-            titulo: 'Mis Órdenes',
-            descripcion: 'Iniciar, finalizar, corregir o consultar el estado de tus órdenes.',
-          },
-          {
-            ruta: '/bodega',
-            titulo: 'Bodega de Papa',
-            descripcion:
-              'Parámetros productivos de las referencias y proyección de kg crudos/fritos.',
-          },
-          {
-            ruta: '/hornos',
-            titulo: 'Capacidad de Hornos',
-            descripcion: 'Configura los bultos por hora que puede procesar cada horno.',
-          },
-        ];
-      case 'operario_horno':
-        return [
-          {
-            ruta: '/horno',
-            titulo: 'Registrar Tanda en Horno',
-            descripcion: 'Registrar bultos de papa, aceite consumido, temperatura y desperdicio.',
-          },
-        ];
-      case 'bodeguero':
-        return [
-          {
-            ruta: '/formula-produccion',
-            titulo: 'Fórmula de producción',
-            descripcion: 'Define la mezcla de papa de cada orden pendiente y sigue su avance.',
-          },
-          {
-            ruta: '/bodega',
-            titulo: 'Referencias de Papa',
-            descripcion:
-              'Crear variedades de papa, su rendimiento, participación y peso por bulto.',
-          },
-        ];
-      case 'operario_saborizado':
-        return [
-          {
-            ruta: '/saborizado',
-            titulo: 'Registrar Recepción y Sabor',
-            descripcion: 'Pesar canastilla por canastilla y registrar adición de saborizante.',
-          },
-        ];
-      default:
-        return [
-          {
-            ruta: '/bodega',
-            titulo: 'Bodega de Papa',
-            descripcion: 'Referencias de papa, parámetros productivos y proyección de producción.',
-          },
-          {
-            ruta: '/formula-produccion',
-            titulo: 'Fórmula de producción',
-            descripcion: 'Mezcla de papa por orden, proyección de kg y avance de bultos.',
-          },
-          {
-            ruta: '/hornos',
-            titulo: 'Capacidad de Hornos',
-            descripcion: 'Configura los bultos por hora que puede procesar cada horno.',
-          },
-          {
-            ruta: '/analisis',
-            titulo: 'Métricas & Análisis KPI',
-            descripcion: 'Indicadores por categoría, rendimientos de aceite y exportación Excel.',
-          },
-          {
-            ruta: '/ordenes',
-            titulo: 'Gestión de Órdenes',
-            descripcion: 'Listado completo de órdenes programadas, en curso y finalizadas.',
-          },
-          {
-            ruta: '/catalogos',
-            titulo: 'Catálogos Maestros',
-            descripcion: 'Configuración de productos, hornos, turnos y densidades.',
-          },
-        ];
-    }
+  protected descargarInformeDiario(): void {
+    if (this.auth.rol() !== 'admin' || this.descargandoInforme()) return;
+
+    // Colombia utiliza UTC-5 todo el año. Usar la fecha de planta, no la UTC.
+    const fecha = formatDate(new Date(), 'yyyy-MM-dd', 'en-US', '-0500');
+    this.descargandoInforme.set(true);
+    this.errorInforme.set(false);
+
+    this.analitica
+      .exportar({ fecha_desde: fecha, fecha_hasta: fecha }, 'xlsx')
+      .pipe(
+        takeUntilDestroyed(this.destruccion),
+        finalize(() => this.descargandoInforme.set(false)),
+      )
+      .subscribe({
+        next: (archivo) => {
+          const url = URL.createObjectURL(archivo);
+          const enlace = this.documento.createElement('a');
+          enlace.href = url;
+          enlace.download = `datacontrol_informe_diario_${fecha}.xlsx`;
+          enlace.click();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        },
+        error: () => this.errorInforme.set(true),
+      });
   }
 }
