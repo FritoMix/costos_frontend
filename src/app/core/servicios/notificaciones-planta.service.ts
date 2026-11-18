@@ -55,6 +55,10 @@ export class NotificacionesPlantaService {
     this._pendientes.set([]);
   }
 
+  historial(): Observable<Notificacion[]> {
+    return this.http.get<Notificacion[]>(`${environment.apiUrl}/notificaciones`);
+  }
+
   marcarLeida(id: number): void {
     this.http.post(`${environment.apiUrl}/notificaciones/${id}/leida`, {}).subscribe({
       next: () => this._pendientes.update((lista) => lista.filter((n) => n.id !== id)),

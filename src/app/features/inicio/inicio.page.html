@@ -1,0 +1,221 @@
+<div class="pagina-contenido">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-extrabold tracking-tight text-marca-950 sm:text-3xl">
+        {{ auth.esBodeguero() ? 'Resumen de bodega' : 'Resumen de producción' }}
+      </h1>
+      <p class="mt-1 text-sm text-slate-600">Hola, {{ auth.usuario()?.nombre_completo }}</p>
+    </div>
+    @if (gestionaOrdenes()) {
+      <a
+        routerLink="/ordenes/nueva"
+        class="inline-flex min-h-11 items-center rounded-xl bg-marca-700 px-4 text-sm font-semibold text-white hover:bg-marca-800"
+      >
+        + Nueva orden
+      </a>
+    }
+  </div>
+
+  @if (cargando()) {
+    <app-cargando texto="Cargando resumen…" />
+  } @else if (falloCarga()) {
+    <div
+      role="alert"
+      class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"
+    >
+      <p>No se pudo cargar el resumen.</p>
+      <button
+        type="button"
+        class="rounded-lg border border-amber-300 bg-white px-3 py-2 font-semibold"
+        (click)="cargarResumen()"
+      >
+        Reintentar
+      </button>
+    </div>
+  } @else {
+    <dl
+      class="grid grid-cols-2 gap-3 sm:gap-4"
+      [class.xl:grid-cols-4]="!auth.esBodeguero() && gestionaOrdenes()"
+    >
+      <div class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+        <dt class="text-sm font-medium text-slate-600">
+          {{ auth.esBodeguero() ? 'Referencias activas' : 'Órdenes en producción' }}
+        </dt>
+        <dd class="mt-1 text-3xl font-bold tabular-nums text-marca-950">
+          {{ auth.esBodeguero() ? referenciasActivas().length : enProduccion().length }}
+        </dd>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+        <dt class="text-sm font-medium text-slate-600">
+          {{ auth.esBodeguero() ? 'Peso promedio por bulto' : 'Cantidad programada' }}
+        </dt>
+        <dd class="mt-1 text-3xl font-bold tabular-nums text-marca-950">
+          {{
+            (auth.esBodeguero() ? pesoPromedioReferencias() : totalKgProgramados())
+              | number: '1.0-2'
+          }}
+          <span class="text-base">kg</span>
+        </dd>
+      </div>
+      @if (!auth.esBodeguero()) {
+        <div class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+          <dt class="text-sm font-medium text-slate-600">Producción recibida en órdenes activas</dt>
+          <dd class="mt-1 text-3xl font-bold tabular-nums text-marca-950">
+            @if (kgRecibidos() !== null) {
+              {{ kgRecibidos() | number: '1.0-2' }} <span class="text-base">kg</span>
+            } @else {
+              <span class="text-base">Sin dato</span>
+            }
+          </dd>
+        </div>
+        @if (gestionaOrdenes()) {
+          <div class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+            <dt class="text-sm font-medium text-slate-600">Pendientes de fórmula</dt>
+            <dd class="mt-1 text-3xl font-bold tabular-nums text-marca-950">
+              {{ sinFormula() ?? '—' }}
+            </dd>
+          </div>
+        }
+      }
+    </dl>
+
+    @if (!auth.esBodeguero()) {
+      <div class="grid min-w-0 gap-4 xl:grid-cols-[2fr_1fr]">
+        <app-tarjeta titulo="Producción en curso" [sinRelleno]="true" class="min-w-0">
+          @if (!enProduccion().length) {
+            <app-estado-vacio
+              titulo="No hay órdenes en producción"
+              descripcion="Las órdenes aparecerán aquí al iniciar la producción."
+            />
+          } @else {
+            <ul class="divide-y divide-slate-200">
+              @for (orden of enProduccion(); track orden.id) {
+                <li class="grid items-center gap-3 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+                  <div class="min-w-0">
+                    <p class="font-mono text-xs font-semibold text-marca-800">
+                      {{ orden.numero_orden }}
+                    </p>
+                    <p class="break-words font-bold text-slate-900">
+                      {{ orden.producto.nombre_comercial }}
+                    </p>
+                    <p class="mt-1 text-sm text-slate-600">
+                      {{ orden.horno.nombre }} ·
+                      {{ orden.cantidad_programada | number: '1.0-2' }} kg programados
+                    </p>
+                    @let avance = totales()[orden.id]?.avance_porcentaje;
+                    @if (avance != null) {
+                      <div
+                        class="mt-2 flex items-center gap-2 text-xs font-semibold text-slate-700"
+                      >
+                        <progress
+                          class="h-2 w-20 accent-emerald-600"
+                          max="100"
+                          [value]="avance"
+                          [attr.aria-label]="'Avance de ' + orden.numero_orden"
+                        ></progress>
+                        {{ avance | number: '1.0-1' }} %
+                      </div>
+                    }
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <app-etiqueta-estado [estado]="orden.estado" [texto]="orden.estado_etiqueta" />
+                    @if (gestionaOrdenes()) {
+                      <a
+                        [routerLink]="['/ordenes', orden.id]"
+                        class="rounded-lg border border-marca-300 px-3 py-2 text-sm font-semibold text-marca-800 hover:bg-marca-50"
+                        >Ver detalle</a
+                      >
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </app-tarjeta>
+        <div class="grid content-start gap-4">
+          @if (gestionaOrdenes()) {
+            <app-tarjeta titulo="Requieren atención">
+              <div class="space-y-3 text-sm text-slate-700">
+                @if (sinFormula() === null) {
+                  <p>No hay datos disponibles de fórmulas pendientes.</p>
+                } @else if (sinFormula() === 0) {
+                  <p>No hay órdenes pendientes de fórmula.</p>
+                } @else {
+                  <a
+                    class="block rounded-lg border border-amber-200 bg-amber-50 p-3 font-semibold text-amber-950 hover:bg-amber-100"
+                    [routerLink]="auth.rol() === 'admin' ? '/formula-produccion' : '/ordenes'"
+                  >
+                    {{ sinFormula() }} órdenes pendientes de fórmula →
+                  </a>
+                }
+                @if (auth.rol() === 'admin' && sinDensidad()?.length) {
+                  <a
+                    routerLink="/catalogos/densidad-aceite"
+                    class="block rounded-lg border border-amber-200 bg-amber-50 p-3 font-semibold text-amber-950 hover:bg-amber-100"
+                  >
+                    Sin densidad vigente: {{ sinDensidad()?.join(', ') }} →
+                  </a>
+                }
+              </div>
+            </app-tarjeta>
+          }
+          <app-tarjeta titulo="Hornos en producción" class="min-w-0">
+            @if (!enProduccion().length) {
+              <p class="text-sm text-slate-600">Sin órdenes en curso.</p>
+            } @else {
+              <ul class="space-y-2">
+                @for (orden of enProduccion(); track orden.id) {
+                  <li class="rounded-xl border border-marca-200 bg-marca-50 px-4 py-3">
+                    <p class="font-semibold text-marca-950">{{ orden.horno.nombre }}</p>
+                    <p class="break-words font-mono text-xs text-marca-800">
+                      {{ orden.numero_orden }}
+                    </p>
+                  </li>
+                }
+              </ul>
+            }
+          </app-tarjeta>
+        </div>
+      </div>
+    }
+  }
+
+  <app-tarjeta titulo="Avisos recientes">
+    @if (actividad(); as avisos) {
+      @if (avisos.length) {
+        <ul class="divide-y divide-slate-200">
+          @for (aviso of avisos; track aviso.id) {
+            <li class="flex flex-wrap justify-between gap-2 py-3">
+              <div class="min-w-0">
+                <p class="font-semibold text-slate-900">{{ aviso.titulo }}</p>
+                <p class="text-sm text-slate-600">{{ aviso.mensaje }}</p>
+              </div>
+              <time [attr.datetime]="aviso.fecha_programada" class="text-sm text-slate-600">
+                {{ aviso.fecha_programada | date: 'short' : '-0500' }}
+              </time>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="text-sm text-slate-600">No hay avisos recientes.</p>
+      }
+    } @else {
+      <p class="text-sm text-slate-600">Avisos no disponibles.</p>
+    }
+  </app-tarjeta>
+
+  <section aria-labelledby="titulo-accesos">
+    <h2 id="titulo-accesos" class="mb-3 text-lg font-bold text-marca-950">Accesos rápidos</h2>
+    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      @for (acceso of accesos(); track acceso.ruta) {
+        <a
+          [routerLink]="acceso.ruta"
+          class="rounded-xl border border-slate-200 bg-white p-4 hover:border-marca-400 hover:bg-marca-50"
+        >
+          <h3 class="font-semibold text-marca-900">{{ acceso.titulo }}</h3>
+          <p class="mt-1 text-sm text-slate-600">{{ acceso.descripcion }}</p>
+        </a>
+      }
+    </div>
+  </section>
+</div>
