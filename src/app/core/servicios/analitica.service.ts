@@ -51,6 +51,13 @@ export class AnaliticaService {
     });
   }
 
+  informeDiario() {
+    return this.http.get(`${this.base}/informe-diario.xlsx`, {
+      observe: 'response',
+      responseType: 'blob',
+    });
+  }
+
   /** Los filtros vacios no se envian: asi la URL queda limpia y legible. */
   private aParams(filtros: FiltrosAnalisis): HttpParams {
     let params = new HttpParams();

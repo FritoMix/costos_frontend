@@ -1,4 +1,4 @@
-import { DatePipe, DecimalPipe, DOCUMENT, formatDate } from '@angular/common';
+import { DatePipe, DecimalPipe, DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -178,23 +178,28 @@ export class InicioPage {
   protected descargarInformeDiario(): void {
     if (this.auth.rol() !== 'admin' || this.descargandoInforme()) return;
 
-    // Colombia utiliza UTC-5 todo el año. Usar la fecha de planta, no la UTC.
-    const fecha = formatDate(new Date(), 'yyyy-MM-dd', 'en-US', '-0500');
     this.descargandoInforme.set(true);
     this.errorInforme.set(false);
 
     this.analitica
-      .exportar({ fecha_desde: fecha, fecha_hasta: fecha }, 'xlsx')
+      .informeDiario()
       .pipe(
         takeUntilDestroyed(this.destruccion),
         finalize(() => this.descargandoInforme.set(false)),
       )
       .subscribe({
-        next: (archivo) => {
-          const url = URL.createObjectURL(archivo);
+        next: ({ body, headers }) => {
+          if (!body?.size) {
+            this.errorInforme.set(true);
+            return;
+          }
+          const url = URL.createObjectURL(body);
           const enlace = this.documento.createElement('a');
           enlace.href = url;
-          enlace.download = `datacontrol_informe_diario_${fecha}.xlsx`;
+          const nombre = headers
+            .get('Content-Disposition')
+            ?.match(/datacontrol_informe_diario_\d{4}-\d{2}-\d{2}\.xlsx/)?.[0];
+          enlace.download = nombre ?? 'datacontrol_informe_diario.xlsx';
           enlace.click();
           setTimeout(() => URL.revokeObjectURL(url), 1000);
         },
