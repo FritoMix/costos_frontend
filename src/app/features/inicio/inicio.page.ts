@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, finalize, from, map, mergeMap, of, toArray } from 'rxjs';
+import { finalize } from 'rxjs';
 import { RouterLink } from '@angular/router';
 
 import type { ReferenciaPapa } from '../../core/modelos/bodega.model';
@@ -49,7 +49,9 @@ export class InicioPage {
   private readonly catalogos = inject(CatalogosService);
   private readonly avisos = inject(NotificacionesPlantaService);
   private readonly destruccion = inject(DestroyRef);
-  protected readonly totales = signal<Record<number, TotalesOrden | null>>({});
+  protected readonly totales = signal<
+    Record<number, Pick<TotalesOrden, 'kg_papa_frita' | 'avance_porcentaje'>>
+  >({});
   protected readonly kgRecibidos = computed(() => {
     const ordenes = this.enProduccion();
     const totales = this.totales();
@@ -129,41 +131,16 @@ export class InicioPage {
       return;
     }
 
-    this.totales.set({});
-    if (this.gestionaOrdenes()) {
-      this.ordenes
-        .listar({ estado: 'pendiente' })
-        .pipe(takeUntilDestroyed(this.destruccion))
-        .subscribe({
-          next: (ordenes) =>
-            this.sinFormula.set(
-              ordenes.filter(
-                (orden) => orden.formula_obligatoria && orden.formula_estado === 'sin_formula',
-              ).length,
-            ),
-          error: () => this.sinFormula.set(null),
-        });
-    }
     this.ordenes
-      .listar({ estado: 'en_produccion', soloPropias: false })
+      .resumenInicio()
       .pipe(takeUntilDestroyed(this.destruccion))
       .subscribe({
-        next: (ordenes) => {
-          this.enProduccion.set(ordenes);
-          from(ordenes)
-            .pipe(
-              mergeMap(
-                (orden) =>
-                  this.ordenes.detalle(orden.id).pipe(
-                    map((detalle) => [orden.id, detalle.totales] as const),
-                    catchError(() => of([orden.id, null] as const)),
-                  ),
-                4,
-              ),
-              toArray(),
-              takeUntilDestroyed(this.destruccion),
-            )
-            .subscribe((totales) => this.totales.set(Object.fromEntries(totales)));
+        next: ({ activas, pendientes_sin_formula }) => {
+          this.enProduccion.set(activas.map(({ orden }) => orden));
+          this.totales.set(
+            Object.fromEntries(activas.map(({ orden, avance }) => [orden.id, avance])),
+          );
+          this.sinFormula.set(pendientes_sin_formula);
           this.cargando.set(false);
         },
         error: () => this.mostrarError(),

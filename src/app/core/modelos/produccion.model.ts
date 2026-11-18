@@ -167,6 +167,11 @@ export interface RecepcionGuardar {
   pesos_canastillas: number[];
 }
 
+export interface ResumenInicioProduccion {
+  activas: { orden: Orden; avance: Pick<TotalesOrden, 'kg_papa_frita' | 'avance_porcentaje'> }[];
+  pendientes_sin_formula: number | null;
+}
+
 export interface TotalesOrden {
   kg_crudos: number;
   cantidad_bultos: number;
