@@ -157,8 +157,21 @@ test.describe('Flujo crítico de planta', () => {
     });
 
     await test.step('consultar la bodega de papa', async () => {
-      await expect(page.getByRole('link', { name: 'Bodega de Papa' }).first()).toBeVisible();
-      await page.goto('/bodega');
+      const escritorio = page.viewportSize()!;
+      const nav = page.getByRole('banner').locator('nav');
+      const bodega = nav.getByTestId('nav-bodega');
+      await expect(bodega).toBeVisible();
+
+      await page.setViewportSize({ width: 375, height: 812 });
+      await expect(bodega).toBeHidden();
+      await page.getByRole('button', { name: 'Abrir menú' }).click();
+      await expect(bodega).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('button', { name: 'Abrir menú' })).toBeFocused();
+      await expect(bodega).toBeHidden();
+
+      await page.setViewportSize(escritorio);
+      await bodega.click();
       await expect(page.getByRole('heading', { name: /Bodega de Papa/ })).toBeVisible();
       await expect(page.getByText(REFERENCIA_PAPA).first()).toBeVisible();
 

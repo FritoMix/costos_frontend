@@ -1,5 +1,4 @@
-import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Injector, afterNextRender, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { animacionRuta } from '../core/animaciones/ruta.animacion';
@@ -24,35 +23,24 @@ interface OpcionMenu {
 @Component({
   selector: 'app-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, AvisosComponent, CampanaAvisosComponent, DatePipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, AvisosComponent, CampanaAvisosComponent],
   animations: [animacionRuta],
   template: `
-    <div class="min-h-screen bg-slate-50 flex flex-col lg:flex-row font-sans text-slate-800">
-      <!-- Mobile Backdrop Overlay -->
-      @if (menuAbierto()) {
-        <div
-          class="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden transition-opacity duration-300"
-          (click)="menuAbierto.set(false)"
-        >
-        </div>
-      }
-
-      <aside
-        class="fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-sky-200 bg-marca-100 text-marca-950 transition-transform duration-300 lg:visible lg:sticky lg:top-0 lg:h-dvh lg:w-64 lg:shrink-0 lg:translate-x-0"
-        [class.-translate-x-full]="!menuAbierto()"
-        [class.translate-x-0]="menuAbierto()"
-        [class.invisible]="!menuAbierto()"
+    <div class="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800">
+      <header
+        class="sticky top-0 z-30 flex min-h-16 items-center justify-between gap-2 border-b border-sky-200 bg-marca-100 px-2.5 sm:px-4"
+        (keydown.escape)="cerrarMenu(botonMenu)"
       >
-        <div class="flex items-center justify-between gap-2 px-5 py-5">
-          <div>
-            <p class="text-xl font-extrabold tracking-tight">{{ appNombre }}</p>
-            <p class="text-sm text-marca-800">FritoMix</p>
-          </div>
-          <button type="button" class="rounded-lg p-2 hover:bg-marca-200 lg:hidden"
-            (click)="menuAbierto.set(false)" aria-label="Cerrar menú">✕</button>
-        </div>
+        <a routerLink="/inicio" (click)="menuAbierto.set(false)"
+          class="flex min-w-0 shrink items-center gap-1.5 rounded-lg text-xs font-extrabold text-marca-950 sm:gap-2 sm:text-sm">
+          <img src="/logo.png" alt="Frito Mix" class="size-8 shrink-0 rounded-lg bg-white object-contain sm:size-10" />
+          <span>{{ appNombre }}</span>
+        </a>
 
-        <nav aria-label="Módulos" class="flex-1 space-y-1 overflow-y-auto p-3">
+        <nav #menuModulos id="menu-modulos" aria-label="Módulos"
+          class="absolute inset-x-0 top-full max-h-[60dvh] grid-cols-2 gap-1 overflow-y-auto border-b border-sky-200 bg-marca-100 p-2 text-marca-950 shadow-lg xl:static xl:flex xl:max-h-none xl:items-center xl:justify-center xl:overflow-visible xl:border-0 xl:bg-transparent xl:p-0 xl:shadow-none"
+          [class.hidden]="!menuAbierto()"
+          [class.grid]="menuAbierto()">
           @for (opcion of menuVisible(); track opcion.ruta) {
             <a
               [routerLink]="opcion.ruta"
@@ -61,82 +49,43 @@ interface OpcionMenu {
               ariaCurrentWhenActive="page"
               [routerLinkActiveOptions]="{ exact: opcion.ruta === '/inicio' }"
               (click)="menuAbierto.set(false)"
-              class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium hover:bg-marca-200/70"
+              class="flex min-h-11 items-center gap-1.5 rounded-xl px-2 text-sm xl:whitespace-nowrap xl:text-xs font-medium hover:bg-marca-200/70"
             >
-              <span aria-hidden="true" class="flex size-5 shrink-0 items-center justify-center" [innerHTML]="obtenerSvgIcono(opcion.icono)"></span>
+              <span aria-hidden="true" class="flex size-4 shrink-0 items-center justify-center" [innerHTML]="obtenerSvgIcono(opcion.icono)"></span>
               <span>{{ opcion.texto }}</span>
             </a>
           }
         </nav>
 
-        <div class="border-t border-marca-200 p-3">
-          <a routerLink="/mi-cuenta" (click)="menuAbierto.set(false)"
-            class="block rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-marca-200">Mi cuenta</a>
+        <div class="flex shrink-0 items-center gap-1.5">
+          <app-campana-avisos />
+          <a routerLink="/mi-cuenta" aria-label="Mi cuenta" [attr.title]="etiquetaRol()"
+            (click)="menuAbierto.set(false)"
+            class="grid size-9 place-items-center rounded-full bg-marca-700 text-xs font-bold text-white">
+            {{ inicialesUsuario() }}
+          </a>
           <button type="button" (click)="auth.cerrarSesion()"
-            class="w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-rose-800 hover:bg-rose-50">Salir</button>
+            class="min-h-11 rounded-lg px-1 text-xs font-semibold text-rose-800 hover:bg-rose-50">
+            Salir
+          </button>
+          <button #botonMenu type="button"
+            class="grid size-10 place-items-center rounded-lg text-marca-950 hover:bg-marca-200 xl:hidden"
+            (click)="alternarMenu(menuModulos)"
+            aria-controls="menu-modulos"
+            [attr.aria-expanded]="menuAbierto()"
+            [attr.aria-label]="menuAbierto() ? 'Cerrar menú' : 'Abrir menú'">
+            <svg aria-hidden="true" class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
         </div>
-      </aside>
+      </header>
 
-      <!-- Área Principal con Top Header Luminoso -->
-      <div class="flex min-w-0 flex-1 flex-col">
-        <!-- Barra Superior Clara con Glassmorphism -->
-        <header
-          class="sticky bg-white top-0 z-30 flex h-16 items-center justify-between border-b border-sky-100/90 px-3.5 sm:px-6 lg:px-8"
-
-        >
-          <div class="flex items-center gap-2.5 sm:gap-4">
-            <button
-              type="button"
-              class="flex h-10 w-10 items-center justify-center rounded-xl border border-sky-200 text-sky-700 hover:bg-sky-50 hover:border-sky-300 lg:hidden transition-all duration-200"
-              (click)="alternarMenu()"
-              [attr.aria-expanded]="menuAbierto()"
-              aria-label="Abrir menú"
-            >
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-
-            <!-- Brand on mobile & desktop -->
-            <div class="flex items-center gap-2 sm:gap-3">
-              <div class="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-white p-0.5 border border-sky-200 shadow-sm flex items-center justify-center">
-                <img src="/logo.png" alt="Pasabocas Frito Mix" class="h-full w-full object-contain" />
-              </div>
-              <div>
-                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-sky-600 block leading-none">Sistema de Control</span>
-                <p class="text-xs sm:text-sm font-extrabold text-slate-900 mt-0.5">DATACONTROL <span class="hidden sm:inline font-normal text-slate-500">· Pasabocas Frito Mix</span></p>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2 sm:gap-4">
-            <div class="hidden md:flex items-center gap-2 rounded-xl bg-white/80 border border-sky-200/80 px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs" style="backdrop-filter: blur(8px);">
-              <svg class="h-4 w-4 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span class="capitalize">{{ fechaActual | date: 'EEEE, d MMMM yyyy' }}</span>
-            </div>
-
-            <div class="flex items-center gap-2 sm:gap-2.5">
-              <app-campana-avisos />
-              <a routerLink="/mi-cuenta" aria-label="Mi cuenta"
-                class="grid size-9 shrink-0 place-items-center rounded-full bg-marca-700 text-xs font-bold text-white">
-                {{ inicialesUsuario() }}
-              </a>
-              <span class="hidden rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 px-3 py-1.5 text-xs font-bold text-sky-900 border border-sky-200/80 sm:inline-block">
-                {{ etiquetaRol() }}
-              </span>
-            </div>
-          </div>
-        </header>
-
-        <!-- Contenedor Principal -->
-        <main class="min-w-0 flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          <div class="contenido-ruta min-w-0" [@animacionRuta]="prepararRuta(salida)">
-            <router-outlet #salida="outlet" />
-          </div>
-        </main>
-      </div>
+      <main class="min-w-0 flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <div class="contenido-ruta min-w-0" [@animacionRuta]="prepararRuta(salida)">
+          <router-outlet #salida="outlet" />
+        </div>
+      </main>
     </div>
 
     <app-avisos />
@@ -151,10 +100,10 @@ interface OpcionMenu {
 })
 export class ShellComponent {
   protected readonly auth = inject(AuthService);
+  private readonly injector = inject(Injector);
   private readonly avisosPlanta = inject(NotificacionesPlantaService);
   protected readonly appNombre = environment.appNombre;
   protected readonly menuAbierto = signal(false);
-  protected readonly fechaActual = new Date();
 
   constructor() {
     this.avisosPlanta.iniciar();
@@ -163,12 +112,12 @@ export class ShellComponent {
   private readonly menu: OpcionMenu[] = [
     { ruta: '/inicio', texto: 'Inicio', icono: 'inicio', roles: ['admin', 'supervisor', 'operario_horno', 'operario_saborizado', 'bodeguero'] },
     { ruta: '/ordenes', texto: 'Órdenes', icono: 'ordenes', roles: ['admin', 'supervisor'] },
-    { ruta: '/bodega', texto: 'Bodega de Papa', icono: 'bodega', roles: ['admin', 'supervisor', 'bodeguero'] },
-    { ruta: '/formula-produccion', texto: 'Fórmula de producción', icono: 'formula', roles: ['admin', 'bodeguero'] },
+    { ruta: '/bodega', texto: 'Bodega', icono: 'bodega', roles: ['admin', 'supervisor', 'bodeguero'] },
+    { ruta: '/formula-produccion', texto: 'Fórmulas', icono: 'formula', roles: ['admin', 'bodeguero'] },
     { ruta: '/hornos', texto: 'Hornos', icono: 'horno', roles: ['supervisor'] },
-    { ruta: '/horno', texto: 'Registro Horno', icono: 'horno', roles: ['admin', 'operario_horno'] },
+    { ruta: '/horno', texto: 'Horno', icono: 'horno', roles: ['admin', 'operario_horno'] },
     { ruta: '/saborizado', texto: 'Saborizado', icono: 'saborizado', roles: ['admin', 'operario_saborizado'] },
-    { ruta: '/analisis', texto: 'Análisis & KPI', icono: 'analisis', roles: ['admin'] },
+    { ruta: '/analisis', texto: 'Análisis', icono: 'analisis', roles: ['admin'] },
     { ruta: '/catalogos', texto: 'Catálogos', icono: 'catalogos', roles: ['admin'] },
     { ruta: '/usuarios', texto: 'Usuarios', icono: 'usuarios', roles: ['admin'] },
   ];
@@ -192,8 +141,18 @@ export class ShellComponent {
     return nombre.substring(0, 2).toUpperCase();
   });
 
-  protected alternarMenu(): void {
+  protected alternarMenu(menu: HTMLElement): void {
     this.menuAbierto.update((abierto) => !abierto);
+    if (this.menuAbierto()) {
+      afterNextRender(() => menu.querySelector('a')?.focus(), { injector: this.injector });
+    }
+  }
+
+  protected cerrarMenu(boton: HTMLButtonElement): void {
+    if (this.menuAbierto()) {
+      this.menuAbierto.set(false);
+      boton.focus();
+    }
   }
 
   protected prepararRuta(salida: RouterOutlet): string {
