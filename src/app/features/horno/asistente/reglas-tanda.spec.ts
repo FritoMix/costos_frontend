@@ -32,30 +32,63 @@ const datos = (cambios: Partial<DatosTandaHorno> = {}): DatosTandaHorno => ({
 });
 
 describe('Reglas del asistente de horno: comportamiento existente', () => {
-  it('conserva los dos recorridos y el orden de los pasos', () => {
-    expect(pasosDeTanda(true)).toEqual([
+  it('conserva los dos recorridos con el orden de planta: temperatura primero, parada y bultos al final', () => {
+    const comunes = [
       'horario',
-      'mezcla',
       'temperatura',
       'personal_zona_humeda',
       'personal_seleccion',
       'aceite_inicial',
       'aceite_final',
       'desperdicio',
-      'resumen',
-    ]);
+      'parada',
+    ];
+    expect(pasosDeTanda(true)).toEqual([...comunes, 'mezcla', 'resumen'] as never);
     expect(pasosDeTanda(false)).toEqual([
-      'horario',
+      ...comunes,
       'referencia_papa',
       'bultos',
-      'temperatura',
-      'personal_zona_humeda',
-      'personal_seleccion',
-      'aceite_inicial',
-      'aceite_final',
-      'desperdicio',
       'resumen',
-    ]);
+    ] as never);
+  });
+
+  it('exige contestar la parada y, si hubo, minutos y causa', () => {
+    expect(pasoTandaValido('parada', datos({ hayParada: null }), 50)).toBeFalse();
+    expect(pasoTandaValido('parada', datos({ hayParada: false }), 50)).toBeTrue();
+    expect(
+      pasoTandaValido('parada', datos({ hayParada: true, minutosParada: 20 }), 50),
+    ).toBeFalse();
+    expect(
+      pasoTandaValido(
+        'parada',
+        datos({ hayParada: true, minutosParada: 20, causaParada: 'limpieza' }),
+        50,
+      ),
+    ).toBeTrue();
+    expect(
+      pasoTandaValido(
+        'parada',
+        datos({ hayParada: true, minutosParada: 20, causaParada: 'otro' }),
+        50,
+      ),
+    ).toBeFalse();
+  });
+
+  it('envía el número de tanda y la parada a la API', () => {
+    const cuerpo = construirRegistroHorno(
+      datos({ hayParada: true, minutosParada: 15, causaParada: 'falta_papa' }),
+      { inicio: '07:00', fin: '08:00' },
+      2,
+    );
+    expect(cuerpo.numero_tanda).toBe(2);
+    expect(cuerpo.minutos_parada).toBe(15);
+    expect(cuerpo.causa_parada).toBe('falta_papa');
+    const sinParada = construirRegistroHorno(datos({ hayParada: false, minutosParada: 15 }), {
+      inicio: '07:00',
+      fin: '08:00',
+    });
+    expect(sinParada.minutos_parada).toBe(0);
+    expect(sinParada.causa_parada).toBeNull();
   });
 
   const casos: {
@@ -178,8 +211,12 @@ describe('Solicitud de una tanda de horno', () => {
     const antes = JSON.stringify(entrada);
     const cuerpo = construirRegistroHorno(entrada, { inicio: '23:30', fin: '00:30' });
     expect(JSON.parse(JSON.stringify(cuerpo))).toEqual({
+      numero_tanda: null,
       hora_inicio: '23:30',
       hora_fin: '00:30',
+      minutos_parada: 0,
+      causa_parada: null,
+      nota_parada: null,
       referencias: [
         { referencia_papa_id: 7, cantidad_bultos: 10 },
         { referencia_papa_id: 8, cantidad_bultos: 2.5 },

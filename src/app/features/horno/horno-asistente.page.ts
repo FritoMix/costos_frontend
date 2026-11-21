@@ -9,6 +9,7 @@ import { cambiarBultosMezcla } from './asistente/proyeccion-mezcla';
 import { PasoHorarioHornoComponent } from './asistente/paso-horario.component';
 import { PasoPersonalHornoComponent } from './asistente/paso-personal.component';
 import { PasoAceiteHornoComponent } from './asistente/paso-aceite.component';
+import { PasoParadaHornoComponent } from './asistente/paso-parada.component';
 import { pasosDeTanda, type PasoTanda, TEXTOS_PASOS_HORNO } from './asistente/pasos-tanda';
 import { colorTecla } from './asistente/presentacion-tanda';
 import { consumoAceiteCm, numeroDeTexto, pasoTandaValido } from './asistente/reglas-tanda';
@@ -58,6 +59,7 @@ import { TecladoNumericoComponent } from '../../ui/teclado-numerico.component';
     PasoHorarioHornoComponent,
     PasoPersonalHornoComponent,
     PasoAceiteHornoComponent,
+    PasoParadaHornoComponent,
     RouterLink,
     DecimalPipe,
     BotonComponent,
@@ -166,6 +168,37 @@ export class HornoAsistentePage {
   protected readonly hayDesperdicio = signal(false);
   protected readonly tipoDesperdicioId = signal<number | null>(null);
   protected readonly cantidadDesperdicio = signal('0');
+  /** Parada dentro de la hora (V17). null = aún no contesta. */
+  protected readonly hayParada = signal<boolean | null>(null);
+  protected readonly minutosParada = signal(0);
+  protected readonly causaParada = signal<string | null>(null);
+  protected readonly notaParada = signal('');
+
+  /** V17: cada hora programada es una tanda; se llena la primera libre. */
+  protected readonly numeroTanda = computed(() => {
+    const datos = this.detalle();
+    if (!datos) return null;
+    const ocupadas = new Set(datos.registros_horno.map((r) => r.numero_tanda).filter((n) => !!n));
+    const horas = datos.orden.horas_produccion ?? ocupadas.size + 1;
+    for (let n = 1; n <= horas; n++) if (!ocupadas.has(n)) return n;
+    return null;
+  });
+
+  /** Hora de la tanda puesta por la app: inicio de la orden + (n − 1) horas. */
+  protected readonly franjaAutomatica = computed(() => {
+    const inicioOrden = this.detalle()?.orden.hora_inicio;
+    const n = this.numeroTanda();
+    if (!inicioOrden || !n) return null;
+    const inicio = new Date(new Date(inicioOrden).getTime() + (n - 1) * 60 * 60 * 1000);
+    return { inicio, fin: new Date(inicio.getTime() + 60 * 60 * 1000) };
+  });
+
+  /** "08:00" si la hora de esta tanda todavía no empieza (5 min de margen). */
+  protected readonly horaFutura = computed(() => {
+    const franja = this.franjaAutomatica();
+    if (!franja || franja.inicio.getTime() - 5 * 60 * 1000 <= Date.now()) return null;
+    return this.aHHMM(franja.inicio);
+  });
 
   protected readonly indicePaso = signal(0);
 
@@ -191,10 +224,14 @@ export class HornoAsistentePage {
   protected readonly subtituloPaso = computed(() => TEXTOS_PASOS_HORNO[this.pasoActual()].sub);
 
   /** Hora de inicio en formato de reloj (HH:MM). */
-  protected readonly horaInicio = computed(() => this.aHHMM(this.inicio()));
+  protected readonly horaInicio = computed(() =>
+    this.aHHMM(this.franjaAutomatica()?.inicio ?? this.inicio()),
+  );
 
   /** Fin = inicio + 1 hora. Cada tanda del horno dura una hora. */
-  protected readonly fin = computed(() => new Date(this.inicio().getTime() + 60 * 60 * 1000));
+  protected readonly fin = computed(
+    () => this.franjaAutomatica()?.fin ?? new Date(this.inicio().getTime() + 60 * 60 * 1000),
+  );
   protected readonly horaFin = computed(() => this.aHHMM(this.fin()));
 
   protected readonly consumoCm = computed(() =>
@@ -218,6 +255,10 @@ export class HornoAsistentePage {
     hayDesperdicio: this.hayDesperdicio(),
     tipoDesperdicioId: this.tipoDesperdicioId(),
     cantidadDesperdicio: this.cantidadDesperdicio(),
+    hayParada: this.hayParada(),
+    minutosParada: this.minutosParada(),
+    causaParada: this.causaParada(),
+    notaParada: this.notaParada(),
   }));
   protected readonly pasoValido = computed(() =>
     pasoTandaValido(this.pasoActual(), this.datosTanda(), this.capacidadMezcla()),
@@ -237,6 +278,10 @@ export class HornoAsistentePage {
       this.hayDesperdicio(),
       this.tipoDesperdicioId(),
       this.cantidadDesperdicio(),
+      this.hayParada(),
+      this.minutosParada(),
+      this.causaParada(),
+      this.notaParada(),
     ],
     () => this.enviando(),
   );
@@ -409,10 +454,11 @@ export class HornoAsistentePage {
       return;
     }
 
-    const datos = construirRegistroHorno(this.datosTanda(), {
-      inicio: this.horaInicio(),
-      fin: this.horaFin(),
-    });
+    const datos = construirRegistroHorno(
+      this.datosTanda(),
+      { inicio: this.horaInicio(), fin: this.horaFin() },
+      this.numeroTanda(),
+    );
 
     this.enviando.set(true);
     this.ordenes.crearRegistroHorno(Number(this.id()), datos).subscribe({
