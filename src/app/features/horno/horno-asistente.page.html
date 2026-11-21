@@ -34,6 +34,32 @@
           </a>
         </div>
       </div>
+    } @else if (horaFutura(); as futura) {
+      <!-- V17: la tanda n se registra cuando empieza su hora -->
+      <div
+        class="rounded-3xl border border-amber-200 bg-white p-8 text-center shadow-xl shadow-amber-200/20"
+        data-testid="horno-hora-futura"
+      >
+        <div
+          class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-2xl font-black text-amber-700"
+        >
+          ⏱
+        </div>
+        <h2 class="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">
+          La tanda {{ numeroTanda() }} empieza a las {{ futura }}
+        </h2>
+        <p class="mx-auto mt-2 max-w-md text-sm font-medium text-slate-500">
+          Cada hora de la orden es una tanda. Regístrala cuando empiece esa hora.
+        </p>
+        <div class="mt-6 flex flex-wrap justify-center gap-3">
+          <a
+            routerLink="/horno"
+            class="inline-flex items-center justify-center rounded-xl bg-marca-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-marca-700 active:scale-95"
+          >
+            Volver a órdenes
+          </a>
+        </div>
+      </div>
     } @else if (ordenCompleta()) {
       <div
         class="rounded-3xl border border-emerald-200 bg-white p-8 text-center shadow-xl shadow-emerald-200/20"
@@ -146,8 +172,21 @@
                   [horaInicio]="horaInicio()"
                   [horaFin]="horaFin()"
                   [ajustes]="ajustes"
+                  [automatica]="franjaAutomatica() !== null"
+                  [numeroTanda]="numeroTanda()"
+                  [totalTandas]="datos.orden.horas_produccion"
                   (atrasar)="atrasarInicio($event)"
                   (reiniciar)="reiniciarHora()"
+                />
+              }
+
+              <!-- Parada dentro de la hora (V17) -->
+              @case ('parada') {
+                <app-paso-parada-horno
+                  [(hayParada)]="hayParada"
+                  [(minutos)]="minutosParada"
+                  [(causa)]="causaParada"
+                  [(nota)]="notaParada"
                 />
               }
 

@@ -26,6 +26,11 @@ export interface DatosTandaHorno {
   hayDesperdicio: boolean;
   tipoDesperdicioId: number | null;
   cantidadDesperdicio: string;
+  /** Parada dentro de la hora (V17). null = aún no contestó. */
+  hayParada?: boolean | null;
+  minutosParada?: number;
+  causaParada?: string | null;
+  notaParada?: string;
 }
 
 export function numeroDeTexto(texto: string): number {
@@ -75,6 +80,15 @@ export function pasoTandaValido(
       return (
         !datos.hayDesperdicio ||
         (datos.tipoDesperdicioId !== null && numeroDeTexto(datos.cantidadDesperdicio) > 0)
+      );
+    case 'parada':
+      return (
+        datos.hayParada === false ||
+        (datos.hayParada === true &&
+          (datos.minutosParada ?? 0) > 0 &&
+          (datos.minutosParada ?? 0) <= 60 &&
+          !!datos.causaParada &&
+          (datos.causaParada !== 'otro' || !!datos.notaParada?.trim()))
       );
     case 'horario':
     case 'resumen':

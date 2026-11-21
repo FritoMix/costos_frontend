@@ -2,6 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 import type { ReferenciaPapa } from '../../../core/modelos/bodega.model';
+import { textoParada } from '../../../core/modelos/paradas';
 import {
   calcularKgCrudosPreview,
   calcularKgFritosPreview,
@@ -34,6 +35,17 @@ export class PasoResumenHornoComponent {
   protected readonly kgFritos = computed(() =>
     calcularKgFritosPreview(this.kgCrudos(), this.referencia()?.rendimiento_fritura_pct),
   );
+  /** "Parada 20 min · Falta de papa", o null si trabajó toda la hora. */
+  protected readonly parada = computed(() => {
+    const d = this.datos();
+    return d.hayParada
+      ? textoParada({
+          minutos_parada: d.minutosParada,
+          causa_parada: d.causaParada,
+          nota_parada: d.notaParada,
+        })
+      : null;
+  });
   protected readonly consumoCm = computed(() =>
     consumoAceiteCm(this.datos().aceiteInicial, this.datos().aceiteFinal),
   );

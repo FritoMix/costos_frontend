@@ -90,8 +90,15 @@ export interface RegistroReferencia {
 export interface RegistroHorno {
   id: number;
   orden_id: number;
+  /** Qué hora de la orden es esta tanda: 1, 2, ... (V17). */
+  numero_tanda?: number | null;
   hora_inicio: string;
   hora_fin: string;
+  minutos_parada?: number;
+  causa_parada?: string | null;
+  nota_parada?: string | null;
+  /** Avisos para el supervisor: parada, pocos bultos, registro tardío. */
+  alertas?: string[];
   /** Referencia única de las órdenes históricas; en tandas nuevas va en `referencias`. */
   referencia_papa: ReferenciaPapaRef | null;
   referencias: RegistroReferencia[];
@@ -123,8 +130,13 @@ export interface RegistroReferenciaGuardar {
 }
 
 export interface RegistroHornoGuardar {
-  hora_inicio: string;
-  hora_fin: string;
+  /** La app pone la hora de la tanda n; solo las órdenes sin hora de inicio la envían. */
+  numero_tanda?: number | null;
+  hora_inicio?: string | null;
+  hora_fin?: string | null;
+  minutos_parada?: number;
+  causa_parada?: string | null;
+  nota_parada?: string | null;
   /** Mezcla de la tanda. En órdenes históricas se admite la referencia única. */
   referencias: RegistroReferenciaGuardar[];
   referencia_papa_id?: number;
@@ -148,8 +160,13 @@ export interface Canastilla {
 export interface Recepcion {
   id: number;
   orden_id: number;
+  numero_tanda?: number | null;
   hora_inicio: string;
   hora_fin: string;
+  minutos_parada?: number;
+  causa_parada?: string | null;
+  nota_parada?: string | null;
+  alertas?: string[];
   cantidad_sabor_kg: number;
   kg_recibidos: number;
   fecha_creacion: string;
@@ -160,8 +177,9 @@ export interface Recepcion {
 }
 
 export interface RecepcionGuardar {
-  hora_inicio: string;
-  hora_fin: string;
+  numero_tanda?: number | null;
+  hora_inicio?: string | null;
+  hora_fin?: string | null;
   sabor_id: number;
   cantidad_sabor_kg: number;
   pesos_canastillas: number[];

@@ -6,12 +6,19 @@ import type { DatosTandaHorno } from './reglas-tanda';
 export function construirRegistroHorno(
   datos: DatosTandaHorno,
   horario: { inicio: string; fin: string },
+  numeroTanda: number | null = null,
 ): RegistroHornoGuardar {
+  const paro = datos.hayParada === true && (datos.minutosParada ?? 0) > 0;
   const conDesperdicio =
     datos.tipoDesperdicioId !== null && numeroDeTexto(datos.cantidadDesperdicio) > 0;
   return {
+    // La API pone la hora de la tanda n; el horario solo cuenta en órdenes sin hora de inicio.
+    numero_tanda: numeroTanda,
     hora_inicio: horario.inicio,
     hora_fin: horario.fin,
+    minutos_parada: paro ? datos.minutosParada! : 0,
+    causa_parada: paro ? (datos.causaParada ?? null) : null,
+    nota_parada: paro && datos.causaParada === 'otro' ? (datos.notaParada ?? '').trim() : null,
     referencias: datos.conFormula
       ? datos.mezcla
           .filter((fila) => fila.bultos > 0)

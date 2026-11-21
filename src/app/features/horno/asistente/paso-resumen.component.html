@@ -99,6 +99,12 @@
         <span class="font-medium text-slate-500">({{ consumoCm() | number: '1.0-2' }} cm)</span>
       </dd>
     </div>
+    <div class="flex items-center justify-between gap-4 px-5 py-3">
+      <dt class="text-sm font-semibold text-slate-500">Parada</dt>
+      <dd class="text-right text-sm font-extrabold text-slate-900">
+        {{ parada() ?? 'No hubo' }}
+      </dd>
+    </div>
     <div class="flex items-center justify-between gap-4 bg-slate-50/70 px-5 py-3">
       <dt class="text-sm font-semibold text-slate-500">Desperdicio</dt>
       <dd class="text-sm font-extrabold text-slate-900">

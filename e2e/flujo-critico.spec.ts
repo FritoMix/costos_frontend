@@ -342,25 +342,11 @@ test.describe('Flujo crítico de planta', () => {
     await test.step('registrar la tanda de horno', async () => {
       await page.goto(`/horno/${ordenId}`);
       await esperarPaso(page, 'horario');
+      // V17: la app pone la hora de la tanda 1 de la orden.
+      await expect(page.getByTestId('numero-tanda')).toContainText('Tanda 1 de 1');
       await continuar(page, 'continuar-horno');
 
-      // Con fórmula, la mezcla se precarga con el plan de cada referencia.
-      await esperarPaso(page, 'mezcla');
-      await expect(page.getByTestId('horno-total-tanda')).toContainText('40');
-      await expect(page.getByTestId('horno-mezcla-' + referenciaPapaId)).toBeVisible();
-      const bultosMezcla = page.getByTestId('horno-mezcla-' + referenciaPapaId);
-      await bultosMezcla.fill('39');
-      await expect(page.getByTestId('horno-total-tanda')).toContainText('39');
-      await continuar(page, 'continuar-horno');
-      await esperarPaso(page, 'temperatura');
-      await page.getByTestId('horno-atras').click();
-      await esperarPaso(page, 'mezcla');
-      await expect(bultosMezcla).toHaveValue('39');
-      await bultosMezcla.fill('40');
-      await capturarPasoHorno(page, info, 'mezcla');
-      await sinViolacionesCriticas(page, 'mezcla de horno');
-      await continuar(page, 'continuar-horno');
-
+      // Orden de planta: temperatura primero; parada y bultos al final de la hora.
       await esperarPaso(page, 'temperatura');
       await page.getByTestId('temperatura-180').click();
       await cancelarSalida(page, page.getByRole('link', { name: 'Salir del registro' }));
@@ -391,6 +377,27 @@ test.describe('Flujo crítico de planta', () => {
 
       await esperarPaso(page, 'desperdicio');
       await page.getByTestId('sin-desperdicio').click();
+
+      await esperarPaso(page, 'parada');
+      await page.getByTestId('parada-no').click();
+      await continuar(page, 'continuar-horno');
+
+      // Con fórmula, la mezcla se precarga con el plan de cada referencia.
+      await esperarPaso(page, 'mezcla');
+      await expect(page.getByTestId('horno-total-tanda')).toContainText('40');
+      await expect(page.getByTestId('horno-mezcla-' + referenciaPapaId)).toBeVisible();
+      const bultosMezcla = page.getByTestId('horno-mezcla-' + referenciaPapaId);
+      await bultosMezcla.fill('39');
+      await expect(page.getByTestId('horno-total-tanda')).toContainText('39');
+      await continuar(page, 'continuar-horno');
+      await esperarPaso(page, 'resumen');
+      await page.getByTestId('horno-atras').click();
+      await esperarPaso(page, 'mezcla');
+      await expect(bultosMezcla).toHaveValue('39');
+      await bultosMezcla.fill('40');
+      await capturarPasoHorno(page, info, 'mezcla');
+      await sinViolacionesCriticas(page, 'mezcla de horno');
+      await continuar(page, 'continuar-horno');
 
       await esperarPaso(page, 'resumen');
       await expect(page.locator('app-paso-resumen-horno')).toContainText('40 bultos');
@@ -425,12 +432,9 @@ test.describe('Flujo crítico de planta', () => {
       await esperarPaso(page, 'horario');
       await continuar(page, 'continuar-saborizado');
 
+      // V17: identificar el sabor, pesar las canastillas y, de último, el sabor usado.
       await esperarPaso(page, 'sabor');
       await page.getByTestId('sabor-opcion').first().click();
-      await continuar(page, 'continuar-saborizado');
-
-      await esperarPaso(page, 'cantidad_sabor');
-      await page.getByTestId('tecla-2').click();
       await continuar(page, 'continuar-saborizado');
 
       await esperarPaso(page, 'canastillas');
@@ -439,6 +443,10 @@ test.describe('Flujo crítico de planta', () => {
       await expect(page.getByTestId('teclado-valor')).toHaveText('25');
       await page.getByTestId('agregar-canastilla').click();
       await expect(page.getByText('25 kg').first()).toBeVisible();
+      await continuar(page, 'continuar-saborizado');
+
+      await esperarPaso(page, 'cantidad_sabor');
+      await page.getByTestId('tecla-2').click();
       await continuar(page, 'continuar-saborizado');
 
       await esperarPaso(page, 'resumen');
@@ -459,6 +467,8 @@ test.describe('Flujo crítico de planta', () => {
       await page.getByRole('button', { name: 'Corregir', exact: true }).click();
       await continuar(page, 'continuar-saborizado');
       await esperarPaso(page, 'sabor');
+      await continuar(page, 'continuar-saborizado');
+      await esperarPaso(page, 'canastillas');
       await continuar(page, 'continuar-saborizado');
       await esperarPaso(page, 'cantidad_sabor');
       await page.getByTestId('tecla-1').click();

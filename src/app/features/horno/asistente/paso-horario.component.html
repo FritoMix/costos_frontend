@@ -1,5 +1,13 @@
 <div class="anim-entrada mx-auto max-w-sm">
   <div class="rounded-3xl border-2 border-marca-300 bg-marca-50/60 px-6 py-7">
+    @if (numeroTanda()) {
+      <p class="mb-4 text-center text-sm font-extrabold text-marca-800" data-testid="numero-tanda">
+        Tanda {{ numeroTanda() }}
+        @if (totalTandas()) {
+          de {{ totalTandas() }}
+        }
+      </p>
+    }
     <div class="flex items-center justify-center gap-5">
       <div class="text-center">
         <p class="text-[11px] font-extrabold uppercase tracking-widest text-slate-500">Inicio</p>
@@ -32,26 +40,32 @@
     </p>
   </div>
 
-  <!-- Ajuste por si la tanda empezó antes de registrarla -->
-  <div class="mt-4 text-center">
-    <p class="text-xs font-medium text-slate-500">¿La tanda empezó antes?</p>
-    <div class="mt-2 flex flex-wrap justify-center gap-2">
-      @for (min of ajustes(); track min) {
+  <!-- Ajuste por si la tanda empezó antes (solo órdenes sin hora de inicio) -->
+  @if (automatica()) {
+    <p class="mt-4 text-center text-xs font-medium text-slate-500">
+      La hora la pone la app: cada hora de la orden es una tanda.
+    </p>
+  } @else {
+    <div class="mt-4 text-center">
+      <p class="text-xs font-medium text-slate-500">¿La tanda empezó antes?</p>
+      <div class="mt-2 flex flex-wrap justify-center gap-2">
+        @for (min of ajustes(); track min) {
+          <button
+            type="button"
+            (click)="atrasar.emit(min)"
+            class="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-bold text-slate-600 shadow-2xs transition hover:border-marca-400 hover:bg-marca-50 hover:text-marca-800 active:scale-95"
+          >
+            −{{ min }} min
+          </button>
+        }
         <button
           type="button"
-          (click)="atrasar.emit(min)"
-          class="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-bold text-slate-600 shadow-2xs transition hover:border-marca-400 hover:bg-marca-50 hover:text-marca-800 active:scale-95"
+          (click)="reiniciar.emit()"
+          class="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-bold text-slate-400 shadow-2xs transition hover:bg-slate-100"
         >
-          −{{ min }} min
+          Ahora
         </button>
-      }
-      <button
-        type="button"
-        (click)="reiniciar.emit()"
-        class="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-bold text-slate-400 shadow-2xs transition hover:bg-slate-100"
-      >
-        Ahora
-      </button>
+      </div>
     </div>
-  </div>
+  }
 </div>

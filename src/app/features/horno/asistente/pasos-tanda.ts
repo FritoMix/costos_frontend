@@ -9,6 +9,7 @@ export type PasoTanda =
   | 'aceite_inicial'
   | 'aceite_final'
   | 'desperdicio'
+  | 'parada'
   | 'resumen';
 
 export const TEXTOS_PASOS_HORNO: Record<
@@ -57,6 +58,11 @@ export const TEXTOS_PASOS_HORNO: Record<
     sub: 'Medida en centímetros al terminar.',
   },
   desperdicio: { etiqueta: 'Desperdicio', titulo: '¿Hubo desperdicio?', sub: '' },
+  parada: {
+    etiqueta: 'Parada',
+    titulo: '¿El horno estuvo parado en esta hora?',
+    sub: 'Si paró, di cuántos minutos y por qué. Explica por qué salieron menos bultos.',
+  },
   resumen: {
     etiqueta: 'Confirmación',
     titulo: 'Revisa y guarda',
@@ -64,16 +70,21 @@ export const TEXTOS_PASOS_HORNO: Record<
   },
 };
 
+/**
+ * Orden en que se toman los datos en planta: primero la temperatura y, al
+ * final de la hora, la parada y los bultos que entraron (V17).
+ */
 export function pasosDeTanda(conFormula: boolean): PasoTanda[] {
   return [
     'horario',
-    ...(conFormula ? (['mezcla'] as const) : (['referencia_papa', 'bultos'] as const)),
     'temperatura',
     'personal_zona_humeda',
     'personal_seleccion',
     'aceite_inicial',
     'aceite_final',
     'desperdicio',
+    'parada',
+    ...(conFormula ? (['mezcla'] as const) : (['referencia_papa', 'bultos'] as const)),
     'resumen',
   ];
 }

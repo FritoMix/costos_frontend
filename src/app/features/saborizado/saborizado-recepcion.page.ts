@@ -6,6 +6,7 @@ import { forkJoin } from 'rxjs';
 import { seguirCambios } from '../../core/guards/cambios.guard';
 
 import type { ItemCatalogo } from '../../core/modelos/catalogos.model';
+import { textoParada } from '../../core/modelos/paradas';
 import type { DetalleOrden, RecepcionGuardar } from '../../core/modelos/produccion.model';
 import { AuthService } from '../../core/servicios/auth.service';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
@@ -146,6 +147,11 @@ type PasoRecepcion =
                 @case ('horario') {
                   <div class="anim-entrada mx-auto max-w-sm">
                     <div class="rounded-3xl border-2 border-marca-300 bg-marca-50/60 px-6 py-7">
+                      @if (franjaAutomatica() && numeroRecepcion()) {
+                        <p class="mb-4 text-center text-sm font-extrabold text-marca-800" data-testid="numero-recepcion">
+                          Recepción {{ numeroRecepcion() }}@if (datos.orden.horas_produccion) { de {{ datos.orden.horas_produccion }}}
+                        </p>
+                      }
                       <div class="flex items-center justify-center gap-5">
                         <div class="text-center">
                           <p class="text-[11px] font-extrabold uppercase tracking-widest text-slate-500">Inicio</p>
@@ -164,7 +170,19 @@ type PasoRecepcion =
                       </p>
                     </div>
 
-                    <!-- Ajuste por si la recepción ya iba andando -->
+                    @if (horaFutura(); as futura) {
+                      <p class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm font-bold text-amber-800" data-testid="saborizado-hora-futura">
+                        Esta recepción empieza a las {{ futura }}: regístrala cuando empiece esa hora.
+                      </p>
+                    }
+                    @if (paradaHorno(); as parada) {
+                      <p class="mt-3 text-center text-xs font-bold text-amber-800" data-testid="parada-horno">
+                        El horno reportó: {{ parada }}
+                      </p>
+                    }
+
+                    <!-- Ajuste por si la recepción ya iba andando (solo órdenes sin hora de inicio) -->
+                    @if (!franjaAutomatica()) {
                     <div class="mt-4 text-center">
                       <p class="text-xs font-medium text-slate-500">¿Cuánto duró la recepción?</p>
                       <div class="mt-2 flex flex-wrap justify-center gap-2">
@@ -185,6 +203,7 @@ type PasoRecepcion =
                         </p>
                       }
                     </div>
+                    }
                   </div>
                 }
 
@@ -301,6 +320,18 @@ type PasoRecepcion =
                         </dd>
                       </div>
                       <div class="flex items-center justify-between gap-4 px-5 py-3">
+                        <dt class="text-sm font-semibold text-slate-500">Parada del horno</dt>
+                        <dd class="text-right text-sm font-extrabold text-slate-900">
+                          @if (paradaHorno(); as parada) {
+                            {{ parada }}
+                          } @else if (hornoRegistroLaHora()) {
+                            No hubo
+                          } @else {
+                            <span class="font-medium text-slate-400">El horno aún no registra esta hora</span>
+                          }
+                        </dd>
+                      </div>
+                      <div class="flex items-center justify-between gap-4 px-5 py-3">
                         <dt class="text-sm font-semibold text-slate-500">Sabor</dt>
                         <dd class="text-sm font-extrabold text-slate-900">{{ nombreSabor() || '—' }}</dd>
                       </div>
@@ -395,6 +426,9 @@ type PasoRecepcion =
                       <span class="font-bold text-slate-800">{{ recepcion.canastillas.length }} canastillas</span> ·
                       <span class="font-mono font-bold text-emerald-700">{{ recepcion.kg_recibidos | number: '1.0-2' }} kg</span>
                     </p>
+                    @if (paradaDeLaHora(recepcion.numero_tanda); as parada) {
+                      <p class="mt-0.5 text-xs font-semibold text-amber-700">Horno: {{ parada }}</p>
+                    }
                   </div>
                   @if (puedeEditar(recepcion.usuario.id)) {
                     <button
@@ -445,11 +479,15 @@ export class SaborizadoRecepcionPage {
   /** Duraciones habituales de una recepción de saborizado. */
   protected readonly duraciones = [30, 45, 60, 90];
 
+  /**
+   * Orden de planta (V17): identificar el sabor, pesar las canastillas
+   * saborizadas y, de último, pesar cuánto sabor se usó.
+   */
   private readonly pasos: PasoRecepcion[] = [
     'horario',
     'sabor',
-    'cantidad_sabor',
     'canastillas',
+    'cantidad_sabor',
     'resumen',
   ];
 
@@ -487,12 +525,64 @@ export class SaborizadoRecepcionPage {
 
   // --- Derivados -------------------------------------------------------------
 
-  /** Hora de inicio en formato de reloj (HH:MM). */
-  protected readonly horaInicio = computed(() => this.aHHMM(this.inicio()));
+  /**
+   * V17: una recepción por hora programada. Al registrar se llena la primera
+   * hora libre; al corregir, la recepción conserva la suya.
+   */
+  protected readonly numeroRecepcion = computed(() => {
+    const datos = this.detalle();
+    if (!datos) return null;
+    const editando = datos.recepciones.find((r) => r.id === this.editandoId());
+    if (editando) return editando.numero_tanda ?? null;
+    const ocupadas = new Set(datos.recepciones.map((r) => r.numero_tanda).filter((n) => !!n));
+    const horas = datos.orden.horas_produccion ?? ocupadas.size + 1;
+    for (let n = 1; n <= horas; n++) if (!ocupadas.has(n)) return n;
+    return null;
+  });
 
-  /** Fin = inicio + duración elegida. */
+  /** La hora la pone la app: inicio de la orden + (n − 1) horas, una hora. */
+  protected readonly franjaAutomatica = computed(() => {
+    const inicioOrden = this.detalle()?.orden.hora_inicio;
+    const n = this.numeroRecepcion();
+    if (!inicioOrden || !n) return null;
+    const inicio = new Date(new Date(inicioOrden).getTime() + (n - 1) * 60 * 60 * 1000);
+    return { inicio, fin: new Date(inicio.getTime() + 60 * 60 * 1000) };
+  });
+
+  /** "08:00" si la hora de esta recepción todavía no empieza (5 min de margen). */
+  protected readonly horaFutura = computed(() => {
+    const franja = this.franjaAutomatica();
+    if (!franja || this.editandoId() !== null) return null;
+    return franja.inicio.getTime() - 5 * 60 * 1000 > Date.now() ? this.aHHMM(franja.inicio) : null;
+  });
+
+  /** La parada la reporta el operario del horno en la misma hora. */
+  protected readonly paradaHorno = computed(() => {
+    const n = this.numeroRecepcion();
+    const tanda = this.detalle()?.registros_horno.find((r) => r.numero_tanda === n);
+    return tanda ? textoParada(tanda) : null;
+  });
+  protected readonly hornoRegistroLaHora = computed(() => {
+    const n = this.numeroRecepcion();
+    return !!this.detalle()?.registros_horno.some((r) => r.numero_tanda === n);
+  });
+
+  protected paradaDeLaHora(numero: number | null | undefined): string | null {
+    if (!numero) return null;
+    const tanda = this.detalle()?.registros_horno.find((r) => r.numero_tanda === numero);
+    return tanda ? textoParada(tanda) : null;
+  }
+
+  /** Hora de inicio en formato de reloj (HH:MM). */
+  protected readonly horaInicio = computed(() =>
+    this.aHHMM(this.franjaAutomatica()?.inicio ?? this.inicio()),
+  );
+
+  /** Fin = inicio + duración elegida (o la hora de la recepción, V17). */
   protected readonly fin = computed(
-    () => new Date(this.inicio().getTime() + this.duracionMin() * 60 * 1000),
+    () =>
+      this.franjaAutomatica()?.fin ??
+      new Date(this.inicio().getTime() + this.duracionMin() * 60 * 1000),
   );
   protected readonly horaFin = computed(() => this.aHHMM(this.fin()));
   protected readonly duracionMinutos = computed(
@@ -515,10 +605,15 @@ export class SaborizadoRecepcionPage {
     return minutos === null ? null : formatearMinutos(minutos);
   });
   protected readonly bloqueada = computed(() => {
+    if (this.editandoId() !== null) return false;
+    // V17: todas las horas de la orden ya tienen su recepción.
+    if (this.detalle()?.orden.hora_inicio && this.numeroRecepcion() === null) return true;
     const minutos = this.minutosDisponibles();
-    return this.editandoId() === null && minutos !== null && minutos <= 0;
+    return minutos !== null && minutos <= 0;
   });
   protected readonly duracionExcede = computed(() => {
+    // Con la hora puesta por la app manda la API (una recepción por hora).
+    if (this.franjaAutomatica()) return false;
     const minutos = this.minutosDisponibles();
     return minutos !== null && this.duracionMin() > minutos;
   });
@@ -539,7 +634,7 @@ export class SaborizadoRecepcionPage {
   protected readonly pasoValido = computed(() => {
     switch (this.pasoActual()) {
       case 'horario':
-        return this.duracionMin() > 0 && !this.duracionExcede();
+        return this.horaFutura() === null && this.duracionMin() > 0 && !this.duracionExcede();
       case 'sabor':
         return this.saborId() !== null;
       case 'cantidad_sabor':
@@ -681,6 +776,8 @@ export class SaborizadoRecepcionPage {
     }
 
     const datos: RecepcionGuardar = {
+      // La API pone la hora de la recepción n; el horario solo cuenta sin hora de inicio.
+      numero_tanda: this.editandoId() ? null : this.numeroRecepcion(),
       hora_inicio: this.horaInicio(),
       hora_fin: this.horaFin(),
       sabor_id: this.saborId()!,
