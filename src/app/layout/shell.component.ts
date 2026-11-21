@@ -32,7 +32,7 @@ interface OpcionMenu {
       >
         <a routerLink="/inicio" (click)="menuAbierto.set(false)"
           class="flex min-w-0 shrink items-center gap-1.5 rounded-lg text-xs font-extrabold text-marca-950 sm:gap-2 sm:text-sm">
-          <img src="/logo.png" alt="Frito Mix" class="size-8 shrink-0 rounded-lg bg-white object-contain sm:size-10" />
+          <img src="/logo.png" alt="Frito Mix" class="size-8 shrink-0 object-contain sm:size-10" />
           <span>{{ appNombre }}</span>
         </a>
 
