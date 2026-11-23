@@ -316,6 +316,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                     <th>Fecha</th>
                     <th>Horno</th>
                     <th>Producto</th>
+                    <th>Tipo de papa</th>
                     <th>Bultos</th>
                     <th>Kg crudos</th>
                     <th>Kg freídos</th>
@@ -323,6 +324,9 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                     <th>Aceite*Bulto</th>
                     <th>Temp.</th>
                     <th>Rendim.</th>
+                    <th title="Kg crudos por bulto × rendimiento">Kg frito/bulto</th>
+                    <th>Kg sabor</th>
+                    <th title="Kg de sabor gastado / kg freídos">% sabor</th>
                     <th>Absorc.</th>
                     <th>Duración</th>
                   </tr>
@@ -334,6 +338,20 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                       <td class="whitespace-nowrap font-mono text-xs text-slate-600">{{ fila.fecha | date: 'dd/MM/yyyy' }}</td>
                       <td class="whitespace-nowrap text-xs font-semibold text-slate-700">{{ fila.horno }}</td>
                       <td class="font-medium text-slate-800">{{ fila.producto }}</td>
+                      <td class="text-xs" data-testid="tipos-papa">
+                        @if (fila.tipos_papa?.length) {
+                          <div class="flex flex-col gap-1">
+                            @for (tipo of fila.tipos_papa; track tipo.tipo) {
+                              <span class="inline-flex w-fit items-center gap-1.5 whitespace-nowrap rounded-md border border-sky-200 bg-sky-50 px-2 py-0.5 font-semibold text-sky-900">
+                                {{ tipo.tipo }}
+                                <span class="font-mono font-normal text-sky-700">{{ tipo.bultos | number: '1.0-2' }} bt</span>
+                              </span>
+                            }
+                          </div>
+                        } @else {
+                          <span class="text-slate-400">—</span>
+                        }
+                      </td>
                       <td class="tabular-nums font-mono text-xs text-slate-700">{{ fila.cantidad_bultos | number: '1.0-2' }}</td>
                       <td class="tabular-nums font-mono font-bold text-xs text-slate-900">{{ fila.kg_crudos | number: '1.0-2' }}</td>
                       <td class="tabular-nums font-mono text-xs text-slate-700">{{ fila.kg_papa_frita_orden | number: '1.0-2' }}</td>
@@ -360,6 +378,13 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                             ? (fila.rendimiento_porcentaje | number: '1.0-2') + '%'
                             : '—'
                         }}
+                      </td>
+                      <td class="tabular-nums font-mono font-bold text-xs text-slate-900">
+                        {{ fila.kg_frito_por_bulto != null ? (fila.kg_frito_por_bulto | number: '1.0-2') : '—' }}
+                      </td>
+                      <td class="tabular-nums font-mono text-xs text-slate-700">{{ fila.kg_sabor_orden != null ? (fila.kg_sabor_orden | number: '1.0-2') : '—' }}</td>
+                      <td class="tabular-nums font-mono font-bold text-xs text-violet-700">
+                        {{ fila.porcentaje_sabor != null ? (fila.porcentaje_sabor | number: '1.0-2') + '%' : '—' }}
                       </td>
                       <td class="tabular-nums font-mono text-xs text-amber-700">
                         {{
