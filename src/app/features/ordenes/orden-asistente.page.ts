@@ -7,6 +7,7 @@ import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import type { Horno, ItemCatalogo, Producto, Turno } from '../../core/modelos/catalogos.model';
+import { productoSirvePara } from '../../core/modelos/catalogos.model';
 import type { FormulaPapa } from '../../core/modelos/formula-papa.model';
 import type { DestinoOrden, OrdenGuardar, UnidadSolicitada } from '../../core/modelos/produccion.model';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
@@ -671,7 +672,12 @@ export class OrdenAsistentePage {
 
   protected readonly productosFiltrados = computed(() => {
     const categoria = this.categoriaId();
-    return categoria ? this.productos().filter((p) => p.categoria.id === categoria) : [];
+    const destino = this.destino();
+    return categoria
+      ? this.productos().filter(
+          (p) => p.categoria.id === categoria && productoSirvePara(p, destino),
+        )
+      : [];
   });
 
   protected readonly hornosFiltrados = computed(() => {

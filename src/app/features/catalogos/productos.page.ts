@@ -4,7 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
-import type { ItemCatalogo, Producto, ProductoGuardar } from '../../core/modelos/catalogos.model';
+import type { ItemCatalogo, Producto, ProductoGuardar, DestinoProducto } from '../../core/modelos/catalogos.model';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
 import { BotonComponent } from '../../ui/boton.component';
@@ -89,6 +89,20 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
               </div>
 
               <div>
+                <label class="etiqueta text-xs font-bold text-slate-700 mb-1.5 block" for="destino-producto"
+                  >Destino</label
+                >
+                <select id="destino-producto" class="campo" formControlName="destino">
+                  <option value="ambos">Nacional y exportación</option>
+                  <option value="nacional">Solo nacional</option>
+                  <option value="exportacion">Solo exportación</option>
+                </select>
+                <p class="mt-1 text-[11px] text-slate-500 font-medium">
+                  Al crear una orden solo aparecen los productos de su destino.
+                </p>
+              </div>
+
+              <div>
                 <label class="etiqueta text-xs font-bold text-slate-700 mb-1.5 block" for="peso">
                   Peso Estimado por Canastilla (kg)
                 </label>
@@ -166,7 +180,14 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                   <tbody class="divide-y divide-slate-100">
                     @for (producto of productos(); track producto.id) {
                       <tr class="hover:bg-sky-50/40 transition-colors">
-                        <td class="py-4 px-6 font-bold text-slate-900 text-sm">{{ producto.nombre_comercial }}</td>
+                        <td class="py-4 px-6 font-bold text-slate-900 text-sm">
+                          {{ producto.nombre_comercial }}
+                          @if (producto.destino && producto.destino !== 'ambos') {
+                            <span class="ml-1 text-[11px] font-semibold text-slate-500">
+                              · {{ producto.destino === 'nacional' ? 'Nacional' : 'Exportación' }}
+                            </span>
+                          }
+                        </td>
                         <td class="py-4 px-4">
                           <span class="inline-flex items-center rounded-lg bg-sky-50 px-2.5 py-1 text-xs font-bold text-sky-800 border border-sky-200/60">
                             {{ producto.categoria.nombre }}
@@ -255,6 +276,7 @@ export class ProductosPage {
     nombre_comercial: this.fb.nonNullable.control('', Validators.required),
     categoria_id: this.fb.control<number | null>(null, Validators.required),
     peso_estandar_canastilla_kg: this.fb.control<number | null>(null),
+    destino: this.fb.nonNullable.control<DestinoProducto>('ambos'),
     activo: this.fb.nonNullable.control(true),
   });
 
@@ -285,13 +307,14 @@ export class ProductosPage {
       peso_estandar_canastilla_kg: producto.peso_estandar_canastilla_kg
         ? Number(producto.peso_estandar_canastilla_kg)
         : null,
+      destino: producto.destino ?? 'ambos',
       activo: producto.activo,
     });
   }
 
   protected cancelarEdicion(): void {
     this.editando.set(null);
-    this.formulario.reset({ nombre_comercial: '', activo: true });
+    this.formulario.reset({ nombre_comercial: '', destino: 'ambos', activo: true });
   }
 
   protected guardar(): void {
@@ -308,6 +331,7 @@ export class ProductosPage {
       peso_estandar_canastilla_kg: valores.peso_estandar_canastilla_kg
         ? Number(valores.peso_estandar_canastilla_kg)
         : null,
+      destino: valores.destino,
     };
 
     const editando = this.editando();

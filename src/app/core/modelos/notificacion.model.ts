@@ -4,7 +4,9 @@ export type TipoNotificacion =
   | 'orden_creada'
   | 'produccion_por_terminar'
   | 'orden_para_bodega'
-  | 'formula_lista';
+  | 'formula_lista'
+  | 'produccion_terminada'
+  | 'orden_cerrada_sola';
 
 export interface Notificacion {
   id: number;

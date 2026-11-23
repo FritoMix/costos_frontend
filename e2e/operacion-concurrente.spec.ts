@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { test, expect, type APIRequestContext, type BrowserContext } from '@playwright/test';
+import { type APIRequestContext, type BrowserContext } from '@playwright/test';
+import { cerrarAvisosGrandes, expect, test } from './avisos';
 
 const API = '/api/v1';
 const USER = process.env['E2E_ADMIN_USER'] || 'admin';
@@ -126,6 +127,7 @@ test.describe('Concurrencia en PostgreSQL y experiencia de operarios', () => {
         ids.add(a.id);
         ids.add(b.id);
         const paginas = await Promise.all(contextos.map((c) => c.newPage()));
+        await Promise.all(paginas.map((p) => cerrarAvisosGrandes(p)));
         await Promise.all(paginas.map((p) => p.goto('/horno')));
         await expect(paginas[0].getByTestId(`tomar-orden-${a.id}`)).toBeEnabled();
         await expect(paginas[1].getByTestId(`tomar-orden-${b.id}`)).toBeEnabled();

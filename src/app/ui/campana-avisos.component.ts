@@ -113,6 +113,10 @@ export class CampanaAvisosComponent {
         return '✅';
       case 'produccion_por_terminar':
         return '⏰';
+      case 'produccion_terminada':
+        return '🛑';
+      case 'orden_cerrada_sola':
+        return '🔒';
       default:
         return '🆕';
     }

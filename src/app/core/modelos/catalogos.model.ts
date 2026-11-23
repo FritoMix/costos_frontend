@@ -80,7 +80,17 @@ export interface Producto {
   nombre_comercial: string;
   activo: boolean;
   peso_estandar_canastilla_kg: number | null;
+  /** Mercado del producto: la orden solo ofrece los de su destino o los de "ambos". */
+  destino?: DestinoProducto;
   categoria: ItemCatalogo;
+}
+
+export type DestinoProducto = 'nacional' | 'exportacion' | 'ambos';
+
+/** ¿Sirve este producto para una orden de ese destino? */
+export function productoSirvePara(producto: Producto, destinoOrden: string): boolean {
+  const destino = producto.destino ?? 'ambos';
+  return destino === 'ambos' || destino === destinoOrden;
 }
 
 export interface ProductoGuardar {
@@ -88,6 +98,7 @@ export interface ProductoGuardar {
   categoria_id: number;
   activo: boolean;
   peso_estandar_canastilla_kg: number | null;
+  destino: DestinoProducto;
 }
 
 export interface ConfiguracionPlanta {

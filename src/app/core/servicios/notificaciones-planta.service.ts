@@ -34,6 +34,19 @@ export class NotificacionesPlantaService {
   readonly pendientes = this._pendientes.asReadonly();
   readonly sinLeer = computed(() => this._pendientes().length);
 
+  /** Aviso que se muestra en grande en el centro de la pantalla al llegar. */
+  private readonly _destacado = signal<Notificacion | null>(null);
+  readonly destacado = this._destacado.asReadonly();
+
+  /** Cierra el aviso grande y lo da por visto. */
+  cerrarDestacado(): void {
+    const aviso = this._destacado();
+    this._destacado.set(null);
+    if (aviso) {
+      this.marcarLeida(aviso.id);
+    }
+  }
+
   /** Empieza a vigilar. Se llama una vez, cuando ya hay sesión. */
   iniciar(): void {
     if (this.suscripcion) {
@@ -53,6 +66,7 @@ export class NotificacionesPlantaService {
     this.suscripcion = null;
     this.yaAnunciadas.clear();
     this._pendientes.set([]);
+    this._destacado.set(null);
   }
 
   historial(): Observable<Notificacion[]> {
@@ -83,6 +97,10 @@ export class NotificacionesPlantaService {
     const nuevos = resumen.pendientes.filter((n) => !this.yaAnunciadas.has(n.id));
     if (nuevos.length > 0) {
       nuevos.forEach((n) => this.yaAnunciadas.add(n.id));
+      // El más reciente sale en grande, salvo que ya haya uno abierto.
+      if (!this._destacado()) {
+        this._destacado.set(nuevos[0]);
+      }
       this.alarma.sonar();
     }
   }
