@@ -9,10 +9,13 @@ import type {
   ConfiguracionPlanta,
   DensidadVigente,
   Horno,
+  Linea,
   HornoCapacidadGuardar,
   HornoGuardar,
   TipoAceite,
   TipoAceiteGuardar,
+  Variedad,
+  VariedadGuardar,
   ItemCatalogo,
   MuestraDensidad,
   Producto,
@@ -328,5 +331,34 @@ export class CatalogosService {
 
   eliminarAceite(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/aceites/${id}`);
+  }
+
+  // --- Líneas de producción y variedades (V21) ---
+
+  private cacheLineas$: Observable<Linea[]> | null = null;
+
+  listarLineas(): Observable<Linea[]> {
+    this.cacheLineas$ ??= this.http.get<Linea[]>(`${this.base}/lineas`).pipe(shareReplay(1));
+    return this.cacheLineas$;
+  }
+
+  listarVariedades(lineaId?: number, soloActivas = false): Observable<Variedad[]> {
+    const params: Record<string, string | number | boolean> = { solo_activas: soloActivas };
+    if (lineaId !== undefined) {
+      params['linea_id'] = lineaId;
+    }
+    return this.http.get<Variedad[]>(`${this.base}/variedades`, { params });
+  }
+
+  crearVariedad(datos: VariedadGuardar): Observable<Variedad> {
+    return this.http.post<Variedad>(`${this.base}/variedades`, datos);
+  }
+
+  actualizarVariedad(id: number, datos: VariedadGuardar): Observable<Variedad> {
+    return this.http.put<Variedad>(`${this.base}/variedades/${id}`, datos);
+  }
+
+  eliminarVariedad(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/variedades/${id}`);
   }
 }

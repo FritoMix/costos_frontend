@@ -351,7 +351,31 @@ type PasoRecepcion =
                           {{ totalKg() | number: '1.0-2' }} kg
                         </dd>
                       </div>
+                      @if (porcentajeSabor() !== null) {
+                        <div class="flex items-center justify-between gap-4 px-5 py-3">
+                          <dt class="text-sm font-semibold text-slate-500">% de sabor</dt>
+                          <dd
+                            class="text-sm font-extrabold"
+                            [class]="fueraDeRangoSabor() ? 'text-rose-600' : 'text-slate-900'"
+                            data-testid="porcentaje-sabor"
+                          >
+                            {{ porcentajeSabor() | number: '1.0-2' }} %
+                            @if (rangoSabor(); as rango) {
+                              <span class="block text-xs font-medium text-slate-500">Esperado {{ rango }}</span>
+                            }
+                          </dd>
+                        </div>
+                      }
                     </dl>
+                    @if (fueraDeRangoSabor()) {
+                      <p
+                        class="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-center text-sm font-bold text-rose-700"
+                        data-testid="aviso-rango-sabor"
+                      >
+                        El % de sabor está fuera del rango de este producto. Revisa los kilos de sabor y las
+                        canastillas antes de guardar: si están bien, guárdalo y el supervisor verá el aviso.
+                      </p>
+                    }
                     @if (editandoId()) {
                       <p class="mt-3 text-center text-xs font-bold text-amber-700">Estás corrigiendo una recepción existente.</p>
                     }
@@ -622,6 +646,33 @@ export class SaborizadoRecepcionPage {
     Math.round(this.canastillas().reduce((suma, p) => suma + p, 0) * 100) / 100,
   );
 
+  /** Sabor usado sobre lo recibido, en % (V21). Null si aún no hay datos. */
+  protected readonly porcentajeSabor = computed(() => {
+    const kg = this.totalKg();
+    const sabor = this.numero(this.cantidadSabor());
+    return kg > 0 && sabor > 0 ? Math.round((sabor / kg) * 10000) / 100 : null;
+  });
+
+  /** Rango del producto en texto: "1,5 % a 2,5 %". */
+  protected readonly rangoSabor = computed(() => {
+    const producto = this.detalle()?.orden.producto;
+    const min = producto?.sabor_minimo_pct;
+    const max = producto?.sabor_maximo_pct;
+    if (min == null && max == null) return null;
+    const f = (n: number) => `${Number(n).toLocaleString('es-CO')} %`;
+    if (min != null && max != null) return `${f(min)} a ${f(max)}`;
+    return min != null ? `mínimo ${f(min)}` : `máximo ${f(max!)}`;
+  });
+
+  protected readonly fueraDeRangoSabor = computed(() => {
+    const pct = this.porcentajeSabor();
+    const producto = this.detalle()?.orden.producto;
+    if (pct === null || !producto) return false;
+    const min = producto.sabor_minimo_pct;
+    const max = producto.sabor_maximo_pct;
+    return (min != null && pct < Number(min)) || (max != null && pct > Number(max));
+  });
+
   protected readonly canastillaActualValor = computed(() => this.numero(this.canastillaActual()));
   protected readonly pesoCanastillaValido = computed(
     () => this.canastillaActualValor() > 0,
@@ -798,6 +849,10 @@ export class SaborizadoRecepcionPage {
         this.avisos.exito(
           `${editando ? 'Recepción corregida' : 'Recepción registrada'}: ${recepcion.kg_recibidos} kg.`,
         );
+        const fuera = (recepcion.alertas ?? []).find((a) => a.startsWith('Sabor'));
+        if (fuera) {
+          this.avisos.error(`${fuera}. El supervisor verá el aviso.`);
+        }
         this.restablecerFormulario();
         this.cargar();
       },

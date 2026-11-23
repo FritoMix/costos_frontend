@@ -1,10 +1,13 @@
 import { protegerRecarga } from '../../core/guards/cambios.guard';
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 
+import type { Linea } from '../../core/modelos/catalogos.model';
 import type { Rol, UsuarioGuardar } from '../../core/modelos/identidad.model';
+import { ROLES_DE_LINEA } from '../../core/modelos/identidad.model';
+import { CatalogosService } from '../../core/servicios/catalogos.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
 import { UsuariosService } from '../../core/servicios/usuarios.service';
 import { BotonComponent } from '../../ui/boton.component';
@@ -24,8 +27,18 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
           routerLink="/usuarios"
           class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition"
         >
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          <svg
+            class="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+            />
           </svg>
           Volver a usuarios
         </a>
@@ -69,6 +82,18 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                 }
               </select>
             </div>
+
+            @if (pideLinea() && lineasDelRol().length > 0) {
+              <div>
+                <label class="etiqueta" for="linea">Línea de producción</label>
+                <select id="linea" class="campo" formControlName="linea_id">
+                  @for (linea of lineasDelRol(); track linea.id) {
+                    <option [ngValue]="linea.id">{{ linea.nombre }}</option>
+                  }
+                </select>
+                <p class="ayuda">Solo verá y registrará las órdenes de esta línea.</p>
+              </div>
+            }
 
             <div>
               <label class="etiqueta" for="password">
@@ -123,16 +148,47 @@ export class UsuarioFormularioPage {
   protected readonly cargando = signal(true);
   protected readonly enviando = signal(false);
   protected readonly roles = signal<Rol[]>([]);
+  protected readonly lineas = signal<Linea[]>([]);
+  private readonly catalogos = inject(CatalogosService);
 
   protected readonly formulario = this.fb.group({
-    nombre_completo: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(3)]),
+    nombre_completo: this.fb.nonNullable.control('', [
+      Validators.required,
+      Validators.minLength(3),
+    ]),
     nombre_usuario: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(3)]),
     rol_id: this.fb.control<number | null>(null, Validators.required),
+    linea_id: this.fb.control<number | null>(null),
     password: this.fb.control<string | null>(null),
     activo: this.fb.nonNullable.control(true),
   });
 
+  private readonly rolElegido = signal<number | null>(null);
+
+  /** Operarios y Bodega trabajan en una línea; admin y supervisor ven todas. */
+  protected readonly pideLinea = computed(() => {
+    const rol = this.roles().find((r) => r.id === this.rolElegido());
+    return !!rol && ROLES_DE_LINEA.includes(rol.codigo);
+  });
+
+  /** Bodega solo existe en las líneas que la usan (la papa). */
+  protected readonly lineasDelRol = computed(() => {
+    const rol = this.roles().find((r) => r.id === this.rolElegido());
+    return this.lineas().filter((l) => l.activo && (rol?.codigo !== 'bodeguero' || l.usa_bodega));
+  });
+
   constructor() {
+    this.formulario.controls.rol_id.valueChanges.subscribe((id) => {
+      this.rolElegido.set(id);
+      const linea = this.formulario.controls.linea_id.value;
+      if (this.pideLinea() && !this.lineasDelRol().some((l) => l.id === linea)) {
+        this.formulario.controls.linea_id.setValue(
+          this.lineasDelRol().find((l) => l.codigo === 'papa')?.id ??
+            this.lineasDelRol()[0]?.id ??
+            null,
+        );
+      }
+    });
     protegerRecarga(() => this.cambiosPendientes());
     queueMicrotask(() => this.cargar());
   }
@@ -146,18 +202,22 @@ export class UsuarioFormularioPage {
 
     forkJoin({
       roles: this.servicio.roles(),
+      lineas: this.catalogos.listarLineas().pipe(catchError(() => of([] as Linea[]))),
       // Al crear no hay usuario que traer: se resuelve con null de una vez.
       usuario: id ? this.servicio.detalle(Number(id)) : of(null),
     }).subscribe({
-      next: ({ roles, usuario }) => {
+      next: ({ roles, lineas, usuario }) => {
         this.roles.set(roles);
+        this.lineas.set(lineas);
         if (usuario) {
           this.formulario.patchValue({
             nombre_completo: usuario.nombre_completo,
             nombre_usuario: usuario.nombre_usuario,
+            linea_id: usuario.linea?.id ?? null,
             rol_id: usuario.rol.id,
             activo: usuario.activo,
           });
+          this.formulario.markAsPristine();
         }
         this.cargando.set(false);
       },
@@ -185,6 +245,10 @@ export class UsuarioFormularioPage {
       rol_id: valores.rol_id!,
       activo: valores.activo,
     };
+    // Solo operarios y Bodega llevan línea; sin elegir, la API deja papa.
+    if (this.pideLinea() && valores.linea_id !== null) {
+      datos.linea_id = valores.linea_id;
+    }
     if (valores.password) {
       datos.password = valores.password;
     }

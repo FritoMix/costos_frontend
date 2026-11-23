@@ -6,7 +6,14 @@
         {{ horaInicio() }} → {{ horaFin() }}
       </dd>
     </div>
-    @if (datos().conFormula) {
+    @if (datos().enKg) {
+      <div class="flex items-center justify-between gap-4 px-5 py-3">
+        <dt class="text-sm font-semibold text-slate-500">Materia prima</dt>
+        <dd class="text-sm font-extrabold text-slate-900">
+          {{ numero(datos().kgMateria ?? '0') | number: '1.0-2' }} kg
+        </dd>
+      </div>
+    } @else if (datos().conFormula) {
       <div class="flex items-start justify-between gap-4 px-5 py-3">
         <dt class="text-sm font-semibold text-slate-500">Mezcla de la fórmula</dt>
         <dd class="text-right text-sm font-extrabold text-slate-900">

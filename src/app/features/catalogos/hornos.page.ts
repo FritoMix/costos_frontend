@@ -8,6 +8,7 @@ import type {
   Horno,
   HornoGuardar,
   ItemCatalogo,
+  Linea,
   TipoAceite,
 } from '../../core/modelos/catalogos.model';
 import { AuthService } from '../../core/servicios/auth.service';
@@ -206,6 +207,23 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                   }
                 </select>
               </div>
+              @if (lineas().length > 0) {
+                <div>
+                  <label
+                    class="etiqueta text-xs font-bold text-slate-700 mb-1.5 block"
+                    for="linea_id"
+                    >Línea de producción</label
+                  >
+                  <select id="linea_id" class="campo" formControlName="linea_id">
+                    @for (linea of lineas(); track linea.id) {
+                      <option [ngValue]="linea.id">{{ linea.nombre }}</option>
+                    }
+                  </select>
+                  <p class="mt-1 text-[11px] text-slate-500 font-medium">
+                    Las órdenes de este horno serán de esta línea.
+                  </p>
+                </div>
+              }
             </div>
 
             <!-- Capacidad productiva del horno -->
@@ -418,6 +436,13 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                     <td class="py-4 px-6 font-bold text-slate-900 text-sm">
                       <div class="flex items-center gap-2">
                         <span>{{ horno.nombre }}</span>
+                        @if (horno.linea && horno.linea.codigo !== 'papa') {
+                          <span
+                            class="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-200/80"
+                          >
+                            {{ horno.linea.nombre }}
+                          </span>
+                        }
                         @if (horno.apto_exportacion) {
                           <span
                             class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 border border-indigo-200/80"
@@ -553,6 +578,7 @@ export class HornosPage {
   protected readonly hornos = signal<Horno[]>([]);
   protected readonly categorias = signal<ItemCatalogo[]>([]);
   protected readonly aceites = signal<TipoAceite[]>([]);
+  protected readonly lineas = signal<Linea[]>([]);
   protected readonly categoriasElegidas = signal<number[]>([]);
   protected readonly editando = signal<Horno | null>(null);
   protected readonly aEliminar = signal<Horno | null>(null);
@@ -561,6 +587,7 @@ export class HornosPage {
     nombre: this.fb.nonNullable.control('', Validators.required),
     tipo_aceite: this.fb.control<string | null>(null),
     aceite_id: this.fb.control<number | null>(null),
+    linea_id: this.fb.control<number | null>(null),
     tanque_diametro_cm: this.fb.control<number | null>(null),
     litros_por_cm_manual: this.fb.control<number | null>(null),
     capacidad_bultos_hora: this.fb.control<number | null>(null, [
@@ -594,11 +621,16 @@ export class HornosPage {
       categorias: this.catalogos.listarCategorias(),
       // El catálogo de aceites es opcional: si falla, el formulario sigue.
       aceites: this.catalogos.listarAceites().pipe(catchError(() => of([] as TipoAceite[]))),
+      lineas: this.catalogos.listarLineas().pipe(catchError(() => of([] as Linea[]))),
     }).subscribe({
-      next: ({ hornos, categorias, aceites }) => {
+      next: ({ hornos, categorias, aceites, lineas }) => {
         this.hornos.set(hornos);
         this.categorias.set(categorias);
         this.aceites.set(aceites);
+        this.lineas.set(lineas);
+        if (!this.editando() && this.formulario.controls.linea_id.value === null) {
+          this.formulario.controls.linea_id.setValue(this.lineaPorDefecto());
+        }
         if (this.esSupervisor() && hornos.length > 0) {
           const primero = hornos[0];
           this.formCapacidad.setValue({
@@ -626,6 +658,7 @@ export class HornosPage {
       nombre: horno.nombre,
       tipo_aceite: horno.tipo_aceite,
       aceite_id: horno.aceite?.id ?? null,
+      linea_id: horno.linea?.id ?? null,
       tanque_diametro_cm: horno.tanque_diametro_cm ? Number(horno.tanque_diametro_cm) : null,
       litros_por_cm_manual: horno.litros_por_cm_manual ? Number(horno.litros_por_cm_manual) : null,
       capacidad_bultos_hora:
@@ -643,7 +676,13 @@ export class HornosPage {
       capacidad_bultos_hora: null,
       apto_exportacion: false,
       activo: true,
+      linea_id: this.lineaPorDefecto(),
     });
+  }
+
+  /** Un horno nuevo es de papa salvo que se elija otra línea. */
+  private lineaPorDefecto(): number | null {
+    return this.lineas().find((l) => l.codigo === 'papa')?.id ?? null;
   }
 
   protected guardar(): void {
@@ -658,6 +697,8 @@ export class HornosPage {
       activo: valores.activo,
       tipo_aceite: valores.tipo_aceite || null,
       aceite_id: valores.aceite_id ?? null,
+      // Sin línea elegida no se envía: la API conserva la del horno (o papa).
+      ...(valores.linea_id ? { linea_id: valores.linea_id } : {}),
       apto_exportacion: valores.apto_exportacion,
       tanque_diametro_cm: valores.tanque_diametro_cm ? Number(valores.tanque_diametro_cm) : null,
       litros_por_cm_manual: valores.litros_por_cm_manual

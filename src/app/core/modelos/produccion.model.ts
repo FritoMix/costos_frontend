@@ -4,7 +4,31 @@ import type { EstadoFormula, Formula } from './formula.model';
 
 export type EstadoOrden = 'pendiente' | 'en_produccion' | 'finalizada' | 'cancelada';
 export type DestinoOrden = 'nacional' | 'exportacion';
-export type UnidadSolicitada = 'kg' | 'canastillas';
+export type UnidadSolicitada = 'kg' | 'canastillas' | 'mojes' | 'baches' | 'bultos';
+
+/** Unidades que se piden contando (enteros), sin kg: trocillo, extruido, pellet. */
+export const UNIDADES_DE_CONTEO: UnidadSolicitada[] = ['mojes', 'baches', 'bultos'];
+
+/** Cómo se dice cada unidad en pantalla. */
+export const NOMBRE_UNIDAD: Record<UnidadSolicitada, string> = {
+  kg: 'Kilos',
+  canastillas: 'Canastillas',
+  mojes: 'Mojes',
+  baches: 'Baches',
+  bultos: 'Bultos crudos',
+};
+
+/** Línea de la orden (la de su horno), tal como la devuelve la API. */
+export interface LineaOrden {
+  id: number;
+  codigo: string;
+  nombre: string;
+  unidad_materia_prima: 'bultos' | 'kg';
+  nombre_materia_prima: string;
+  usa_bodega: boolean;
+  pide_variedad: boolean;
+  unidades_orden: UnidadSolicitada[];
+}
 
 export interface Referencia {
   id: number;
@@ -14,6 +38,9 @@ export interface Referencia {
 export interface ProductoRef {
   id: number;
   nombre_comercial: string;
+  /** Rango de % de sabor esperado (V21). */
+  sabor_minimo_pct?: number | null;
+  sabor_maximo_pct?: number | null;
 }
 
 export interface UsuarioRef {
@@ -40,7 +67,13 @@ export interface Orden {
   destino_etiqueta: string;
   cantidad_programada: number;
   unidad_solicitada: UnidadSolicitada;
+  /** Cuántas se pidieron en la unidad del supervisor (canastillas, mojes, baches o bultos). */
   cantidad_canastillas_solicitadas: number | null;
+  /** La meta como se pidió: "600 kg", "3 baches", "50 canastillas (300 kg)". */
+  meta_texto?: string;
+  /** Línea de la orden y variedad de la materia prima (V21). */
+  linea?: LineaOrden | null;
+  variedad?: Referencia | null;
   /** Horas programadas de producción (mínimo 1). Null en órdenes antiguas. */
   horas_produccion: number | null;
   hora_inicio: string | null;
@@ -68,6 +101,10 @@ export interface OrdenGuardar {
   cantidad_kg: number | null;
   cantidad_canastillas: number | null;
   horas_produccion: number | null;
+  /** Mojes, baches o bultos pedidos (enteros). */
+  cantidad_unidades?: number | null;
+  /** Variedad de la materia prima, en las líneas que la piden (plátano). */
+  variedad_id?: number | null;
 }
 
 export interface Desperdicio {
@@ -144,6 +181,8 @@ export interface RegistroHornoGuardar {
   referencias: RegistroReferenciaGuardar[];
   referencia_papa_id?: number;
   cantidad_bultos?: number;
+  /** Líneas que no son papa: kilos de materia prima que entraron (V21). */
+  kg_materia_prima?: number;
   operarios_seleccion: number;
   operarios_horno: number;
   nivel_aceite_inicial_cm: number;
@@ -172,6 +211,8 @@ export interface Recepcion {
   causa_parada?: string | null;
   nota_parada?: string | null;
   alertas?: string[];
+  /** Sabor sobre lo recibido, en % (V21). */
+  porcentaje_sabor?: number | null;
   cantidad_sabor_kg: number;
   kg_recibidos: number;
   fecha_creacion: string;
@@ -218,4 +259,9 @@ export interface PaginaOrdenes {
   total: number;
   pagina: number;
   tamano: number;
+}
+
+/** La meta en palabras, también para órdenes viejas sin meta_texto. */
+export function metaDeOrden(orden: Pick<Orden, 'meta_texto' | 'cantidad_programada'>): string {
+  return orden.meta_texto || `${Number(orden.cantidad_programada)} kg`;
 }

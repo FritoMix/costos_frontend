@@ -7,7 +7,8 @@ export type TipoNotificacion =
   | 'formula_lista'
   | 'produccion_terminada'
   | 'orden_cerrada_sola'
-  | 'recordar_formula_noche';
+  | 'recordar_formula_noche'
+  | 'recuperar_password';
 
 export interface Notificacion {
   id: number;

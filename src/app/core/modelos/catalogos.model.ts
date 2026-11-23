@@ -43,6 +43,34 @@ export interface TipoAceiteGuardar {
   activo: boolean;
 }
 
+/** Línea de producción (V21): papa, plátano, pellet, extruido, trocillo, nachos. */
+export interface Linea {
+  id: number;
+  codigo: string;
+  nombre: string;
+  unidad_materia_prima: 'bultos' | 'kg';
+  nombre_materia_prima: string;
+  usa_bodega: boolean;
+  pide_variedad: boolean;
+  permite_canastillas: boolean;
+  unidades_orden: ('kg' | 'canastillas' | 'mojes' | 'baches' | 'bultos')[];
+  activo: boolean;
+}
+
+/** Variedad de la materia prima de una línea (Hartón, FHIA 21). */
+export interface Variedad {
+  id: number;
+  linea_id: number;
+  nombre: string;
+  activo: boolean;
+}
+
+export interface VariedadGuardar {
+  linea_id: number;
+  nombre: string;
+  activo: boolean;
+}
+
 export interface Horno {
   id: number;
   nombre: string;
@@ -57,6 +85,8 @@ export interface Horno {
   litros_por_cm: number | null;
   capacidad_bultos_hora: number | null;
   categorias: ItemCatalogo[];
+  /** Línea del horno; de aquí sale la línea de la orden. */
+  linea?: Linea | null;
 }
 
 export interface HornoGuardar {
@@ -69,6 +99,7 @@ export interface HornoGuardar {
   litros_por_cm_manual: number | null;
   capacidad_bultos_hora: number | null;
   categoria_ids: number[];
+  linea_id?: number | null;
 }
 
 export interface HornoCapacidadGuardar {
@@ -82,6 +113,9 @@ export interface Producto {
   peso_estandar_canastilla_kg: number | null;
   /** Mercado del producto: la orden solo ofrece los de su destino o los de "ambos". */
   destino?: DestinoProducto;
+  /** Rango de % de sabor esperado: si se sale, saborizado avisa. */
+  sabor_minimo_pct?: number | null;
+  sabor_maximo_pct?: number | null;
   categoria: ItemCatalogo;
 }
 
@@ -99,6 +133,8 @@ export interface ProductoGuardar {
   activo: boolean;
   peso_estandar_canastilla_kg: number | null;
   destino: DestinoProducto;
+  sabor_minimo_pct?: number | null;
+  sabor_maximo_pct?: number | null;
 }
 
 export interface ConfiguracionPlanta {

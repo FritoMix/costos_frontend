@@ -4,12 +4,20 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } 
 import type { SafeHtml } from '@angular/platform-browser';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 
-import type { Horno, ItemCatalogo, Producto, Turno } from '../../core/modelos/catalogos.model';
+import type {
+  Horno,
+  ItemCatalogo,
+  Linea,
+  Producto,
+  Turno,
+  Variedad,
+} from '../../core/modelos/catalogos.model';
 import { productoSirvePara } from '../../core/modelos/catalogos.model';
 import type { FormulaPapa } from '../../core/modelos/formula-papa.model';
 import type { DestinoOrden, OrdenGuardar, UnidadSolicitada } from '../../core/modelos/produccion.model';
+import { NOMBRE_UNIDAD, UNIDADES_DE_CONTEO } from '../../core/modelos/produccion.model';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
 import { FormulasPapaService } from '../../core/servicios/formulas-papa.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
@@ -18,9 +26,11 @@ import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 
 type ClavePaso =
+  | 'linea'
   | 'destino'
   | 'categoria'
   | 'producto'
+  | 'variedad'
   | 'horas'
   | 'horno'
   | 'turno'
@@ -97,6 +107,34 @@ type ClavePaso =
             <!-- Opciones -->
             <div class="mt-7">
               @switch (pasoActual()) {
+                <!-- 0. Línea de producción (solo si hay hornos de más de una línea) -->
+                @case ('linea') {
+                  <div class="space-y-2.5 anim-entrada">
+                    @for (linea of lineas(); track linea.id) {
+                      <button
+                        type="button"
+                        [attr.data-testid]="'opcion-linea-' + linea.codigo"
+                        (click)="elegirLinea(linea)"
+                        [disabled]="!tieneHorno(linea.id)"
+                        [class]="claseFila(lineaId() === linea.id) + (tieneHorno(linea.id) ? '' : ' opacity-50')"
+                      >
+                        <span [class]="claseAvatar(lineaId() === linea.id)">{{ inicial(linea.nombre) }}</span>
+                        <span class="min-w-0 flex-1 text-left">
+                          <span class="block truncate font-bold text-slate-900">{{ linea.nombre }}</span>
+                          <span class="block truncate text-xs font-medium text-slate-500">
+                            @if (tieneHorno(linea.id)) {
+                              Se pide en {{ textoUnidades(linea) }}
+                            } @else {
+                              Sin horno asignado todavía
+                            }
+                          </span>
+                        </span>
+                        <span [innerHTML]="radio(lineaId() === linea.id)"></span>
+                      </button>
+                    }
+                  </div>
+                }
+
                 <!-- 1. Destino (dos tejas grandes) -->
                 @case ('destino') {
                   <div class="grid grid-cols-2 gap-3 sm:gap-4 anim-entrada">
@@ -128,7 +166,7 @@ type ClavePaso =
                 <!-- 2. Categoría -->
                 @case ('categoria') {
                   <div class="space-y-2.5 anim-entrada">
-                    @for (categoria of categorias(); track categoria.id) {
+                    @for (categoria of categoriasFiltradas(); track categoria.id) {
                       <button
                         type="button"
                         data-testid="opcion-categoria"
@@ -168,6 +206,28 @@ type ClavePaso =
                       <p [class]="claseVacio">
                         Esa categoría no tiene productos activos. Créalos en Catálogos › Productos.
                       </p>
+                    }
+                  </div>
+                }
+
+                <!-- 3b. Variedad de la materia prima (plátano: Hartón, FHIA 21) -->
+                @case ('variedad') {
+                  <div class="space-y-2.5 anim-entrada">
+                    @for (variedad of variedadesDeLinea(); track variedad.id) {
+                      <button
+                        type="button"
+                        data-testid="opcion-variedad"
+                        (click)="elegirVariedad(variedad.id)"
+                        [class]="claseFila(variedadId() === variedad.id)"
+                      >
+                        <span [class]="claseAvatar(variedadId() === variedad.id)">{{ inicial(variedad.nombre) }}</span>
+                        <span class="min-w-0 flex-1 text-left">
+                          <span class="block truncate font-bold text-slate-900">{{ variedad.nombre }}</span>
+                        </span>
+                        <span [innerHTML]="radio(variedadId() === variedad.id)"></span>
+                      </button>
+                    } @empty {
+                      <p [class]="claseVacio">No hay tipos activos. Créalos en Catálogos › Tipos de Materia Prima.</p>
                     }
                   </div>
                 }
@@ -278,31 +338,22 @@ type ClavePaso =
                   </div>
                 }
 
-                <!-- 6. Unidad (dos tejas grandes) -->
+                <!-- 6. Unidad (las de la línea) -->
                 @case ('unidad') {
                   <div class="grid grid-cols-2 gap-3 sm:gap-4 anim-entrada">
-                    <button
-                      type="button"
-                      data-testid="opcion-unidad-kg"
-                      (click)="elegirUnidad('kg')"
-                      [class]="claseTeja(unidad() === 'kg')"
-                    >
-                      <span [class]="claseIcono(unidad() === 'kg')">⚖️</span>
-                      <span class="text-base font-extrabold text-slate-900">Kilogramos</span>
-                      <span class="text-xs font-medium text-slate-500">Cantidad directa</span>
-                      @if (unidad() === 'kg') { <span [class]="claseBadge()" [innerHTML]="iconoCheck"></span> }
-                    </button>
-                    <button
-                      type="button"
-                      data-testid="opcion-unidad-canastillas"
-                      (click)="elegirUnidad('canastillas')"
-                      [class]="claseTeja(unidad() === 'canastillas')"
-                    >
-                      <span [class]="claseIcono(unidad() === 'canastillas')">🧺</span>
-                      <span class="text-base font-extrabold text-slate-900">Canastillas</span>
-                      <span class="text-xs font-medium text-slate-500">Se convierten a kg</span>
-                      @if (unidad() === 'canastillas') { <span [class]="claseBadge()" [innerHTML]="iconoCheck"></span> }
-                    </button>
+                    @for (opcion of unidadesLinea(); track opcion) {
+                      <button
+                        type="button"
+                        [attr.data-testid]="'opcion-unidad-' + opcion"
+                        (click)="elegirUnidad(opcion)"
+                        [class]="claseTeja(unidad() === opcion)"
+                      >
+                        <span [class]="claseIcono(unidad() === opcion)">{{ iconoUnidad(opcion) }}</span>
+                        <span class="text-base font-extrabold text-slate-900">{{ nombreUnidad(opcion) }}</span>
+                        <span class="text-xs font-medium text-slate-500">{{ ayudaUnidad(opcion) }}</span>
+                        @if (unidad() === opcion) { <span [class]="claseBadge()" [innerHTML]="iconoCheck"></span> }
+                      </button>
+                    }
                   </div>
                 }
 
@@ -321,7 +372,7 @@ type ClavePaso =
                         aria-label="Cantidad"
                       />
                       <span class="mt-1 block text-xs font-extrabold uppercase tracking-widest text-slate-400">
-                        {{ unidad() === 'kg' ? 'kilogramos' : 'canastillas' }}
+                        {{ unidad() === 'kg' ? 'kilogramos' : nombreUnidad(unidad()).toLowerCase() }}
                       </span>
                     </div>
 
@@ -343,7 +394,13 @@ type ClavePaso =
                       @for (n of teclas; track n) {
                         <button type="button" (click)="tecla(n)" [class]="claseTecla()">{{ n }}</button>
                       }
-                      <button type="button" (click)="teclaDecimal()" [class]="claseTecla()" aria-label="Punto decimal">,</button>
+                      <button
+                        type="button"
+                        (click)="teclaDecimal()"
+                        [class]="claseTecla()"
+                        [disabled]="esConteo()"
+                        aria-label="Punto decimal"
+                      >,</button>
                       <button type="button" (click)="tecla('0')" [class]="claseTecla()">0</button>
                       <button type="button" (click)="borrar()" [class]="claseTeclaAccion()" aria-label="Borrar">
                         <svg class="mx-auto h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -365,6 +422,11 @@ type ClavePaso =
                     @if (unidad() === 'canastillas') {
                       <p class="mt-3 text-center text-xs font-medium text-slate-500">
                         Se convierten a kilos con el peso estándar por canastilla de Catálogos.
+                      </p>
+                    } @else if (esConteo()) {
+                      <p class="mt-3 text-center text-xs font-medium text-slate-500">
+                        La orden queda en {{ nombreUnidad(unidad()).toLowerCase() }}: los kilos reales salen de
+                        lo que se pesa en saborizado.
                       </p>
                     }
                   </div>
@@ -446,6 +508,12 @@ type ClavePaso =
                 @case ('resumen') {
                   <div class="anim-entrada">
                     <dl class="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200">
+                      @if (lineaSeleccionada(); as linea) {
+                        <div class="flex items-center justify-between gap-4 px-5 py-3">
+                          <dt class="text-sm font-semibold text-slate-500">Línea</dt>
+                          <dd class="text-sm font-extrabold text-slate-900">{{ linea.nombre }}</dd>
+                        </div>
+                      }
                       <div class="flex items-center justify-between gap-4 px-5 py-3">
                         <dt class="text-sm font-semibold text-slate-500">Destino</dt>
                         <dd class="text-sm font-extrabold text-slate-900 capitalize">{{ destino() }}</dd>
@@ -458,6 +526,12 @@ type ClavePaso =
                         <dt class="shrink-0 text-sm font-semibold text-slate-500">Producto</dt>
                         <dd class="truncate text-right text-sm font-extrabold text-slate-900">{{ nombreProducto() }}</dd>
                       </div>
+                      @if (variedadId()) {
+                        <div class="flex items-center justify-between gap-4 px-5 py-3">
+                          <dt class="shrink-0 text-sm font-semibold text-slate-500">Tipo</dt>
+                          <dd class="truncate text-right text-sm font-extrabold text-slate-900">{{ nombreVariedad() }}</dd>
+                        </div>
+                      }
                       <div class="flex items-center justify-between gap-4 px-5 py-3">
                         <dt class="shrink-0 text-sm font-semibold text-slate-500">Duración de producción</dt>
                         <dd class="text-right text-sm font-extrabold text-slate-900">
@@ -475,15 +549,17 @@ type ClavePaso =
                       <div class="flex items-center justify-between gap-4 bg-marca-50/50 px-5 py-3.5">
                         <dt class="shrink-0 text-sm font-semibold text-slate-600">Cantidad</dt>
                         <dd class="text-base font-extrabold text-marca-700">
-                          {{ cantidad() | number: '1.0-2' }} {{ unidad() === 'kg' ? 'kg' : 'canastillas' }}
+                          {{ cantidad() | number: '1.0-2' }} {{ unidad() === 'kg' ? 'kg' : nombreUnidad(unidad()).toLowerCase() }}
                         </dd>
                       </div>
-                      <div class="flex items-center justify-between gap-4 px-5 py-3">
-                        <dt class="shrink-0 text-sm font-semibold text-slate-500">Fórmula</dt>
-                        <dd class="truncate text-right text-sm font-extrabold text-slate-900">
-                          {{ resumenFormula() }}
-                        </dd>
-                      </div>
+                      @if (usaBodega()) {
+                        <div class="flex items-center justify-between gap-4 px-5 py-3">
+                          <dt class="shrink-0 text-sm font-semibold text-slate-500">Fórmula</dt>
+                          <dd class="truncate text-right text-sm font-extrabold text-slate-900">
+                            {{ resumenFormula() }}
+                          </dd>
+                        </div>
+                      }
                     </dl>
                   </div>
                 }
@@ -533,8 +609,9 @@ export class OrdenAsistentePage {
   private estadoGuardado = '';
 
   private estadoFormulario(): string {
-    return JSON.stringify([this.destino(), this.categoriaId(), this.productoId(),
-      this.hornoId(), this.turnoId(), this.horas(), this.unidad(), this.cantidadTexto()]);
+    return JSON.stringify([this.lineaId(), this.destino(), this.categoriaId(), this.productoId(),
+      this.variedadId(), this.hornoId(), this.turnoId(), this.horas(), this.unidad(),
+      this.cantidadTexto()]);
   }
 
   cambiosPendientes(): boolean {
@@ -555,8 +632,12 @@ export class OrdenAsistentePage {
   protected readonly categorias = signal<ItemCatalogo[]>([]);
   protected readonly hornos = signal<Horno[]>([]);
   protected readonly productos = signal<Producto[]>([]);
+  protected readonly lineas = signal<Linea[]>([]);
+  protected readonly variedades = signal<Variedad[]>([]);
 
   // Selección del asistente.
+  protected readonly lineaId = signal<number | null>(null);
+  protected readonly variedadId = signal<number | null>(null);
   protected readonly destino = signal<DestinoOrden>('nacional');
   protected readonly categoriaId = signal<number | null>(null);
   protected readonly productoId = signal<number | null>(null);
@@ -588,30 +669,56 @@ export class OrdenAsistentePage {
     `<span class="block h-4 w-4">${this.svgCheck}</span>`,
   );
 
-  private readonly ordenPasos: ClavePaso[] = [
-    'destino',
-    'categoria',
-    'producto',
-    'horas',
-    'horno',
-    'turno',
-    'unidad',
-    'cantidad',
-    'formula',
-    'resumen',
-  ];
+  // --- Línea de producción (V21) ------------------------------------------
 
-  protected readonly totalPasos = computed(() => this.ordenPasos.length);
-  protected readonly pasoActual = computed<ClavePaso>(() => this.ordenPasos[this.indicePaso()]);
+  /** Líneas con al menos un horno activo: solo esas se pueden programar. */
+  protected readonly lineasConHorno = computed(() => {
+    const ids = new Set(this.hornos().map((h) => h.linea?.id).filter((id) => id !== undefined));
+    return this.lineas().filter((l) => ids.has(l.id));
+  });
+  protected readonly lineaSeleccionada = computed(
+    () => this.lineas().find((l) => l.id === this.lineaId()) ?? null,
+  );
+  /** Sin línea (backend viejo): se comporta como papa. */
+  protected readonly usaBodega = computed(() => this.lineaSeleccionada()?.usa_bodega ?? true);
+  protected readonly unidadesLinea = computed<UnidadSolicitada[]>(
+    () => this.lineaSeleccionada()?.unidades_orden ?? ['kg', 'canastillas'],
+  );
+  protected readonly esConteo = computed(() => UNIDADES_DE_CONTEO.includes(this.unidad()));
+  protected readonly variedadesDeLinea = computed(() =>
+    this.variedades().filter((v) => v.linea_id === this.lineaId() && v.activo),
+  );
+
+  /** Los pasos dependen de la línea: variedad solo si la pide, fórmula solo en papa. */
+  private readonly ordenPasos = computed<ClavePaso[]>(() => {
+    const linea = this.lineaSeleccionada();
+    const pasos: ClavePaso[] = [];
+    if (this.lineasConHorno().length > 1) pasos.push('linea');
+    pasos.push('destino', 'categoria', 'producto');
+    if (linea?.pide_variedad) pasos.push('variedad');
+    pasos.push('horas', 'horno', 'turno');
+    if (this.unidadesLinea().length > 1) pasos.push('unidad');
+    pasos.push('cantidad');
+    if (this.usaBodega()) pasos.push('formula');
+    pasos.push('resumen');
+    return pasos;
+  });
+
+  protected readonly totalPasos = computed(() => this.ordenPasos().length);
+  protected readonly pasoActual = computed<ClavePaso>(
+    () => this.ordenPasos()[Math.min(this.indicePaso(), this.ordenPasos().length - 1)],
+  );
   protected readonly progreso = computed(
     () => ((this.indicePaso() + 1) / this.totalPasos()) * 100,
   );
 
   // Textos de cada paso (etiqueta corta, título y subtítulo).
   private readonly textosPaso: Record<ClavePaso, { etiqueta: string; titulo: string; sub: string }> = {
+    linea: { etiqueta: 'Línea', titulo: '¿De qué línea es la orden?', sub: 'Las líneas sin horno aparecen bloqueadas.' },
     destino: { etiqueta: 'Destino', titulo: '¿Cuál es el destino del lote?', sub: 'Mercado nacional o exportación.' },
     categoria: { etiqueta: 'Categoría', titulo: '¿Qué categoría vas a producir?', sub: 'Elige la línea de producto.' },
     producto: { etiqueta: 'Producto', titulo: '¿Qué producto exactamente?', sub: '' },
+    variedad: { etiqueta: 'Tipo', titulo: '¿Qué tipo se va a fritar?', sub: 'Escoge la variedad de la materia prima.' },
     horas: {
       etiqueta: 'Duración',
       titulo: '¿Cuántas horas va a producción?',
@@ -619,7 +726,7 @@ export class OrdenAsistentePage {
     },
     horno: { etiqueta: 'Horno', titulo: '¿En qué horno se produce?', sub: '' },
     turno: { etiqueta: 'Turno', titulo: '¿En qué turno?', sub: 'Selecciona el turno operativo.' },
-    unidad: { etiqueta: 'Unidad', titulo: '¿Cómo te pidieron la cantidad?', sub: 'En kilos o en canastillas.' },
+    unidad: { etiqueta: 'Unidad', titulo: '¿Cómo te pidieron la cantidad?', sub: 'Las unidades de esta línea.' },
     cantidad: { etiqueta: 'Cantidad', titulo: '¿Cuánto se va a producir?', sub: 'Toca para sumar o escribe el valor exacto.' },
     formula: {
       etiqueta: 'Fórmula',
@@ -634,7 +741,11 @@ export class OrdenAsistentePage {
     // El de producto/horno se personaliza con el contexto elegido.
     const clave = this.pasoActual();
     if (clave === 'cantidad') {
-      return this.unidad() === 'kg' ? '¿Cuántos kilos se van a producir?' : '¿Cuántas canastillas?';
+      if (this.unidad() === 'kg') return '¿Cuántos kilos se van a producir?';
+      return `¿Cuántos ${this.nombreUnidad(this.unidad()).toLowerCase()}?`;
+    }
+    if (clave === 'variedad') {
+      return `¿Qué tipo de ${this.lineaSeleccionada()?.nombre_materia_prima ?? 'materia prima'} se va a fritar?`;
     }
     return this.textosPaso[clave].titulo;
   });
@@ -667,7 +778,7 @@ export class OrdenAsistentePage {
 
   protected readonly paso = computed(() => (this.unidad() === 'kg' ? 50 : 1));
   protected readonly saltosRapidos = computed(() =>
-    this.unidad() === 'kg' ? [50, 100, 500, 1000] : [1, 5, 10, 20],
+    this.unidad() === 'kg' ? [50, 100, 500, 1000] : this.esConteo() ? [1, 2, 5, 10] : [1, 5, 10, 20],
   );
 
   protected readonly productosFiltrados = computed(() => {
@@ -680,14 +791,27 @@ export class OrdenAsistentePage {
       : [];
   });
 
+  /** Hornos de la línea elegida (todos si el backend aún no manda líneas). */
+  private readonly hornosDeLinea = computed(() => {
+    const linea = this.lineaId();
+    return linea === null ? this.hornos() : this.hornos().filter((h) => (h.linea?.id ?? linea) === linea);
+  });
+
+  /** Categorías que fríen los hornos de la línea. */
+  protected readonly categoriasFiltradas = computed(() => {
+    if (this.lineaId() === null) return this.categorias();
+    const ids = new Set(this.hornosDeLinea().flatMap((h) => h.categorias.map((c) => c.id)));
+    return this.categorias().filter((c) => ids.has(c.id));
+  });
+
   protected readonly hornosFiltrados = computed(() => {
     if (this.destino() === 'exportacion') {
-      return this.hornos().filter((h) => h.apto_exportacion);
+      return this.hornosDeLinea().filter((h) => h.apto_exportacion);
     }
     const categoria = this.categoriaId();
     return categoria
-      ? this.hornos().filter((h) => h.categorias.some((c) => c.id === categoria))
-      : this.hornos();
+      ? this.hornosDeLinea().filter((h) => h.categorias.some((c) => c.id === categoria))
+      : this.hornosDeLinea();
   });
 
   // Nombres para el resumen.
@@ -700,6 +824,9 @@ export class OrdenAsistentePage {
   protected readonly nombreHorno = computed(
     () => this.hornos().find((h) => h.id === this.hornoId())?.nombre ?? '—',
   );
+  protected readonly nombreVariedad = computed(
+    () => this.variedades().find((v) => v.id === this.variedadId())?.nombre ?? '—',
+  );
   protected readonly nombreTurno = computed(
     () => this.turnos().find((t) => t.id === this.turnoId())?.nombre ?? '—',
   );
@@ -707,6 +834,10 @@ export class OrdenAsistentePage {
   /** Si el paso actual tiene una selección válida para poder continuar. */
   protected readonly pasoValido = computed(() => {
     switch (this.pasoActual()) {
+      case 'linea':
+        return this.lineaId() !== null;
+      case 'variedad':
+        return this.variedadId() !== null;
       case 'destino':
         return !!this.destino();
       case 'categoria':
@@ -723,7 +854,7 @@ export class OrdenAsistentePage {
       case 'unidad':
         return !!this.unidad();
       case 'cantidad':
-        return this.cantidad() > 0;
+        return this.cantidad() > 0 && (!this.esConteo() || Number.isInteger(this.cantidad()));
       default:
         return true;
     }
@@ -745,6 +876,18 @@ export class OrdenAsistentePage {
       }
     });
     effect(() => {
+      const validas = this.categoriasFiltradas();
+      if (this.categoriaId() && !validas.some((c) => c.id === this.categoriaId())) {
+        this.categoriaId.set(null);
+      }
+    });
+    effect(() => {
+      const validas = this.variedadesDeLinea();
+      if (this.variedadId() && !validas.some((v) => v.id === this.variedadId())) {
+        this.variedadId.set(null);
+      }
+    });
+    effect(() => {
       const validos = this.hornosFiltrados();
       if (this.hornoId() && !validos.some((h) => h.id === this.hornoId())) {
         this.hornoId.set(null);
@@ -757,7 +900,8 @@ export class OrdenAsistentePage {
       const productoId = this.productoId();
       const horas = this.horas();
       const numero = ++this.peticionFormula;
-      if (!productoId) {
+      // Solo la papa lleva fórmula de Bodega.
+      if (!productoId || !this.usaBodega()) {
         this.formulaActiva.set(null);
         this.cargandoFormula.set(false);
         return;
@@ -784,12 +928,25 @@ export class OrdenAsistentePage {
       categorias: this.catalogos.listarCategorias(true),
       hornos: this.catalogos.listarHornos(true),
       productos: this.catalogos.listarProductos(true),
+      // Líneas y variedades son opcionales: sin ellas el asistente es el de papa.
+      lineas: this.catalogos.listarLineas().pipe(catchError(() => of([] as Linea[]))),
+      variedades: this.catalogos
+        .listarVariedades(undefined, true)
+        .pipe(catchError(() => of([] as Variedad[]))),
     }).subscribe({
-      next: ({ turnos, categorias, hornos, productos }) => {
+      next: ({ turnos, categorias, hornos, productos, lineas, variedades }) => {
         this.turnos.set(turnos);
         this.categorias.set(categorias);
         this.hornos.set(hornos);
         this.productos.set(productos);
+        this.lineas.set(lineas);
+        this.variedades.set(variedades);
+        // Con una sola línea con hornos (hoy, la papa), se elige sola.
+        const conHorno = this.lineasConHorno();
+        if (conHorno.length === 1) {
+          this.fijarLinea(conHorno[0]);
+        }
+        this.estadoGuardado = this.estadoFormulario();
         this.cargando.set(false);
       },
       error: () => this.cargando.set(false),
@@ -884,6 +1041,50 @@ export class OrdenAsistentePage {
   }
 
   // --- Selección en cada paso (avanza sola al elegir para dar fluidez) ------
+
+  protected tieneHorno(lineaId: number): boolean {
+    return this.lineasConHorno().some((l) => l.id === lineaId);
+  }
+
+  protected textoUnidades(linea: Linea): string {
+    return linea.unidades_orden.map((u) => this.nombreUnidad(u).toLowerCase()).join(' o ');
+  }
+
+  protected nombreUnidad(unidad: UnidadSolicitada): string {
+    return NOMBRE_UNIDAD[unidad] ?? unidad;
+  }
+
+  protected iconoUnidad(unidad: UnidadSolicitada): string {
+    return { kg: '⚖️', canastillas: '🧺', mojes: '🥣', baches: '🛢️', bultos: '📦' }[unidad] ?? '🔢';
+  }
+
+  protected ayudaUnidad(unidad: UnidadSolicitada): string {
+    if (unidad === 'kg') return 'Cantidad directa';
+    if (unidad === 'canastillas') return 'Se convierten a kg';
+    return 'Se cuentan enteros';
+  }
+
+  private fijarLinea(linea: Linea): void {
+    if (this.lineaId() !== linea.id) {
+      this.lineaId.set(linea.id);
+      this.variedadId.set(null);
+    }
+    if (!linea.unidades_orden.includes(this.unidad())) {
+      this.unidad.set(linea.unidades_orden[0] ?? 'kg');
+      this.cantidadTexto.set('0');
+    }
+  }
+
+  protected elegirLinea(linea: Linea): void {
+    if (!this.tieneHorno(linea.id)) return;
+    this.fijarLinea(linea);
+    this.avanzarPronto();
+  }
+
+  protected elegirVariedad(id: number): void {
+    this.variedadId.set(id);
+    this.avanzarPronto();
+  }
 
   protected elegirDestino(valor: DestinoOrden): void {
     this.destino.set(valor);
@@ -984,6 +1185,7 @@ export class OrdenAsistentePage {
   }
 
   protected teclaDecimal(): void {
+    if (this.esConteo()) return; // mojes, baches y bultos van enteros
     const actual = this.cantidadTexto();
     if (actual.includes('.')) {
       return;
@@ -1055,6 +1257,13 @@ export class OrdenAsistentePage {
       cantidad_canastillas: this.unidad() === 'canastillas' ? this.cantidad() : null,
       horas_produccion: this.horas(),
     };
+    // Campos nuevos (V21): solo viajan cuando aplican, el cuerpo de papa no cambia.
+    if (this.esConteo()) {
+      datos.cantidad_unidades = this.cantidad();
+    }
+    if (this.variedadId() !== null) {
+      datos.variedad_id = this.variedadId();
+    }
 
     this.enviando.set(true);
     this.ordenes.crear(datos).subscribe({

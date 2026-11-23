@@ -214,14 +214,24 @@ export class HornoAsistentePage {
   /** 30, 31, 32... 55: el rango completo de bultos de una tanda. */
   protected readonly bultosComunes = Array.from({ length: 26 }, (_, i) => String(30 + i));
 
-  private readonly pasos = computed(() => pasosDeTanda(this.hayFormula()));
+  /** La línea de la orden: papa en bultos, las demás en kilos (V21). */
+  protected readonly linea = computed(() => this.detalle()?.orden.linea ?? null);
+  protected readonly enKg = computed(() => this.linea()?.unidad_materia_prima === 'kg');
+  protected readonly materia = computed(() => this.linea()?.nombre_materia_prima ?? 'papa');
+  protected readonly kgMateria = signal('0');
+
+  private readonly pasos = computed(() => pasosDeTanda(this.hayFormula(), this.enKg()));
 
   protected readonly totalPasos = computed(() => this.pasos().length);
   protected readonly pasoActual = computed<PasoTanda>(() => this.pasos()[this.indicePaso()]);
   protected readonly progreso = computed(() => ((this.indicePaso() + 1) / this.totalPasos()) * 100);
 
   protected readonly etiquetaPaso = computed(() => TEXTOS_PASOS_HORNO[this.pasoActual()].etiqueta);
-  protected readonly tituloPaso = computed(() => TEXTOS_PASOS_HORNO[this.pasoActual()].titulo);
+  protected readonly tituloPaso = computed(() =>
+    this.pasoActual() === 'kg_materia'
+      ? `¿Cuántos kilos de ${this.materia()} entraron al horno?`
+      : TEXTOS_PASOS_HORNO[this.pasoActual()].titulo,
+  );
   protected readonly subtituloPaso = computed(() => TEXTOS_PASOS_HORNO[this.pasoActual()].sub);
 
   /** Hora de inicio en formato de reloj (HH:MM). */
@@ -261,6 +271,8 @@ export class HornoAsistentePage {
     minutosParada: this.minutosParada(),
     causaParada: this.causaParada(),
     notaParada: this.notaParada(),
+    enKg: this.enKg(),
+    kgMateria: this.kgMateria(),
   }));
   protected readonly pasoValido = computed(() =>
     pasoTandaValido(this.pasoActual(), this.datosTanda(), this.capacidadMezcla()),
@@ -285,6 +297,7 @@ export class HornoAsistentePage {
       this.minutosParada(),
       this.causaParada(),
       this.notaParada(),
+      this.kgMateria(),
     ],
     () => this.enviando(),
   );

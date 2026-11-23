@@ -103,6 +103,38 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
               </div>
 
               <div>
+                <span class="etiqueta text-xs font-bold text-slate-700 mb-1.5 block">% de sabor esperado</span>
+                <div class="flex items-center gap-2">
+                  <input
+                    type="number"
+                    inputmode="decimal"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    class="campo"
+                    placeholder="Mín."
+                    aria-label="% de sabor mínimo"
+                    formControlName="sabor_minimo_pct"
+                  />
+                  <span class="text-slate-400">a</span>
+                  <input
+                    type="number"
+                    inputmode="decimal"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    class="campo"
+                    placeholder="Máx."
+                    aria-label="% de sabor máximo"
+                    formControlName="sabor_maximo_pct"
+                  />
+                </div>
+                <p class="mt-1 text-[11px] text-slate-500 font-medium">
+                  Opcional. Si el sabor real se sale del rango, saborizado avisa (ej. Tostón 1,5 a 2,5).
+                </p>
+              </div>
+
+              <div>
                 <label class="etiqueta text-xs font-bold text-slate-700 mb-1.5 block" for="peso">
                   Peso Estimado por Canastilla (kg)
                 </label>
@@ -277,6 +309,8 @@ export class ProductosPage {
     categoria_id: this.fb.control<number | null>(null, Validators.required),
     peso_estandar_canastilla_kg: this.fb.control<number | null>(null),
     destino: this.fb.nonNullable.control<DestinoProducto>('ambos'),
+    sabor_minimo_pct: this.fb.control<number | null>(null, [Validators.min(0), Validators.max(100)]),
+    sabor_maximo_pct: this.fb.control<number | null>(null, [Validators.min(0), Validators.max(100)]),
     activo: this.fb.nonNullable.control(true),
   });
 
@@ -308,6 +342,8 @@ export class ProductosPage {
         ? Number(producto.peso_estandar_canastilla_kg)
         : null,
       destino: producto.destino ?? 'ambos',
+      sabor_minimo_pct: producto.sabor_minimo_pct != null ? Number(producto.sabor_minimo_pct) : null,
+      sabor_maximo_pct: producto.sabor_maximo_pct != null ? Number(producto.sabor_maximo_pct) : null,
       activo: producto.activo,
     });
   }
@@ -332,6 +368,8 @@ export class ProductosPage {
         ? Number(valores.peso_estandar_canastilla_kg)
         : null,
       destino: valores.destino,
+      sabor_minimo_pct: numeroONulo(valores.sabor_minimo_pct),
+      sabor_maximo_pct: numeroONulo(valores.sabor_maximo_pct),
     };
 
     const editando = this.editando();
@@ -362,4 +400,9 @@ export class ProductosPage {
       this.cargar();
     });
   }
+}
+
+/** Un campo numérico vacío viaja como null (sin control de sabor). */
+function numeroONulo(valor: number | string | null): number | null {
+  return valor === null || valor === '' ? null : Number(valor);
 }

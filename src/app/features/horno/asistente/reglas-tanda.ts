@@ -33,6 +33,9 @@ export interface DatosTandaHorno {
   minutosParada?: number;
   causaParada?: string | null;
   notaParada?: string;
+  /** Líneas que no son papa: la tanda va en kilos de materia prima (V21). */
+  enKg?: boolean;
+  kgMateria?: string;
 }
 
 export function numeroDeTexto(texto: string): number {
@@ -65,6 +68,8 @@ export function pasoTandaValido(
       return datos.referenciaPapaId !== null;
     case 'bultos':
       return numeroDeTexto(datos.bultos) > 0;
+    case 'kg_materia':
+      return numeroDeTexto(datos.kgMateria ?? '0') > 0;
     case 'temperatura':
       return numeroDeTexto(datos.temperatura) > 0;
     case 'personal_zona_humeda':

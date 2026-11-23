@@ -13,6 +13,13 @@ export interface Rol {
   nombre: string;
 }
 
+/** Línea de producción de un operario o de Bodega (V21). */
+export interface LineaRef {
+  id: number;
+  codigo: string;
+  nombre: string;
+}
+
 export interface Usuario {
   id: number;
   nombre_completo: string;
@@ -20,6 +27,10 @@ export interface Usuario {
   activo: boolean;
   fecha_creacion: string;
   rol: Rol;
+  /** Operarios y Bodega: su línea. Administrador y supervisor no tienen (ven todas). */
+  linea?: LineaRef | null;
+  /** Entró con una contraseña temporal: debe crear la suya antes de seguir. */
+  debe_cambiar_password?: boolean;
 }
 
 export interface Credenciales {
@@ -41,7 +52,12 @@ export interface UsuarioGuardar {
   rol_id: number;
   activo: boolean;
   password?: string | null;
+  /** Operarios y Bodega: en qué línea trabajan. */
+  linea_id?: number | null;
 }
+
+/** Roles que trabajan en una sola línea de producción. */
+export const ROLES_DE_LINEA: CodigoRol[] = ['operario_horno', 'operario_saborizado', 'bodeguero'];
 
 /** Texto que ve el usuario para cada rol (el codigo nunca se muestra). */
 export const ETIQUETAS_ROL: Record<CodigoRol, string> = {

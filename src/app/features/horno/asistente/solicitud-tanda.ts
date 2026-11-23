@@ -19,16 +19,20 @@ export function construirRegistroHorno(
     minutos_parada: paro ? datos.minutosParada! : 0,
     causa_parada: paro ? (datos.causaParada ?? null) : null,
     nota_parada: paro && datos.causaParada === 'otro' ? (datos.notaParada ?? '').trim() : null,
-    referencias: datos.conFormula
-      ? datos.mezcla
-          .filter((fila) => fila.bultos > 0)
-          .map((fila) => ({
-            referencia_papa_id: fila.referencia_id,
-            cantidad_bultos: fila.bultos,
-          }))
-      : [],
-    referencia_papa_id: datos.conFormula ? undefined : datos.referenciaPapaId!,
-    cantidad_bultos: datos.conFormula ? undefined : numeroDeTexto(datos.bultos),
+    referencias: datos.enKg
+      ? []
+      : datos.conFormula
+        ? datos.mezcla
+            .filter((fila) => fila.bultos > 0)
+            .map((fila) => ({
+              referencia_papa_id: fila.referencia_id,
+              cantidad_bultos: fila.bultos,
+            }))
+        : [],
+    referencia_papa_id: datos.conFormula || datos.enKg ? undefined : datos.referenciaPapaId!,
+    cantidad_bultos: datos.conFormula || datos.enKg ? undefined : numeroDeTexto(datos.bultos),
+    // Líneas que no son papa (V21): solo viaja cuando aplica.
+    ...(datos.enKg ? { kg_materia_prima: numeroDeTexto(datos.kgMateria ?? '0') } : {}),
     operarios_seleccion: datos.operariosSeleccion,
     operarios_horno: datos.operariosZonaHumeda,
     nivel_aceite_inicial_cm: numeroDeTexto(datos.aceiteInicial),

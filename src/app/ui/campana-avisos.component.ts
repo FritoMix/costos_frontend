@@ -119,6 +119,8 @@ export class CampanaAvisosComponent {
         return '🔒';
       case 'recordar_formula_noche':
         return '🌙';
+      case 'recuperar_password':
+        return '🔑';
       default:
         return '🆕';
     }
@@ -133,6 +135,9 @@ export class CampanaAvisosComponent {
     if (aviso.tipo === 'recordar_formula_noche') {
       return ['/formula-produccion/noche'];
     }
+    if (aviso.tipo === 'recuperar_password') {
+      return [this.auth.esAdmin() ? '/usuarios' : '/recuperar-clave'];
+    }
     if (aviso.tipo === 'orden_para_bodega' && (this.auth.esAdmin() || this.auth.esBodeguero())) {
       return ['/formula-produccion/ordenes', String(ordenId)];
     }
@@ -145,6 +150,9 @@ export class CampanaAvisosComponent {
   protected etiquetaEnlace(tipo: string): string {
     if (tipo === 'recordar_formula_noche') {
       return 'Dejar la fórmula';
+    }
+    if (tipo === 'recuperar_password') {
+      return 'Dar contraseña temporal';
     }
     if (tipo === 'orden_para_bodega' && (this.auth.esAdmin() || this.auth.esBodeguero())) {
       return 'Definir fórmula';

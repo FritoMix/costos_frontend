@@ -37,6 +37,15 @@ import { NotificacionesPlantaService } from '../core/servicios/notificaciones-pl
             </p>
           </div>
           <div class="flex flex-wrap justify-center gap-3 px-6 py-5">
+            @if (a.tipo === 'recuperar_password') {
+              <button
+                type="button"
+                (click)="irARecuperar()"
+                class="min-w-36 rounded-2xl bg-marca-700 px-5 py-3.5 text-base font-semibold text-white shadow-md hover:bg-marca-800"
+              >
+                Dar contraseña temporal
+              </button>
+            }
             @if (a.tipo === 'recordar_formula_noche') {
               <button
                 type="button"
@@ -84,6 +93,8 @@ export class AvisoGrandeComponent {
         return { fondo: 'bg-emerald-50', circulo: 'bg-emerald-200', icono: '✅' };
       case 'recordar_formula_noche':
         return { fondo: 'bg-indigo-50', circulo: 'bg-indigo-200', icono: '🌙' };
+      case 'recuperar_password':
+        return { fondo: 'bg-amber-50', circulo: 'bg-amber-200', icono: '🔑' };
       case 'formula_lista':
         return { fondo: 'bg-emerald-50', circulo: 'bg-emerald-200', icono: '🧪' };
       default:
@@ -112,6 +123,11 @@ export class AvisoGrandeComponent {
     return this.auth.esOperarioHorno() || this.auth.esOperarioSaborizado()
       ? 'Ir a mi pantalla'
       : 'Ver la orden';
+  }
+
+  protected irARecuperar(): void {
+    this.servicio.cerrarDestacado();
+    void this.router.navigate([this.auth.esAdmin() ? '/usuarios' : '/recuperar-clave']);
   }
 
   protected irANoche(): void {

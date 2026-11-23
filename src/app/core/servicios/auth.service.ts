@@ -100,9 +100,26 @@ export class AuthService {
   }
 
   cambiarPassword(passwordActual: string, passwordNueva: string): Observable<void> {
-    return this.http.post<void>(`${environment.apiUrl}/auth/cambiar-password`, {
-      password_actual: passwordActual,
-      password_nueva: passwordNueva,
+    return this.http
+      .post<void>(`${environment.apiUrl}/auth/cambiar-password`, {
+        password_actual: passwordActual,
+        password_nueva: passwordNueva,
+      })
+      .pipe(
+        // Ya creó su contraseña propia: deja de pedírsela.
+        tap(() => {
+          const actual = this._usuario();
+          if (actual?.debe_cambiar_password) {
+            this._usuario.set({ ...actual, debe_cambiar_password: false });
+          }
+        }),
+      );
+  }
+
+  /** «¿Olvidaste tu contraseña?»: avisa al administrador y al supervisor. */
+  olvidePassword(nombreUsuario: string): Observable<{ mensaje: string }> {
+    return this.http.post<{ mensaje: string }>(`${environment.apiUrl}/auth/olvide-password`, {
+      nombre_usuario: nombreUsuario,
     });
   }
 
