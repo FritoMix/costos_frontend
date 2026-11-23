@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, type ElementRef, effect, input, output, viewChild } from '@angular/core';
 
 import { BotonComponent } from './boton.component';
 
@@ -11,43 +11,41 @@ import { BotonComponent } from './boton.component';
   imports: [BotonComponent],
   template: `
     @if (abierto()) {
-      <div
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm anim-aparecer"
-        role="dialog"
-        aria-modal="true"
+      <dialog
+        #dialogo
+        class="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-2xl border border-sky-100 bg-white p-5 shadow-2xl backdrop:bg-slate-900/50 sm:p-6"
+        [attr.aria-label]="titulo()"
+        (cancel)="$event.preventDefault(); cancelado.emit()"
       >
-        <div class="w-full max-w-md rounded-3xl border border-sky-100 bg-white/95 p-5 sm:p-6 shadow-2xl anim-escala"
-             style="backdrop-filter: blur(16px) saturate(1.2);">
-          <div class="flex items-start gap-3.5">
-            @if (peligroso()) {
-              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-100 to-rose-50 text-rose-600 border border-rose-200/40">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                </svg>
-              </div>
-            } @else {
-              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-100 to-sky-50 text-sky-700 border border-sky-200/50">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
-                </svg>
-              </div>
-            }
-            <div class="flex-1">
-              <h2 class="text-lg font-bold text-slate-900 tracking-tight">{{ titulo() }}</h2>
-              <p class="mt-1.5 text-sm text-slate-600 leading-relaxed font-medium">{{ mensaje() }}</p>
+        <div class="flex items-start gap-3.5">
+          @if (peligroso()) {
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-100 to-rose-50 text-rose-600 border border-rose-200/40">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
             </div>
-          </div>
-
-          <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5 border-t border-sky-100/80 pt-4">
-            <app-boton variante="secundario" (click)="cancelado.emit()">
-              {{ textoCancelar() }}
-            </app-boton>
-            <app-boton [variante]="peligroso() ? 'peligro' : 'primario'" (click)="confirmado.emit()">
-              {{ textoConfirmar() }}
-            </app-boton>
+          } @else {
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-100 to-sky-50 text-sky-700 border border-sky-200/50">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+              </svg>
+            </div>
+          }
+          <div class="min-w-0 flex-1 wrap-anywhere">
+            <h2 class="text-lg font-bold text-slate-900 tracking-tight">{{ titulo() }}</h2>
+            <p class="mt-1.5 text-sm text-slate-600 leading-relaxed font-medium">{{ mensaje() }}</p>
           </div>
         </div>
-      </div>
+
+        <div class="mt-6 flex flex-wrap justify-end gap-2.5 border-t border-sky-100/80 pt-4">
+          <app-boton variante="secundario" (click)="cancelado.emit()">
+            {{ textoCancelar() }}
+          </app-boton>
+          <app-boton [variante]="peligroso() ? 'peligro' : 'primario'" (click)="confirmado.emit()">
+            {{ textoConfirmar() }}
+          </app-boton>
+        </div>
+      </dialog>
     }
   `,
 })
@@ -61,4 +59,10 @@ export class ConfirmarComponent {
 
   readonly confirmado = output<void>();
   readonly cancelado = output<void>();
+
+  private readonly dialogo = viewChild<ElementRef<HTMLDialogElement>>('dialogo');
+
+  constructor() {
+    effect(() => this.dialogo()?.nativeElement.showModal());
+  }
 }

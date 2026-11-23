@@ -147,11 +147,20 @@ test('olvidé mi contraseña: aviso, temporal y contraseña nueva', async ({ pag
     await entrar(page);
     await expect(page).toHaveURL(/\/inicio/);
     await page.goto('/usuarios');
+    const escritorio = page.viewportSize()!;
+    await page.setViewportSize({ width: 320, height: 640 });
     await page.getByTestId(`clave-temporal-${nombreUsuario}`).click();
-    await page.getByRole('button', { name: 'Sí, generar' }).click();
+    const confirmar = page.getByRole('dialog', { name: /Dar contraseña temporal/ });
+    await expect(confirmar).toBeInViewport({ ratio: 1 });
+    await expect(confirmar).toHaveJSProperty('open', true);
+    await expect.poll(() => confirmar.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+    await confirmar.getByRole('button', { name: 'Sí, generar' }).click();
+    const dialogoClave = page.getByRole('dialog', { name: 'Contraseña temporal generada' });
+    await expect(dialogoClave).toBeInViewport({ ratio: 1 });
     const temporal = (await page.getByTestId('clave-temporal-valor').innerText()).trim();
     expect(temporal).toMatch(/^\d{8}$/);
-    await page.getByRole('button', { name: 'Listo, ya la dicté' }).click();
+    await dialogoClave.getByRole('button', { name: 'Listo, ya la dicté' }).click();
+    await page.setViewportSize(escritorio);
     await page.request.post('/api/v1/auth/logout');
 
     // 3. Entra con la temporal: la app le pide crear la suya antes de seguir.
