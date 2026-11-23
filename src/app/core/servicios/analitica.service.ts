@@ -33,6 +33,12 @@ export class AnaliticaService {
     return this.http.get<FilaBache[]>(`${this.base}/baches`, { params: this.aParams(filtros) });
   }
 
+  paginaBaches(filtros: FiltrosAnalisis, pagina: number) {
+    return this.http.get<{ items: FilaBache[]; hay_siguiente: boolean }>(`${this.base}/baches/pagina`, {
+      params: this.aParams(filtros).set('pagina', pagina),
+    });
+  }
+
   /** Supervisores disponibles para el filtro (viven en el modulo Identidad). */
   supervisores(): Observable<Usuario[]> {
     return this.http.get<Usuario[]>(`${environment.apiUrl}/usuarios/supervisores`, {
