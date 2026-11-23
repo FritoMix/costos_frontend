@@ -463,6 +463,9 @@ test.describe('Flujo crítico de planta', () => {
       await expect(page.getByTestId('teclado-valor')).toHaveText('25');
       await page.getByTestId('agregar-canastilla').click();
       await expect(page.getByText('25 kg').first()).toBeVisible();
+      // A prueba de errores: 25 kg es posible pero raro (lo normal es 3 a 12 kg).
+      await expect(page.getByTestId('continuar-saborizado')).toBeDisabled();
+      await page.getByTestId('confirmar-dato').click();
       await continuar(page, 'continuar-saborizado');
 
       await esperarPaso(page, 'cantidad_sabor');
