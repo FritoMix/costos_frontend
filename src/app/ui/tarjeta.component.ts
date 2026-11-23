@@ -9,11 +9,14 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block min-w-0' },
   template: `
-    <section class="tarjeta overflow-hidden">
+    <section [class]="minimalista()
+      ? 'rounded-xl border border-zinc-200 bg-white overflow-hidden'
+      : 'tarjeta overflow-hidden'">
       @if (titulo() || subtitulo()) {
         <header
-          class="flex flex-wrap items-center justify-between gap-3 border-b border-sky-100/90 px-5 py-4 sm:px-7 sm:py-4.5"
-          style="background: linear-gradient(135deg, rgba(240,249,255,0.7) 0%, rgba(224,242,254,0.35) 100%);"
+          class="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4 sm:px-7 sm:py-4.5"
+          [class]="minimalista() ? 'border-zinc-200 bg-zinc-50' : 'border-sky-100/90'"
+          [style.background]="minimalista() ? null : 'linear-gradient(135deg, rgba(240,249,255,0.7) 0%, rgba(224,242,254,0.35) 100%)'"
         >
           <div class="min-w-0">
             @if (titulo()) {
@@ -35,6 +38,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   `,
 })
 export class TarjetaComponent {
+  readonly minimalista = input(false);
   readonly titulo = input<string>('');
   readonly subtitulo = input<string>('');
   /** Para tablas o listados que traen su propio espaciado interno */

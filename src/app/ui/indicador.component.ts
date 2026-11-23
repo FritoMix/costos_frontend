@@ -12,65 +12,83 @@ export type TonoIndicador = 'neutral' | 'marca' | 'verde' | 'azul' | 'ambar' | '
   host: { class: 'block min-w-0' },
   imports: [DecimalPipe],
   template: `
-    <div
-      class="group relative flex flex-col justify-between overflow-hidden rounded-3xl border-2 p-4 sm:p-5 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-      [style]="estiloContenedor()"
-    >
-      <!-- Círculo decorativo grande -->
-      <div
-        class="pointer-events-none absolute -bottom-8 -right-8 h-32 w-32 rounded-full opacity-40 group-hover:opacity-60 transition-opacity duration-300"
-        [style]="glowStyle()"
-      ></div>
-      <!-- Círculo pequeño arriba -->
-      <div
-        class="pointer-events-none absolute -top-4 -left-4 h-16 w-16 rounded-full opacity-20 group-hover:opacity-35 transition-opacity duration-300"
-        [style]="glowStyle()"
-      ></div>
-
-      <!-- Top header con título e ícono -->
-      <div class="relative flex items-start justify-between gap-3">
-        <p class="text-xs font-extrabold uppercase tracking-wider leading-tight" [style]="estiloTituloTexto()">
-          {{ nombre() }}
-        </p>
-        <div
-          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg shadow-md"
-          [style]="estiloIconoFondo()"
-        >
-          <span [style]="estiloIconoColor()" [innerHTML]="svgIcono()"></span>
-        </div>
-      </div>
-
-      <!-- Valor principal con unidad -->
-      <div class="mt-4 relative">
-        @if (valor() === null || valor() === undefined) {
-          <div class="flex items-baseline gap-2">
-            <span class="text-2xl sm:text-3xl font-extrabold font-mono tracking-tight opacity-40">—</span>
-          </div>
-          @if (faltante()) {
-            <p class="mt-2 text-xs font-semibold px-2.5 py-1 rounded-lg border inline-block" [style]="estiloFaltante()">
-              {{ faltante() }}
-            </p>
+    @if (minimalista()) {
+      <div class="flex h-full flex-col rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+        <p class="text-sm font-medium text-zinc-700">{{ nombre() }}</p>
+        <p class="mt-2 flex flex-wrap items-baseline gap-x-2 text-2xl font-semibold tabular-nums text-zinc-900">
+          {{ (valor() | number: '1.0-2') ?? '—' }}
+          @if (valor() != null && unidad()) {
+            <span class="text-sm font-medium text-zinc-600">{{ unidad() }}</span>
           }
-        } @else {
-          <div class="flex items-baseline gap-2 flex-wrap">
-            <span class="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-mono tracking-tight tabular-nums" [style]="estiloValorTexto()">
-              {{ valor() | number: '1.0-2' }}
-            </span>
-            @if (unidad()) {
-              <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg border-2" [style]="estiloUnidad()">
-                {{ unidad() }}
-              </span>
-            }
-          </div>
+        </p>
+        @if (valor() == null && faltante()) {
+          <p class="mt-1 text-xs text-zinc-700">{{ faltante() }}</p>
+        }
+        @if (subtexto()) {
+          <p class="mt-auto pt-2 text-xs leading-relaxed text-zinc-600">{{ subtexto() }}</p>
         }
       </div>
+    } @else {
+      <div
+        class="group relative flex flex-col justify-between overflow-hidden rounded-3xl border-2 p-4 sm:p-5 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+        [style]="estiloContenedor()"
+      >
+        <!-- Círculo decorativo grande -->
+        <div
+          class="pointer-events-none absolute -bottom-8 -right-8 h-32 w-32 rounded-full opacity-40 group-hover:opacity-60 transition-opacity duration-300"
+          [style]="glowStyle()"
+        ></div>
+        <!-- Círculo pequeño arriba -->
+        <div
+          class="pointer-events-none absolute -top-4 -left-4 h-16 w-16 rounded-full opacity-20 group-hover:opacity-35 transition-opacity duration-300"
+          [style]="glowStyle()"
+        ></div>
 
-      @if (subtexto()) {
-        <p class="mt-3 text-xs font-semibold border-t-2 pt-2.5 relative" [style]="estiloSubtexto()">
-          {{ subtexto() }}
-        </p>
-      }
-    </div>
+        <!-- Top header con título e ícono -->
+        <div class="relative flex items-start justify-between gap-3">
+          <p class="text-xs font-extrabold uppercase tracking-wider leading-tight" [style]="estiloTituloTexto()">
+            {{ nombre() }}
+          </p>
+          <div
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg shadow-md"
+            [style]="estiloIconoFondo()"
+          >
+            <span [style]="estiloIconoColor()" [innerHTML]="svgIcono()"></span>
+          </div>
+        </div>
+
+        <!-- Valor principal con unidad -->
+        <div class="mt-4 relative">
+          @if (valor() === null || valor() === undefined) {
+            <div class="flex items-baseline gap-2">
+              <span class="text-2xl sm:text-3xl font-extrabold font-mono tracking-tight opacity-40">—</span>
+            </div>
+            @if (faltante()) {
+              <p class="mt-2 text-xs font-semibold px-2.5 py-1 rounded-lg border inline-block" [style]="estiloFaltante()">
+                {{ faltante() }}
+              </p>
+            }
+          } @else {
+            <div class="flex items-baseline gap-2 flex-wrap">
+              <span class="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-mono tracking-tight tabular-nums" [style]="estiloValorTexto()">
+                {{ valor() | number: '1.0-2' }}
+              </span>
+              @if (unidad()) {
+                <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg border-2" [style]="estiloUnidad()">
+                  {{ unidad() }}
+                </span>
+              }
+            </div>
+          }
+        </div>
+
+        @if (subtexto()) {
+          <p class="mt-3 text-xs font-semibold border-t-2 pt-2.5 relative" [style]="estiloSubtexto()">
+            {{ subtexto() }}
+          </p>
+        }
+      </div>
+    }
   `,
 })
 export class IndicadorComponent {
@@ -79,6 +97,7 @@ export class IndicadorComponent {
   readonly unidad = input('');
   readonly faltante = input('');
   readonly subtexto = input('');
+  readonly minimalista = input(false);
   readonly tono = input<TonoIndicador>('neutral');
   readonly icono = input<string>('');
 
