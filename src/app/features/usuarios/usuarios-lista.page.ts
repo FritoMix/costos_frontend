@@ -50,7 +50,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
         @if (cargando()) {
           <app-cargando texto="Cargando usuarios autorizados…" />
         } @else {
-          <div class="tabla-contenedor">
+          <div class="tabla-contenedor max-w-full">
             <table class="tabla min-w-140">
               <thead>
                 <tr>
@@ -67,11 +67,11 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                     <td>
                       <div class="flex items-center gap-3">
                         <span
-                          class="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 font-mono text-xs font-bold text-slate-700 border border-slate-200/80"
+                          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 font-mono text-xs font-bold text-slate-700 border border-slate-200/80"
                         >
                           {{ iniciales(usuario.nombre_completo) }}
                         </span>
-                        <div>
+                        <div class="min-w-0 wrap-anywhere">
                           <div class="font-bold text-slate-900">{{ usuario.nombre_completo }}</div>
                           @if (usuario.id === auth.usuario()?.id) {
                             <span
@@ -82,7 +82,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                         </div>
                       </div>
                     </td>
-                    <td class="font-mono text-xs text-slate-600">
+                    <td class="font-mono text-xs text-slate-600 wrap-anywhere">
                       {{ usuario.nombre_usuario }}
                     </td>
                     <td>
@@ -120,8 +120,8 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                         </span>
                       }
                     </td>
-                    <td class="text-right whitespace-nowrap">
-                      <div class="flex items-center justify-end gap-2">
+                    <td class="text-right">
+                      <div class="flex flex-wrap items-center justify-end gap-2">
                         <a
                           [routerLink]="['/usuarios', usuario.id]"
                           class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-marca-700 transition"

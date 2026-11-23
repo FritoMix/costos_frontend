@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, type ElementRef, effect, inject, input, signal, viewChild } from '@angular/core';
 
 import type { Usuario } from '../../core/modelos/identidad.model';
 import { UsuariosService } from '../../core/servicios/usuarios.service';
@@ -33,33 +33,32 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
     />
 
     @if (clave(); as valor) {
-      <div
-        class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/50 px-4"
-        role="dialog"
-        aria-modal="true"
+      <dialog
+        #dialogoClave
+        class="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-sm overflow-y-auto rounded-2xl bg-white p-6 text-center shadow-2xl backdrop:bg-slate-900/50"
+        aria-label="Contraseña temporal generada"
+        (cancel)="$event.preventDefault(); clave.set(null)"
       >
-        <div class="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl">
-          <p class="text-sm font-semibold text-slate-600">
-            Contraseña temporal de {{ usuario().nombre_completo }}
-          </p>
-          <p
-            class="mt-3 font-mono text-4xl font-black tracking-[0.2em] text-slate-900"
-            data-testid="clave-temporal-valor"
-          >
-            {{ valor }}
-          </p>
-          <p class="mt-3 text-xs font-medium text-slate-500">
-            Díctasela ahora: no se vuelve a mostrar. Usuario: <b>{{ usuario().nombre_usuario }}</b>
-          </p>
-          <button
-            type="button"
-            class="mt-5 w-full rounded-2xl bg-marca-700 px-5 py-3 text-base font-semibold text-white hover:bg-marca-800"
-            (click)="clave.set(null)"
-          >
-            Listo, ya la dicté
-          </button>
-        </div>
-      </div>
+        <p class="text-sm font-semibold text-slate-600 wrap-anywhere">
+          Contraseña temporal de {{ usuario().nombre_completo }}
+        </p>
+        <p
+          class="mt-3 font-mono text-2xl font-black tracking-widest min-[360px]:text-4xl text-slate-900"
+          data-testid="clave-temporal-valor"
+        >
+          {{ valor }}
+        </p>
+        <p class="mt-3 text-xs font-medium text-slate-500 wrap-anywhere">
+          Díctasela ahora: no se vuelve a mostrar. Usuario: <b>{{ usuario().nombre_usuario }}</b>
+        </p>
+        <button
+          type="button"
+          class="mt-5 w-full rounded-2xl bg-marca-700 px-5 py-3 text-base font-semibold text-white hover:bg-marca-800"
+          (click)="clave.set(null)"
+        >
+          Listo, ya la dicté
+        </button>
+      </dialog>
     }
   `,
 })
@@ -68,6 +67,12 @@ export class ClaveTemporalComponent {
   private readonly servicio = inject(UsuariosService);
   protected readonly preguntando = signal(false);
   protected readonly clave = signal<string | null>(null);
+
+  private readonly dialogoClave = viewChild<ElementRef<HTMLDialogElement>>('dialogoClave');
+
+  constructor() {
+    effect(() => this.dialogoClave()?.nativeElement.showModal());
+  }
 
   protected generar(): void {
     this.preguntando.set(false);
