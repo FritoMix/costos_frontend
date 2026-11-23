@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import type {
   Formula,
   FormulaGuardar,
+  FormulaNoche,
   FormulaProyeccion,
   FormulaProyeccionGuardar,
 } from '../modelos/formula.model';
@@ -31,9 +32,25 @@ export class FormulaService {
   }
 
   proyectar(ordenId: number, datos: FormulaProyeccionGuardar): Observable<FormulaProyeccion> {
-    return this.http.post<FormulaProyeccion>(
-      `${this.base}/${ordenId}/formula/proyeccion`,
-      datos,
-    );
+    return this.http.post<FormulaProyeccion>(`${this.base}/${ordenId}/formula/proyeccion`, datos);
+  }
+
+  // --- Fórmula de la noche por horno ---
+
+  listarNoche(): Observable<FormulaNoche[]> {
+    return this.http.get<FormulaNoche[]>(`${environment.apiUrl}/bodega/formula-noche`);
+  }
+
+  guardarNoche(
+    hornoId: number,
+    referencias: { referencia_papa_id: number; bultos_por_tanda: number }[],
+  ): Observable<FormulaNoche> {
+    return this.http.put<FormulaNoche>(`${environment.apiUrl}/bodega/formula-noche/${hornoId}`, {
+      referencias,
+    });
+  }
+
+  confirmarNoche(ordenId: number): Observable<unknown> {
+    return this.http.post(`${environment.apiUrl}/bodega/ordenes/${ordenId}/confirmar-formula`, {});
   }
 }

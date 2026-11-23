@@ -66,6 +66,9 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
           </p>
         </div>
         <div class="flex items-center gap-3">
+          <a routerLink="/formula-produccion/noche" data-testid="ir-formula-noche">
+            <app-boton variante="secundario">🌙 Fórmula de la noche</app-boton>
+          </a>
           @if (ultimaActualizacion()) {
             <span class="hidden sm:block text-xs font-semibold text-slate-400">
               Actualizado {{ ultimaActualizacion() | date: 'HH:mm:ss' }}
@@ -425,6 +428,13 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
                         <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
                         {{ badge(orden.formula_estado).texto }}
                       </span>
+                      @if (orden.formula_automatica) {
+                        <span
+                          class="mt-1 block text-[11px] font-bold text-amber-700"
+                          data-testid="formula-noche-por-confirmar"
+                          >🌙 De la noche · por confirmar</span
+                        >
+                      }
                     </td>
                     <td class="px-5 py-3.5">
                       @if (orden.total_bultos_planificados) {

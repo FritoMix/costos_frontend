@@ -94,6 +94,23 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
           </div>
         </div>
       } @else if (orden(); as actual) {
+        @if (actual.formula_automatica) {
+          <div
+            class="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-amber-200 bg-amber-50 p-5"
+            data-testid="aviso-formula-noche"
+          >
+            <div>
+              <p class="font-extrabold text-amber-900">🌙 Esta orden tomó la fórmula de la noche</p>
+              <p class="text-sm font-medium text-amber-800">
+                La puso la app porque el producto no tenía fórmula activa. Confírmala si está bien
+                o corrígela abajo (mientras la orden esté pendiente).
+              </p>
+            </div>
+            <app-boton [cargando]="confirmando()" testId="confirmar-formula-noche" (click)="confirmarNoche()"
+              >Confirmar fórmula</app-boton
+            >
+          </div>
+        }
         <!-- A. Encabezado tipo orden -->
         <app-tarjeta titulo="Orden solicitada por el supervisor" [sinRelleno]="true">
           <div class="grid gap-x-6 gap-y-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -409,6 +426,7 @@ export class FormulaOrdenPage {
   protected readonly cargando = signal(true);
   protected readonly errorCarga = signal<string | null>(null);
   protected readonly orden = signal<OrdenBodega | null>(null);
+  protected readonly confirmando = signal(false);
   protected readonly formula = signal<Formula | null>(null);
   protected readonly referencias = signal<ReferenciaPapa[]>([]);
   protected readonly filas = signal<FilaMezcla[]>([]);
@@ -503,6 +521,23 @@ export class FormulaOrdenPage {
       },
     });
     this.cargar();
+  }
+
+  /** Bodega da por buena la fórmula de la noche que puso la app. */
+  protected confirmarNoche(): void {
+    const actual = this.orden();
+    if (!actual) {
+      return;
+    }
+    this.confirmando.set(true);
+    this.formulas.confirmarNoche(actual.id).subscribe({
+      next: () => {
+        this.confirmando.set(false);
+        this.orden.set({ ...actual, formula_automatica: false });
+        this.avisos.exito('Fórmula confirmada.');
+      },
+      error: () => this.confirmando.set(false),
+    });
   }
 
   protected cargar(): void {

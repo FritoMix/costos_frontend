@@ -107,6 +107,12 @@ export const rutas: Routes = [
               ),
           },
           {
+            path: 'noche',
+            title: 'Fórmula de la noche - DATACONTROL',
+            loadComponent: () =>
+              import('./features/formulas/formula-noche.page').then((m) => m.FormulaNochePage),
+          },
+          {
             path: 'ordenes/:id',
             title: 'Fórmula de la orden - DATACONTROL',
             canDeactivate: [cambiosGuard],
