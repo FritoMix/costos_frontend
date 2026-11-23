@@ -36,11 +36,19 @@ type PasoRecepcion =
  * toca para agregarla: los kilos recibidos son la SUMA de los pesos reales,
  * nunca un estimado.
  */
+import {
+  revisarCanastillas,
+  revisarPesoCanastilla,
+  revisarSabor,
+  type Revision,
+} from '../../core/poka-yoke';
+import { RevisionPasoComponent } from '../../ui/revision-paso.component';
 @Component({
   selector: 'app-saborizado-recepcion',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.inert]': 'enviando() ? "" : null' },
   imports: [
+    RevisionPasoComponent,
     RouterLink,
     DecimalPipe,
     BotonComponent,
@@ -266,6 +274,15 @@ type PasoRecepcion =
                         >
                           {{ canastillaActualValor() > 0 ? 'Agregar canastilla' : 'Ingresa el peso y agrega' }}
                         </app-boton>
+                        @if (revisionPesoActual().error; as error) {
+                          <p
+                            class="mt-3 rounded-2xl border-2 border-rose-300 bg-rose-50 px-4 py-3 text-center text-sm font-semibold text-rose-800"
+                            role="alert"
+                            data-testid="peso-canastilla-imposible"
+                          >
+                            ✋ {{ error }}
+                          </p>
+                        }
                       </div>
 
                       <!-- Lista de canastillas agregadas -->
@@ -384,6 +401,13 @@ type PasoRecepcion =
               }
             </div>
           </div>
+
+          <!-- A prueba de errores: dato imposible (rojo) o raro (amarillo) -->
+          <app-revision-paso
+            [revision]="revision()"
+            [confirmado]="confirmados().has(pasoActual())"
+            (confirmar)="confirmarPaso()"
+          />
 
           <!-- Navegación -->
           <footer class="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-5 py-4 sm:px-7">
@@ -674,15 +698,38 @@ export class SaborizadoRecepcionPage {
   });
 
   protected readonly canastillaActualValor = computed(() => this.numero(this.canastillaActual()));
+  /** Una canastilla fuera de 0,5 a 30 kg no se deja agregar (poka-yoke). */
+  protected readonly revisionPesoActual = computed(() => revisarPesoCanastilla(this.canastillaActualValor()));
   protected readonly pesoCanastillaValido = computed(
-    () => this.canastillaActualValor() > 0,
+    () => this.canastillaActualValor() > 0 && !this.revisionPesoActual().error,
   );
+
+  // --- A prueba de errores: datos imposibles (rojo) o raros (amarillo) ---
+  /** Pasos en los que la persona confirmó «Sí, el dato está bien». */
+  protected readonly confirmados = signal<Set<string>>(new Set());
+  protected readonly revision = computed<Revision>(() => {
+    switch (this.pasoActual()) {
+      case 'cantidad_sabor':
+        return revisarSabor(this.numero(this.cantidadSabor()));
+      case 'canastillas':
+        return revisarCanastillas(this.canastillas());
+      default:
+        return {};
+    }
+  });
+
+  protected confirmarPaso(): void {
+    this.confirmados.update((s) => new Set(s).add(this.pasoActual()));
+  }
 
   protected readonly nombreSabor = computed(
     () => this.sabores().find((s) => s.id === this.saborId())?.nombre ?? '',
   );
 
   protected readonly pasoValido = computed(() => {
+    const revision = this.revision();
+    if (revision.error) return false;
+    if (revision.aviso && !this.confirmados().has(this.pasoActual())) return false;
     switch (this.pasoActual()) {
       case 'horario':
         return this.horaFutura() === null && this.duracionMin() > 0 && !this.duracionExcede();
@@ -754,14 +801,25 @@ export class SaborizadoRecepcionPage {
 
   protected agregarCanastilla(): void {
     const peso = this.canastillaActualValor();
-    if (peso > 0) {
+    if (peso > 0 && this.pesoCanastillaValido()) {
       this.canastillas.update((lista) => [...lista, peso]);
       this.canastillaActual.set('0');
+      // Cambió la lista: hay que volver a confirmar si queda un peso raro.
+      this.olvidarConfirmacion('canastillas');
     }
+  }
+
+  private olvidarConfirmacion(paso: string): void {
+    this.confirmados.update((s) => {
+      const copia = new Set(s);
+      copia.delete(paso);
+      return copia;
+    });
   }
 
   protected quitarCanastilla(indice: number): void {
     this.canastillas.update((lista) => lista.filter((_, i) => i !== indice));
+    this.olvidarConfirmacion('canastillas');
   }
 
   protected puedeEditar(usuarioId: number): boolean {
@@ -779,6 +837,8 @@ export class SaborizadoRecepcionPage {
     this.canastillas.set(recepcion.canastillas.map((c) => Number(c.peso_kg)));
     this.saborId.set(recepcion.sabor.id);
     this.cantidadSabor.set(String(Number(recepcion.cantidad_sabor_kg)));
+    // Lo guardado ya se confirmó al registrarlo; si se cambia, se pide otra vez.
+    this.confirmados.set(new Set(['canastillas', 'cantidad_sabor']));
     const inicio = new Date(recepcion.hora_inicio);
     const fin = new Date(recepcion.hora_fin);
     this.inicio.set(inicio);
@@ -795,6 +855,7 @@ export class SaborizadoRecepcionPage {
   }
 
   private restablecerFormulario(): void {
+    this.confirmados.set(new Set());
     this.canastillaActual.set('0');
     this.editandoId.set(null);
     this.indicePaso.set(0);

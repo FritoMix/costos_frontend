@@ -24,6 +24,8 @@ import { NotificacionesService } from '../../core/servicios/notificaciones.servi
 import { OrdenesService } from '../../core/servicios/ordenes.service';
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
+import { revisarCantidadOrden, revisarHoras, type Revision } from '../../core/poka-yoke';
+import { RevisionPasoComponent } from '../../ui/revision-paso.component';
 
 type ClavePaso =
   | 'linea'
@@ -60,7 +62,7 @@ type ClavePaso =
   selector: 'app-orden-asistente',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.inert]': 'enviando() ? "" : null' },
-  imports: [RouterLink, DecimalPipe, BotonComponent, CargandoComponent],
+  imports: [RouterLink, DecimalPipe, BotonComponent, CargandoComponent, RevisionPasoComponent],
   template: `
     <div class="mx-auto w-full max-w-xl">
       @if (cargando()) {
@@ -567,6 +569,13 @@ type ClavePaso =
             </div>
           </div>
 
+          <!-- A prueba de errores: dato imposible (rojo) o raro (amarillo) -->
+          <app-revision-paso
+            [revision]="revision()"
+            [confirmado]="confirmados().has(pasoActual())"
+            (confirmar)="confirmarPaso()"
+          />
+
           <!-- Navegación (dentro del panel) -->
           <footer class="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-5 py-4 sm:px-7">
             <app-boton
@@ -831,8 +840,28 @@ export class OrdenAsistentePage {
     () => this.turnos().find((t) => t.id === this.turnoId())?.nombre ?? '—',
   );
 
+  // --- A prueba de errores: datos imposibles (rojo) o raros (amarillo) ---
+  protected readonly confirmados = signal<Set<string>>(new Set());
+  protected readonly revision = computed<Revision>(() => {
+    switch (this.pasoActual()) {
+      case 'horas':
+        return revisarHoras(this.horas());
+      case 'cantidad':
+        return revisarCantidadOrden(this.cantidad(), this.unidad());
+      default:
+        return {};
+    }
+  });
+
+  protected confirmarPaso(): void {
+    this.confirmados.update((s) => new Set(s).add(this.pasoActual()));
+  }
+
   /** Si el paso actual tiene una selección válida para poder continuar. */
   protected readonly pasoValido = computed(() => {
+    const revision = this.revision();
+    if (revision.error) return false;
+    if (revision.aviso && !this.confirmados().has(this.pasoActual())) return false;
     switch (this.pasoActual()) {
       case 'linea':
         return this.lineaId() !== null;
