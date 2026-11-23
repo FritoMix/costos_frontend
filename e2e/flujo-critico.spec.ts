@@ -280,6 +280,10 @@ test.describe('Flujo crítico de planta', () => {
       // Crear una fórmula por la UI: regresión del botón que quedaba
       // deshabilitado al llenar el formulario (reactividad de signals).
       await page.goto('/formula-produccion');
+      const menu = page.getByRole('navigation', { name: 'Módulos' });
+      const formulas = menu.getByTestId('nav-formula-produccion');
+      await expect(formulas).toHaveAttribute('aria-current', 'page');
+      await expect(menu.locator('[aria-current="page"]')).toHaveCount(1);
       await page.getByTestId('nueva-formula').click();
       await expect(page.getByTestId('formula-papa-form')).toBeVisible();
       await page.getByTestId('formula-papa-nombre').fill('Fórmula UI E2E');
@@ -291,6 +295,8 @@ test.describe('Flujo crítico de planta', () => {
       await expect(page.getByTestId('formula-papa-nombre')).toHaveValue('Fórmula UI E2E');
       await page.getByTestId('formula-papa-guardar').click();
       await expect(page).toHaveURL(/\/formula-produccion\/formulas\/\d+/);
+      await expect(formulas).toHaveAttribute('aria-current', 'page');
+      await expect(menu.locator('[aria-current="page"]')).toHaveCount(1);
 
       // La URL cambia al empezar la animación: esperar a que salga el formulario
       // anterior evita seleccionar dos botones durante la transición de nueva a editar.
