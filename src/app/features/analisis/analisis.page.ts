@@ -1,7 +1,8 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, type Subscription } from 'rxjs';
 
 import type { Horno, ItemCatalogo, Producto, Turno } from '../../core/modelos/catalogos.model';
 import type { Usuario } from '../../core/modelos/identidad.model';
@@ -134,7 +135,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
           <!-- Barra de Acciones de Filtro -->
           <div class="flex flex-wrap items-center justify-end gap-4 pt-4 border-t border-slate-100">
             <div class="flex flex-wrap items-center gap-2">
-              <button type="button" class="kpi-boton" (click)="limpiar()">Limpiar Filtros</button>
+              <button type="button" class="kpi-boton" (click)="limpiar()" [disabled]="consultando()">Limpiar Filtros</button>
               <button type="button" class="kpi-boton kpi-boton-principal"
                 (click)="consultar()" [disabled]="consultando()">
                 {{ consultando() ? 'Consultando…' : 'Aplicar Filtros' }}
@@ -146,6 +147,8 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
 
       @if (cargando()) {
         <app-cargando texto="Calculando indicadores consolidados de planta…" />
+      } @else if (errorIndicadores()) {
+        <p role="alert" class="text-sm text-zinc-700">No se pudieron cargar los indicadores.</p>
       } @else if (indicadores(); as datos) {
         <!-- Sección 1: Volumen y Balance de Masa -->
         <div class="space-y-3">
@@ -236,7 +239,12 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
           </div>
         </div>
 
+      }
+
         <!-- Cuadro por Categoría -->
+        @if (errorCategorias()) {
+          <p role="alert" class="text-sm text-zinc-700">No se pudo cargar el desglose por categoría.</p>
+        }
         @if (porCategoria().length > 0) {
           <div class="space-y-4">
             <div>
@@ -283,7 +291,14 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
           subtitulo="Registro cronológico y parámetros operativos individuales por bache procesado"
           [sinRelleno]="true"
         >
-          @if (baches().length === 0) {
+          @if (cargandoBaches()) {
+            <app-cargando texto="Cargando tandas…" />
+          } @else if (errorBaches()) {
+            <div class="flex items-center gap-3 p-5">
+              <p role="alert" class="text-sm text-zinc-700">No se pudieron cargar las tandas.</p>
+              <button type="button" class="kpi-boton" (click)="cargarBaches(paginaBaches())">Reintentar</button>
+            </div>
+          } @else if (baches().length === 0) {
             <div class="px-6 py-12 text-center">
               <svg class="mx-auto h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -360,8 +375,16 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
               </table>
             </div>
           }
+          @if (paginaBaches() > 1 || haySiguienteBaches()) {
+            <nav aria-label="Paginación de tandas" class="flex flex-wrap items-center justify-end gap-2 border-t border-zinc-200 p-3">
+              <button type="button" class="kpi-boton" [disabled]="cargandoBaches() || paginaBaches() === 1"
+                (click)="cargarBaches(paginaBaches() - 1)">Anterior</button>
+              <span class="text-sm text-zinc-700">Página {{ paginaBaches() }}</span>
+              <button type="button" class="kpi-boton" [disabled]="cargandoBaches() || !haySiguienteBaches()"
+                (click)="cargarBaches(paginaBaches() + 1)">Siguiente</button>
+            </nav>
+          }
         </app-tarjeta>
-      }
     </div>
   `,
   styles: `
@@ -385,6 +408,10 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
   `,
 })
 export class AnalisisPage {
+  private readonly destroyRef = inject(DestroyRef);
+  private cargaCategorias?: Subscription;
+  private cargaBaches?: Subscription;
+  private filtrosAplicados: FiltrosAnalisis = {};
   private readonly fb = inject(FormBuilder);
   private readonly analitica = inject(AnaliticaService);
   private readonly catalogos = inject(CatalogosService);
@@ -392,6 +419,12 @@ export class AnalisisPage {
 
   protected readonly cargando = signal(true);
   protected readonly consultando = signal(false);
+  protected readonly errorIndicadores = signal(false);
+  protected readonly errorCategorias = signal(false);
+  protected readonly errorBaches = signal(false);
+  protected readonly cargandoBaches = signal(false);
+  protected readonly paginaBaches = signal(1);
+  protected readonly haySiguienteBaches = signal(false);
 
   protected readonly indicadores = signal<Indicadores | null>(null);
   protected readonly porCategoria = signal<IndicadoresCategoria[]>([]);
@@ -423,7 +456,7 @@ export class AnalisisPage {
       hornos: this.catalogos.listarHornos(),
       turnos: this.catalogos.listarTurnos(),
       supervisores: this.analitica.supervisores(),
-    }).subscribe({
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (datos) => {
         this.categorias.set(datos.categorias);
         this.sabores.set(datos.sabores);
@@ -442,23 +475,55 @@ export class AnalisisPage {
   }
 
   protected consultar(): void {
-    const filtros = this.filtros();
+    if (this.consultando()) return;
+    this.filtrosAplicados = this.filtros();
     this.consultando.set(true);
-    forkJoin({
-      indicadores: this.analitica.indicadores(filtros),
-      porCategoria: this.analitica.porCategoria(filtros),
-      baches: this.analitica.baches(filtros),
-    }).subscribe({
-      next: ({ indicadores, porCategoria, baches }) => {
-        this.indicadores.set(indicadores);
-        this.porCategoria.set(porCategoria);
-        this.baches.set(baches);
+    this.cargando.set(true);
+    this.errorIndicadores.set(false);
+    this.errorCategorias.set(false);
+    this.porCategoria.set([]);
+    this.cargaCategorias?.unsubscribe();
+
+    this.analitica.indicadores(this.filtrosAplicados).pipe(
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: (datos) => {
+        this.indicadores.set(datos);
         this.cargando.set(false);
         this.consultando.set(false);
       },
       error: () => {
+        this.errorIndicadores.set(true);
         this.cargando.set(false);
         this.consultando.set(false);
+      },
+    });
+    this.cargaCategorias = this.analitica.porCategoria(this.filtrosAplicados).pipe(
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: (datos) => this.porCategoria.set(datos),
+      error: () => this.errorCategorias.set(true),
+    });
+    this.cargarBaches(1);
+  }
+
+  protected cargarBaches(pagina: number): void {
+    this.cargaBaches?.unsubscribe();
+    this.paginaBaches.set(pagina);
+    this.haySiguienteBaches.set(false);
+    this.cargandoBaches.set(true);
+    this.errorBaches.set(false);
+    this.cargaBaches = this.analitica.paginaBaches(this.filtrosAplicados, pagina).pipe(
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: ({ items, hay_siguiente }) => {
+        this.baches.set(items);
+        this.haySiguienteBaches.set(hay_siguiente);
+        this.cargandoBaches.set(false);
+      },
+      error: () => {
+        this.errorBaches.set(true);
+        this.cargandoBaches.set(false);
       },
     });
   }
