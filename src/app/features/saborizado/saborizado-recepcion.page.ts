@@ -276,11 +276,14 @@ import { RevisionPasoComponent } from '../../ui/revision-paso.component';
                         </app-boton>
                         @if (revisionPesoActual().error; as error) {
                           <p
-                            class="mt-3 rounded-2xl border-2 border-rose-300 bg-rose-50 px-4 py-3 text-center text-sm font-semibold text-rose-800"
+                            class="anim-deslizar mt-3 flex items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50/95 px-4 py-3 text-center text-sm font-semibold text-rose-900"
                             role="alert"
                             data-testid="peso-canastilla-imposible"
                           >
-                            ✋ {{ error }}
+                            <svg class="h-4.5 w-4.5 shrink-0 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                            </svg>
+                            {{ error }}
                           </p>
                         }
                       </div>
