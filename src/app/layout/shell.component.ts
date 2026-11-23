@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, Injector, afterNextRender, computed, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, PRIMARY_OUTLET, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { filter, map } from 'rxjs';
 
 import { animacionRuta } from '../core/animaciones/ruta.animacion';
 import { environment } from '../../environments/environment';
@@ -26,7 +28,6 @@ interface OpcionMenu {
   imports: [
     RouterOutlet,
     RouterLink,
-    RouterLinkActive,
     AvisosComponent,
     AvisoGrandeComponent,
     CampanaAvisosComponent,
@@ -52,9 +53,8 @@ interface OpcionMenu {
             <a
               [routerLink]="opcion.ruta"
               [attr.data-testid]="'nav' + opcion.ruta.replace('/', '-')"
-              routerLinkActive="active-link"
-              ariaCurrentWhenActive="page"
-              [routerLinkActiveOptions]="{ exact: opcion.ruta === '/inicio' }"
+              [class.active-link]="moduloActivo() === opcion.ruta"
+              [attr.aria-current]="moduloActivo() === opcion.ruta ? 'page' : null"
               (click)="menuAbierto.set(false)"
               class="nav-link flex min-h-11 items-center justify-center rounded-lg px-3 text-center text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-marca-700 xl:whitespace-nowrap xl:text-xs"
             >
@@ -116,10 +116,23 @@ interface OpcionMenu {
 })
 export class ShellComponent {
   protected readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly injector = inject(Injector);
   private readonly avisosPlanta = inject(NotificacionesPlantaService);
   protected readonly appNombre = environment.appNombre;
   protected readonly menuAbierto = signal(false);
+  private readonly urlActual = toSignal(
+    this.router.events.pipe(
+      filter((evento) => evento instanceof NavigationEnd),
+      map((evento) => evento.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  protected readonly moduloActivo = computed(() => {
+    const segmentos = this.router.parseUrl(this.urlActual()).root.children[PRIMARY_OUTLET]?.segments;
+    return segmentos?.length ? `/${segmentos[0].path}` : null;
+  });
 
   constructor() {
     this.avisosPlanta.iniciar();
