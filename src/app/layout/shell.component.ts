@@ -7,6 +7,7 @@ import type { CodigoRol } from '../core/modelos/identidad.model';
 import { ETIQUETAS_ROL } from '../core/modelos/identidad.model';
 import { AuthService } from '../core/servicios/auth.service';
 import { AvisosComponent } from '../ui/avisos.component';
+import { AvisoGrandeComponent } from '../ui/aviso-grande.component';
 import { CampanaAvisosComponent } from '../ui/campana-avisos.component';
 import { NotificacionesPlantaService } from '../core/servicios/notificaciones-planta.service';
 
@@ -22,7 +23,14 @@ interface OpcionMenu {
 @Component({
   selector: 'app-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, AvisosComponent, CampanaAvisosComponent],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    AvisosComponent,
+    AvisoGrandeComponent,
+    CampanaAvisosComponent,
+  ],
   animations: [animacionRuta],
   template: `
     <div class="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800">
@@ -87,6 +95,7 @@ interface OpcionMenu {
     </div>
 
     <app-avisos />
+    <app-aviso-grande />
   `,
   styles: `
     .nav-link.active-link {

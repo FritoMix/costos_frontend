@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import type { Horno, ItemCatalogo, Producto, Turno } from '../../core/modelos/catalogos.model';
+import { productoSirvePara } from '../../core/modelos/catalogos.model';
 import type { Formula } from '../../core/modelos/formula.model';
 import type { OrdenGuardar } from '../../core/modelos/produccion.model';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
@@ -265,9 +266,12 @@ export class OrdenFormularioPage {
   private readonly valores = signal(this.formulario.getRawValue());
 
   protected readonly productosDeCategoria = computed(() => {
-    const categoriaId = this.valores().categoria_id;
+    const { categoria_id: categoriaId, destino } = this.valores();
     return categoriaId
-      ? this.productos().filter((producto) => producto.categoria.id === categoriaId)
+      ? this.productos().filter(
+          (producto) =>
+            producto.categoria.id === categoriaId && productoSirvePara(producto, destino),
+        )
       : [];
   });
 

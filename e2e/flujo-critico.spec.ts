@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
-import { test, expect, type Page, type Locator, type TestInfo } from '@playwright/test';
+import { type Page, type Locator, type TestInfo } from '@playwright/test';
+import { test, expect } from './avisos';
 import { readFile } from 'node:fs/promises';
 
 /**
