@@ -51,6 +51,12 @@ export interface IndicadoresCategoria {
   sabores_usados: Desglose[];
 }
 
+/** Bultos de un tipo de papa (A, B, C, D...) de la fórmula de una tanda. */
+export interface TipoPapaTanda {
+  tipo: string;
+  bultos: number;
+}
+
 export interface FilaBache {
   registro_id: number;
   numero_orden: string;
@@ -73,4 +79,11 @@ export interface FilaBache {
   aceite_por_bulto: number | null;
   rendimiento_porcentaje: number | null;
   porcentaje_absorcion_aceite: number | null;
+  /** Vacío si la tanda no usó fórmula. */
+  tipos_papa?: TipoPapaTanda[];
+  /** Kg crudos por bulto × rendimiento. */
+  kg_frito_por_bulto?: number | null;
+  kg_sabor_orden?: number;
+  /** Kg de sabor gastado / kg freídos × 100. */
+  porcentaje_sabor?: number | null;
 }
