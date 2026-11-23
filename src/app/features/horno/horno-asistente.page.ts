@@ -36,6 +36,18 @@ import { OrdenesService } from '../../core/servicios/ordenes.service';
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 import { TecladoNumericoComponent } from '../../ui/teclado-numerico.component';
+import {
+  revisarBajaAceite,
+  revisarBultos,
+  revisarDesperdicio,
+  revisarKgMateriaPrima,
+  revisarNivelAceite,
+  revisarOperarios,
+  revisarTemperatura,
+  type Revision,
+} from '../../core/poka-yoke';
+import { RevisionPasoComponent } from '../../ui/revision-paso.component';
+import { resumirMezcla } from './asistente/proyeccion-mezcla';
 
 /**
  * Registro de una tanda de fritura, paso a paso (mismo estilo del asistente
@@ -65,6 +77,7 @@ import { TecladoNumericoComponent } from '../../ui/teclado-numerico.component';
     BotonComponent,
     CargandoComponent,
     TecladoNumericoComponent,
+    RevisionPasoComponent,
   ],
   templateUrl: './horno-asistente.page.html',
 })
@@ -274,9 +287,56 @@ export class HornoAsistentePage {
     enKg: this.enKg(),
     kgMateria: this.kgMateria(),
   }));
-  protected readonly pasoValido = computed(() =>
-    pasoTandaValido(this.pasoActual(), this.datosTanda(), this.capacidadMezcla()),
-  );
+  // --- A prueba de errores: datos imposibles (rojo) o raros (amarillo) ---
+  /** Pasos en los que el operario confirmó «Sí, el dato está bien». */
+  protected readonly confirmados = signal<Set<string>>(new Set());
+
+  /** Kg crudos de la tanda según lo anotado, para comparar el desperdicio. */
+  private readonly kgCrudosTanda = computed(() => {
+    if (this.enKg()) return this.numero(this.kgMateria());
+    if (this.hayFormula()) return resumirMezcla(this.mezcla()).kgCrudos;
+    return this.kgCrudos();
+  });
+
+  protected readonly revision = computed<Revision>(() => {
+    switch (this.pasoActual()) {
+      case 'temperatura':
+        return revisarTemperatura(this.numero(this.temperatura()));
+      case 'personal_zona_humeda':
+        return revisarOperarios(this.operariosZonaHumeda());
+      case 'personal_seleccion':
+        return revisarOperarios(this.operariosSeleccion());
+      case 'aceite_inicial':
+        return revisarNivelAceite(this.numero(this.aceiteInicial()));
+      case 'aceite_final': {
+        const nivel = revisarNivelAceite(this.numero(this.aceiteFinal()));
+        return nivel.error ? nivel : revisarBajaAceite(this.consumoCm());
+      }
+      case 'desperdicio':
+        return this.hayDesperdicio()
+          ? revisarDesperdicio(this.numero(this.cantidadDesperdicio()), this.kgCrudosTanda())
+          : {};
+      case 'mezcla':
+        return revisarBultos(resumirMezcla(this.mezcla()).bultos, this.hayParada() === true);
+      case 'bultos':
+        return revisarBultos(this.numero(this.bultos()), this.hayParada() === true);
+      case 'kg_materia':
+        return revisarKgMateriaPrima(this.numero(this.kgMateria()));
+      default:
+        return {};
+    }
+  });
+
+  protected confirmarPaso(): void {
+    this.confirmados.update((s) => new Set(s).add(this.pasoActual()));
+  }
+
+  protected readonly pasoValido = computed(() => {
+    const revision = this.revision();
+    if (revision.error) return false;
+    if (revision.aviso && !this.confirmados().has(this.pasoActual())) return false;
+    return pasoTandaValido(this.pasoActual(), this.datosTanda(), this.capacidadMezcla());
+  });
 
   private readonly proteccion = seguirCambios(
     () => [

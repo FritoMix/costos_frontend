@@ -546,6 +546,13 @@
           </div>
         </div>
 
+        <!-- A prueba de errores: dato imposible (rojo) o raro (amarillo) -->
+        <app-revision-paso
+          [revision]="revision()"
+          [confirmado]="confirmados().has(pasoActual())"
+          (confirmar)="confirmarPaso()"
+        />
+
         <!-- Navegación -->
         <footer
           class="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-5 py-4 sm:px-7"
