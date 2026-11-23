@@ -14,7 +14,6 @@ import type {
 import { AnaliticaService } from '../../core/servicios/analitica.service';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
-import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 import { GraficaBarrasComponent } from '../../ui/grafica-barras.component';
 import { IndicadorComponent } from '../../ui/indicador.component';
@@ -32,7 +31,6 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
     DatePipe,
     DecimalPipe,
     TarjetaComponent,
-    BotonComponent,
     CargandoComponent,
     IndicadorComponent,
     GraficaBarrasComponent,
@@ -42,10 +40,6 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
       <!-- Encabezado Principal Espacioso -->
       <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
         <div>
-          <div class="flex items-center gap-2">
-            <span class="h-2 w-2 rounded-full bg-marca-500"></span>
-            <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Reportes & Eficiencia</span>
-          </div>
           <h1
             class="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900"
             data-testid="analisis-titulo"
@@ -56,24 +50,18 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
             Indicadores de rendimiento, balance de masa, absorción de aceite y mermas calculados sobre datos consolidados de planta.
           </p>
         </div>
-        <div class="flex items-center gap-3">
-          <app-boton variante="secundario" (click)="exportar('csv')" testId="exportar-csv">
-            <span class="flex items-center gap-2">
-              <svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-              Descargar CSV
-            </span>
-          </app-boton>
-          <app-boton variante="acento" (click)="exportar('xlsx')" testId="exportar-xlsx">
-            <span class="flex items-center gap-2">
-              <svg class="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-              Excel (.xlsx)
-            </span>
-          </app-boton>
+        <div class="flex shrink-0 flex-wrap items-center gap-2">
+          <button type="button" class="kpi-boton" (click)="exportar('csv')" data-testid="exportar-csv">
+            Descargar CSV
+          </button>
+          <button type="button" class="kpi-boton" (click)="exportar('xlsx')" data-testid="exportar-xlsx">
+            Excel (.xlsx)
+          </button>
         </div>
       </header>
 
       <!-- Filtros de Consulta con Espaciado Cómodo -->
-      <app-tarjeta
+      <app-tarjeta [minimalista]="true"
         titulo="Filtros de Búsqueda y Segmentación"
         subtitulo="Personaliza el período y las líneas operativas para calcular los indicadores"
       >
@@ -81,15 +69,15 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
           <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             <div>
               <label class="etiqueta" for="desde">Fecha Desde</label>
-              <input id="desde" type="date" class="campo" formControlName="fecha_desde" />
+              <input id="desde" type="date" class="campo kpi-campo" formControlName="fecha_desde" />
             </div>
             <div>
               <label class="etiqueta" for="hasta">Fecha Hasta</label>
-              <input id="hasta" type="date" class="campo" formControlName="fecha_hasta" />
+              <input id="hasta" type="date" class="campo kpi-campo" formControlName="fecha_hasta" />
             </div>
             <div>
               <label class="etiqueta" for="categoria">Categoría</label>
-              <select id="categoria" class="campo" formControlName="categoria_id">
+              <select id="categoria" class="campo kpi-campo" formControlName="categoria_id">
                 <option [ngValue]="null">Todas las categorías</option>
                 @for (categoria of categorias(); track categoria.id) {
                   <option [ngValue]="categoria.id">{{ categoria.nombre }}</option>
@@ -98,7 +86,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
             </div>
             <div>
               <label class="etiqueta" for="producto">Producto</label>
-              <select id="producto" class="campo" formControlName="producto_id">
+              <select id="producto" class="campo kpi-campo" formControlName="producto_id">
                 <option [ngValue]="null">Todos los productos</option>
                 @for (producto of productos(); track producto.id) {
                   <option [ngValue]="producto.id">{{ producto.nombre_comercial }}</option>
@@ -107,7 +95,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
             </div>
             <div>
               <label class="etiqueta" for="horno">Horno</label>
-              <select id="horno" class="campo" formControlName="horno_id">
+              <select id="horno" class="campo kpi-campo" formControlName="horno_id">
                 <option [ngValue]="null">Todos los hornos</option>
                 @for (horno of hornos(); track horno.id) {
                   <option [ngValue]="horno.id">{{ horno.nombre }}</option>
@@ -116,7 +104,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
             </div>
             <div>
               <label class="etiqueta" for="turno">Turno</label>
-              <select id="turno" class="campo" formControlName="turno_id">
+              <select id="turno" class="campo kpi-campo" formControlName="turno_id">
                 <option [ngValue]="null">Todos los turnos</option>
                 @for (turno of turnos(); track turno.id) {
                   <option [ngValue]="turno.id">{{ turno.nombre }}</option>
@@ -125,7 +113,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
             </div>
             <div>
               <label class="etiqueta" for="sabor">Sabor</label>
-              <select id="sabor" class="campo" formControlName="sabor_id">
+              <select id="sabor" class="campo kpi-campo" formControlName="sabor_id">
                 <option [ngValue]="null">Todos los sabores</option>
                 @for (sabor of sabores(); track sabor.id) {
                   <option [ngValue]="sabor.id">{{ sabor.nombre }}</option>
@@ -134,7 +122,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
             </div>
             <div>
               <label class="etiqueta" for="supervisor">Supervisor</label>
-              <select id="supervisor" class="campo" formControlName="supervisor_id">
+              <select id="supervisor" class="campo kpi-campo" formControlName="supervisor_id">
                 <option [ngValue]="null">Todos los supervisores</option>
                 @for (supervisor of supervisores(); track supervisor.id) {
                   <option [ngValue]="supervisor.id">{{ supervisor.nombre_completo }}</option>
@@ -144,17 +132,13 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
           </div>
 
           <!-- Barra de Acciones de Filtro -->
-          <div class="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-100">
-            <p class="text-xs text-slate-500 font-medium">
-              Aplica filtros para acotar el rango de tandas analizadas.
-            </p>
-            <div class="flex items-center gap-3">
-              <app-boton variante="secundario" (click)="limpiar()">
-                Limpiar Filtros
-              </app-boton>
-              <app-boton (click)="consultar()" [cargando]="consultando()">
-                Aplicar Filtros
-              </app-boton>
+          <div class="flex flex-wrap items-center justify-end gap-4 pt-4 border-t border-slate-100">
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" class="kpi-boton" (click)="limpiar()">Limpiar Filtros</button>
+              <button type="button" class="kpi-boton kpi-boton-principal"
+                (click)="consultar()" [disabled]="consultando()">
+                {{ consultando() ? 'Consultando…' : 'Aplicar Filtros' }}
+              </button>
             </div>
           </div>
         </form>
@@ -165,36 +149,32 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
       } @else if (indicadores(); as datos) {
         <!-- Sección 1: Volumen y Balance de Masa -->
         <div class="space-y-3">
-          <div class="flex items-center justify-between">
-            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-600">Balance de Masa & Producción</h2>
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 class="text-base font-semibold text-zinc-900">Balance de Masa & Producción</h2>
             <span class="text-xs text-slate-500 font-medium">Totales del período seleccionado</span>
           </div>
           <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <app-indicador
+            <app-indicador [minimalista]="true"
               nombre="Órdenes Procesadas"
               [valor]="datos.numero_ordenes"
-              tono="azul"
               subtexto="Total de órdenes con registro"
             />
-            <app-indicador
+            <app-indicador [minimalista]="true"
               nombre="Materia Prima (Cruda)"
               [valor]="datos.kg_crudos"
               unidad="kg"
-              tono="ambar"
               subtexto="Peso neto de papa ingresada"
             />
-            <app-indicador
+            <app-indicador [minimalista]="true"
               nombre="Producto Terminado (Frita)"
               [valor]="datos.kg_papa_frita"
               unidad="kg"
-              tono="azul"
               subtexto="Papa frita saborizada obtenida"
             />
-            <app-indicador
+            <app-indicador [minimalista]="true"
               nombre="Desperdicio Total"
               [valor]="datos.kg_desperdicio"
               unidad="kg"
-              tono="ambar"
               subtexto="Merma total registrada en planta"
             />
           </div>
@@ -202,39 +182,35 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
 
         <!-- Sección 2: Eficiencia & Rendimiento -->
         <div class="space-y-3">
-          <div class="flex items-center justify-between">
-            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-600">Eficiencia Operativa & Consumos</h2>
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 class="text-base font-semibold text-zinc-900">Eficiencia Operativa & Consumos</h2>
             <span class="text-xs text-slate-500 font-medium">Indicadores clave de proceso</span>
           </div>
           <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <app-indicador
+            <app-indicador [minimalista]="true"
               nombre="Rendimiento Global"
               [valor]="datos.rendimiento_porcentaje"
               unidad="%"
-              tono="azul"
               faltante="Faltan datos de horno/saborizado"
               subtexto="Kg frita / Kg cruda procesada"
             />
-            <app-indicador
+            <app-indicador [minimalista]="true"
               nombre="Absorción de Aceite"
               [valor]="datos.porcentaje_absorcion_aceite"
               unidad="%"
-              tono="ambar"
               faltante="Falta densidad o papa frita"
               subtexto="Porcentaje de aceite en producto"
             />
-            <app-indicador
+            <app-indicador [minimalista]="true"
               nombre="Aceite Consumido"
               [valor]="datos.kg_aceite"
               unidad="kg"
-              tono="azul"
               subtexto="Aceite total utilizado en fritura"
             />
-            <app-indicador
+            <app-indicador [minimalista]="true"
               nombre="Aceite por Bulto"
               [valor]="datos.aceite_por_bulto"
               unidad="kg/bto"
-              tono="ambar"
               faltante="Faltan bultos o densidad"
               subtexto="Consumo promedio por bulto crudo"
             />
@@ -243,19 +219,19 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
 
         <!-- Gráficas de Distribución Espaciosas -->
         <div class="space-y-4">
-          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-600">Distribución Operativa</h2>
+          <h2 class="text-base font-semibold text-zinc-900">Distribución Operativa</h2>
           <div class="grid gap-6 lg:grid-cols-2">
-            <app-tarjeta titulo="Producción por Horno" subtitulo="Distribución de kilogramos procesados en cada equipo">
-              <app-grafica-barras [datos]="datos.por_horno" />
+            <app-tarjeta [minimalista]="true" titulo="Producción por Horno" subtitulo="Distribución de kilogramos procesados en cada equipo">
+              <app-grafica-barras [minimalista]="true" [datos]="datos.por_horno" />
             </app-tarjeta>
-            <app-tarjeta titulo="Producción por Turno" subtitulo="Volumen generado por turno de trabajo">
-              <app-grafica-barras [datos]="datos.por_turno" />
+            <app-tarjeta [minimalista]="true" titulo="Producción por Turno" subtitulo="Volumen generado por turno de trabajo">
+              <app-grafica-barras [minimalista]="true" [datos]="datos.por_turno" />
             </app-tarjeta>
-            <app-tarjeta titulo="Top Productos Elaborados" subtitulo="Productos con mayor volumen de producción">
-              <app-grafica-barras [datos]="datos.por_producto" />
+            <app-tarjeta [minimalista]="true" titulo="Top Productos Elaborados" subtitulo="Productos con mayor volumen de producción">
+              <app-grafica-barras [minimalista]="true" [datos]="datos.por_producto" />
             </app-tarjeta>
-            <app-tarjeta titulo="Desperdicio por Causa" subtitulo="Principales motivos de descarte y merma">
-              <app-grafica-barras [datos]="datos.por_tipo_desperdicio" />
+            <app-tarjeta [minimalista]="true" titulo="Desperdicio por Causa" subtitulo="Principales motivos de descarte y merma">
+              <app-grafica-barras [minimalista]="true" [datos]="datos.por_tipo_desperdicio" />
             </app-tarjeta>
           </div>
         </div>
@@ -269,32 +245,30 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
             </div>
             <div class="grid gap-6 lg:grid-cols-2">
               @for (categoria of porCategoria(); track categoria.categoria_id) {
-                <app-tarjeta
+                <app-tarjeta [minimalista]="true"
                   [titulo]="categoria.categoria_nombre"
                   [subtitulo]="categoria.numero_ordenes + ' orden(es) registrada(s)'"
                 >
                   <div class="grid grid-cols-2 gap-4">
-                    <app-indicador nombre="Cruda" [valor]="categoria.kg_crudos" unidad="kg" tono="azul" />
-                    <app-indicador nombre="Frita" [valor]="categoria.kg_papa_frita" unidad="kg" tono="ambar" />
-                    <app-indicador
+                    <app-indicador [minimalista]="true" nombre="Cruda" [valor]="categoria.kg_crudos" unidad="kg" />
+                    <app-indicador [minimalista]="true" nombre="Frita" [valor]="categoria.kg_papa_frita" unidad="kg" />
+                    <app-indicador [minimalista]="true"
                       nombre="Rendimiento"
                       [valor]="categoria.rendimiento_porcentaje"
                       unidad="%"
-                      tono="azul"
                       faltante="Sin datos"
                     />
-                    <app-indicador
+                    <app-indicador [minimalista]="true"
                       nombre="Absorción"
                       [valor]="categoria.porcentaje_absorcion_aceite"
                       unidad="%"
-                      tono="ambar"
                       faltante="Sin datos"
                     />
                   </div>
                   @if (categoria.sabores_usados.length > 0) {
                     <div class="mt-6 border-t border-slate-100 pt-5">
                       <p class="mb-3 text-xs font-bold text-slate-700 uppercase tracking-wider">Sabores Aplicados</p>
-                      <app-grafica-barras [datos]="categoria.sabores_usados" />
+                      <app-grafica-barras [minimalista]="true" [datos]="categoria.sabores_usados" />
                     </div>
                   }
                 </app-tarjeta>
@@ -304,7 +278,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
         }
 
         <!-- Detalle por tanda de horno -->
-        <app-tarjeta
+        <app-tarjeta [minimalista]="true"
           titulo="Detalle de Tandas de Horno"
           subtitulo="Registro cronológico y parámetros operativos individuales por bache procesado"
           [sinRelleno]="true"
@@ -389,6 +363,25 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
         </app-tarjeta>
       }
     </div>
+  `,
+  styles: `
+    .kpi-boton {
+      min-height: 44px;
+      padding: .5rem .875rem;
+      border: 1px solid #d4d4d8;
+      border-radius: .5rem;
+      background: white;
+      color: #27272a;
+      font-size: .875rem;
+      font-weight: 600;
+    }
+    .kpi-boton:hover { background: #f4f4f5; }
+    .kpi-boton-principal { background: #27272a; color: white; border-color: #27272a; }
+    .kpi-boton-principal:hover { background: #3f3f46; }
+    .kpi-boton:disabled { opacity: .6; }
+    .kpi-boton:focus-visible { outline: 2px solid #52525b; outline-offset: 2px; }
+    .kpi-campo { border-color: #d4d4d8; background: white; }
+    .tabla thead th { background: #f4f4f5; color: #3f3f46; border-color: #e4e4e7; }
   `,
 })
 export class AnalisisPage {

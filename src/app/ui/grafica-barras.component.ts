@@ -61,7 +61,9 @@ export interface BarraDato {
                 [class]="colorBarra(dato)"
                 [style.width.%]="anchoBarra(dato)"
               >
-                <div class="absolute inset-0 anim-shimmer"></div>
+                @if (!minimalista()) {
+                  <div class="absolute inset-0 anim-shimmer"></div>
+                }
               </div>
             </div>
 
@@ -87,6 +89,7 @@ export interface BarraDato {
 export class GraficaBarrasComponent {
   readonly datos = input.required<BarraDato[]>();
   readonly unidad = input('kg');
+  readonly minimalista = input(false);
 
   private readonly maximo = computed(() =>
     this.datos().reduce((mayor, dato) => Math.max(mayor, Number(dato.valor)), 0),
@@ -126,7 +129,7 @@ export class GraficaBarrasComponent {
         : 'bg-gradient-to-r from-red-400 via-rose-500 to-red-600';
     }
     // Sin meta: barra neutra (gris azulado)
-    return 'bg-gradient-to-r from-slate-400 via-slate-500 to-slate-600';
+    return this.minimalista() ? 'bg-zinc-500' : 'bg-gradient-to-r from-slate-400 via-slate-500 to-slate-600';
   }
 }
 
