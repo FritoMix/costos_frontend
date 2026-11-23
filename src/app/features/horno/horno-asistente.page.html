@@ -263,6 +263,11 @@
               }
 
               <!-- 3. Bultos -->
+              @case ('kg_materia') {
+                <div class="anim-entrada">
+                  <app-teclado-numerico [(valor)]="kgMateria" [unidad]="'kilos de ' + materia()" />
+                </div>
+              }
               @case ('bultos') {
                 <div class="anim-entrada">
                   @if (tecladoBultosAbierto()) {

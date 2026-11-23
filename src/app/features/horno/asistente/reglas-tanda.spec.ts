@@ -273,3 +273,35 @@ describe('Solicitud de una tanda de horno', () => {
     expect(sinCantidad.cantidad_desperdicio_kg).toBeNull();
   });
 });
+
+describe('Tanda de las líneas que no son papa (V21)', () => {
+  it('pide kilos de materia prima en vez de papa y bultos', () => {
+    const pasos = pasosDeTanda(false, true);
+    expect(pasos).toContain('kg_materia');
+    expect(pasos).not.toContain('bultos');
+    expect(pasos).not.toContain('referencia_papa');
+    expect(pasos).not.toContain('mezcla');
+    expect(pasos.at(-1)).toBe('resumen');
+  });
+
+  it('valida que los kilos sean mayores que cero', () => {
+    expect(pasoTandaValido('kg_materia', datos({ enKg: true, kgMateria: '0' }), 50)).toBeFalse();
+    expect(pasoTandaValido('kg_materia', datos({ enKg: true, kgMateria: '420.5' }), 50)).toBeTrue();
+  });
+
+  it('envía kg_materia_prima sin referencias ni bultos de papa', () => {
+    const cuerpo = construirRegistroHorno(
+      datos({ enKg: true, kgMateria: '420.5', conFormula: false }),
+      { inicio: '08:00', fin: '09:00' },
+    );
+    expect(cuerpo.kg_materia_prima).toBe(420.5);
+    expect(cuerpo.referencias).toEqual([]);
+    expect(cuerpo.referencia_papa_id).toBeUndefined();
+    expect(cuerpo.cantidad_bultos).toBeUndefined();
+  });
+
+  it('una tanda de papa no lleva kg_materia_prima', () => {
+    const cuerpo = construirRegistroHorno(datos(), { inicio: '08:00', fin: '09:00' });
+    expect('kg_materia_prima' in cuerpo).toBeFalse();
+  });
+});

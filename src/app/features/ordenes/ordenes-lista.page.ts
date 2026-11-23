@@ -5,6 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 
 import type { EstadoOrden, Orden } from '../../core/modelos/produccion.model';
+import { UNIDADES_DE_CONTEO } from '../../core/modelos/produccion.model';
 import { AuthService } from '../../core/servicios/auth.service';
 import { OrdenesService } from '../../core/servicios/ordenes.service';
 import { BotonComponent } from '../../ui/boton.component';
@@ -125,9 +126,18 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                       </span>
                     </td>
                     <td class="whitespace-nowrap tabular-nums">
-                      <div class="font-mono font-bold text-slate-900">
-                        {{ orden.cantidad_programada | number: '1.0-2' }} <span class="text-xs font-semibold text-slate-500 font-sans">kg</span>
-                      </div>
+                      @if (sinKg(orden)) {
+                        <div class="font-mono font-bold text-slate-900">{{ orden.meta_texto }}</div>
+                      } @else {
+                        <div class="font-mono font-bold text-slate-900">
+                          {{ orden.cantidad_programada | number: '1.0-2' }} <span class="text-xs font-semibold text-slate-500 font-sans">kg</span>
+                        </div>
+                      }
+                      @if (orden.linea && orden.linea.codigo !== 'papa') {
+                        <div class="text-[11px] font-medium text-slate-500">
+                          {{ orden.linea.nombre }}@if (orden.variedad) { · {{ orden.variedad.nombre }} }
+                        </div>
+                      }
                       @if (orden.unidad_solicitada === 'canastillas') {
                         <div class="text-[11px] font-medium text-slate-500">
                           {{ orden.cantidad_canastillas_solicitadas | number: '1.0-2' }} canastillas
@@ -190,6 +200,11 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
   `,
 })
 export class OrdenesListaPage {
+  /** Órdenes en mojes, baches o bultos: su meta no va en kg (V21). */
+  protected sinKg(orden: { unidad_solicitada: string }): boolean {
+    return (UNIDADES_DE_CONTEO as string[]).includes(orden.unidad_solicitada);
+  }
+
   private readonly servicio = inject(OrdenesService);
   protected readonly auth = inject(AuthService);
 

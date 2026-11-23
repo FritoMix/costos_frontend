@@ -7,6 +7,7 @@ import type { Subscription } from 'rxjs';
 import { forkJoin } from 'rxjs';
 
 import type { Orden } from '../../core/modelos/produccion.model';
+import { UNIDADES_DE_CONTEO } from '../../core/modelos/produccion.model';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
 import { OrdenesService } from '../../core/servicios/ordenes.service';
 import { BotonComponent } from '../../ui/boton.component';
@@ -76,7 +77,9 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                     <span class="ml-1 font-mono text-xs font-bold text-slate-500">#{{ orden.numero_orden }}</span>
                   </p>
                   <p class="mt-0.5 text-xs font-medium text-slate-500">
-                    {{ orden.horno.nombre }} · {{ orden.cantidad_programada | number: '1.0-2' }} kg
+                    {{ orden.horno.nombre }} ·
+                    @if (sinKg(orden)) { {{ orden.meta_texto }} } @else { {{ orden.cantidad_programada | number: '1.0-2' }} kg }
+                    @if (orden.variedad) { · {{ orden.variedad.nombre }} }
                     @if (orden.horas_produccion) {
                       · {{ orden.horas_produccion }} {{ orden.horas_produccion === 1 ? 'hora' : 'horas' }}
                     }
@@ -148,7 +151,11 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                   <div>
                     <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Programado</span>
                     <span class="font-mono font-extrabold text-slate-900 text-base">
-                      {{ orden.cantidad_programada | number: '1.0-2' }} <span class="text-xs font-medium text-slate-500 font-sans">kg</span>
+                      @if (sinKg(orden)) {
+                        {{ orden.meta_texto }}
+                      } @else {
+                        {{ orden.cantidad_programada | number: '1.0-2' }} <span class="text-xs font-medium text-slate-500 font-sans">kg</span>
+                      }
                     </span>
                   </div>
                   <div class="text-right">
@@ -189,6 +196,11 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
   `,
 })
 export class SaborizadoListaPage {
+  /** Órdenes en mojes, baches o bultos: su meta no va en kg (V21). */
+  protected sinKg(orden: { unidad_solicitada: string }): boolean {
+    return (UNIDADES_DE_CONTEO as string[]).includes(orden.unidad_solicitada);
+  }
+
   private readonly servicio = inject(OrdenesService);
   private readonly avisos = inject(NotificacionesService);
 

@@ -38,4 +38,17 @@ export class UsuariosService {
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
   }
+
+  /** Para que el supervisor busque a quién darle contraseña temporal. */
+  paraRecuperar(): Observable<Usuario[]> {
+    return this.http.get<Usuario[]>(`${this.base}/para-recuperar`);
+  }
+
+  /** Contraseña temporal de 8 números: se muestra una sola vez para dictarla. */
+  passwordTemporal(id: number): Observable<{ password_temporal: string }> {
+    return this.http.post<{ password_temporal: string }>(
+      `${this.base}/${id}/password-temporal`,
+      {},
+    );
+  }
 }

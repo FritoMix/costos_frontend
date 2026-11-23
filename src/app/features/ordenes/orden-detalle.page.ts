@@ -5,6 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 
 import type { DetalleOrden } from '../../core/modelos/produccion.model';
+import { UNIDADES_DE_CONTEO } from '../../core/modelos/produccion.model';
 import { AuthService } from '../../core/servicios/auth.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
 import { OrdenesService } from '../../core/servicios/ordenes.service';
@@ -147,12 +148,20 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
               Producir
               @if (datos.orden.unidad_solicitada === 'canastillas') {
                 <span class="text-marca-700">{{ datos.orden.cantidad_canastillas_solicitadas | number: '1.0-0' }} canastillas</span>
+              } @else if (sinKg(datos.orden)) {
+                <span class="text-marca-700">{{ datos.orden.meta_texto }}</span>
               } @else {
                 <span class="text-marca-700">{{ datos.orden.cantidad_programada | number: '1.0-2' }} kg</span>
               }
               de <span class="text-slate-900">{{ datos.orden.producto.nombre_comercial }}</span>
             </h2>
             <p class="mt-2 text-sm font-medium text-slate-500">
+              @if (datos.orden.linea && datos.orden.linea.codigo !== 'papa') {
+                Línea {{ datos.orden.linea.nombre }} ·
+              }
+              @if (datos.orden.variedad) {
+                Tipo {{ datos.orden.variedad.nombre }} ·
+              }
               Categoría {{ datos.orden.categoria.nombre }} · Destino {{ datos.orden.destino_etiqueta }}
               @if (datos.orden.unidad_solicitada === 'canastillas') {
                 · equivale a ≈ {{ datos.orden.cantidad_programada | number: '1.0-0' }} kg
@@ -172,6 +181,8 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
               <p class="mt-1 text-base font-extrabold text-slate-900">
                 @if (datos.orden.unidad_solicitada === 'canastillas') {
                   {{ datos.orden.cantidad_canastillas_solicitadas | number: '1.0-0' }} canastillas
+                } @else if (sinKg(datos.orden)) {
+                  {{ datos.orden.meta_texto }}
                 } @else {
                   {{ datos.orden.cantidad_programada | number: '1.0-2' }} kg
                 }
@@ -322,6 +333,8 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
                       @if (datos.orden.unidad_solicitada === 'canastillas') {
                         {{ datos.orden.cantidad_canastillas_solicitadas | number: '1.0-2' }} canastillas
                         <span class="text-xs text-slate-500 font-sans font-normal block mt-0.5">({{ datos.orden.cantidad_programada | number: '1.0-2' }} kg estimados)</span>
+                      } @else if (sinKg(datos.orden)) {
+                        {{ datos.orden.meta_texto }}
                       } @else {
                         {{ datos.orden.cantidad_programada | number: '1.0-2' }} kg
                       }
@@ -371,8 +384,15 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
               >
                 <div class="space-y-4">
                   <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Bultos Crudos</span>
-                    <span class="font-mono font-bold text-slate-900 text-sm">{{ datos.totales.cantidad_bultos | number: '1.0-2' }} bultos</span>
+                    @if (datos.orden.linea?.unidad_materia_prima === 'kg') {
+                      <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                        Kg de {{ datos.orden.linea!.nombre_materia_prima }}
+                      </span>
+                      <span class="font-mono font-bold text-slate-900 text-sm">{{ datos.totales.kg_crudos | number: '1.0-2' }} kg</span>
+                    } @else {
+                      <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Bultos Crudos</span>
+                      <span class="font-mono font-bold text-slate-900 text-sm">{{ datos.totales.cantidad_bultos | number: '1.0-2' }} bultos</span>
+                    }
                   </div>
 
                   <div class="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -447,7 +467,11 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
                             </span>
                           </td>
                           <td class="tabular-nums font-mono text-sm font-semibold text-slate-800">
-                            {{ registro.cantidad_bultos | number: '1.0-2' }} bto
+                            @if (datos.orden.linea?.unidad_materia_prima === 'kg') {
+                              {{ registro.kg_crudos_calculados | number: '1.0-2' }} kg
+                            } @else {
+                              {{ registro.cantidad_bultos | number: '1.0-2' }} bto
+                            }
                             @if (registro.referencias.length > 0) {
                               <div class="mt-1 flex flex-wrap gap-1 font-sans font-semibold text-[10px] text-slate-500">
                                 @for (fila of registro.referencias; track fila.referencia_papa_id) {
@@ -596,6 +620,11 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
   `,
 })
 export class OrdenDetallePage {
+  /** Órdenes en mojes, baches o bultos: su meta no va en kg (V21). */
+  protected sinKg(orden: { unidad_solicitada: string }): boolean {
+    return (UNIDADES_DE_CONTEO as string[]).includes(orden.unidad_solicitada);
+  }
+
   readonly id = input.required<string>();
 
   private readonly servicio = inject(OrdenesService);

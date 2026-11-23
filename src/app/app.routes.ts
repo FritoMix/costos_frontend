@@ -18,6 +18,19 @@ export const rutas: Routes = [
     loadComponent: () => import('./features/auth/login.page').then((m) => m.LoginPage),
   },
   {
+    // «¿Olvidaste tu contraseña?»: sin sesión.
+    path: 'olvide-clave',
+    title: 'Olvidé mi contraseña - DATACONTROL',
+    loadComponent: () => import('./features/auth/olvide-clave.page').then((m) => m.OlvideClavePage),
+  },
+  {
+    // Entró con una contraseña temporal: debe crear la suya antes de seguir.
+    path: 'crear-clave',
+    title: 'Crear contraseña - DATACONTROL',
+    canActivate: [sesionGuard],
+    loadComponent: () => import('./features/auth/crear-clave.page').then((m) => m.CrearClavePage),
+  },
+  {
     path: '',
     component: ShellComponent,
     canActivate: [sesionGuard],
@@ -27,6 +40,14 @@ export const rutas: Routes = [
         path: 'inicio',
         title: 'Inicio - DATACONTROL',
         loadComponent: () => import('./features/inicio/inicio.page').then((m) => m.InicioPage),
+      },
+      {
+        // El supervisor da contraseñas temporales a los usuarios de planta.
+        path: 'recuperar-clave',
+        title: 'Recuperar contraseña - DATACONTROL',
+        canActivate: [rolGuard(['admin', 'supervisor'])],
+        loadComponent: () =>
+          import('./features/usuarios/recuperar.page').then((m) => m.RecuperarClavePage),
       },
       {
         path: 'mi-cuenta',
@@ -256,6 +277,12 @@ export const rutas: Routes = [
             title: 'Configuración - DATACONTROL',
             loadComponent: () =>
               import('./features/catalogos/configuracion.page').then((m) => m.ConfiguracionPage),
+          },
+          {
+            path: 'variedades',
+            title: 'Tipos de materia prima - DATACONTROL',
+            loadComponent: () =>
+              import('./features/catalogos/variedades.page').then((m) => m.VariedadesPage),
           },
           {
             path: 'aceites',

@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import type { CanActivateFn} from '@angular/router';
+import type { CanActivateFn } from '@angular/router';
 import { Router } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
 
@@ -20,12 +20,16 @@ export const sesionGuard: CanActivateFn = (_ruta, estado) => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
+  // Con una contraseña temporal no se entra a nada más hasta crear la propia.
+  const exigirClave = (debe: boolean | undefined) =>
+    debe && !estado.url.startsWith('/crear-clave') ? router.createUrlTree(['/crear-clave']) : true;
+
   if (auth.usuario()) {
-    return true;
+    return exigirClave(auth.usuario()!.debe_cambiar_password);
   }
 
   return auth.recuperarSesion().pipe(
-    map(() => true),
+    map((usuario) => exigirClave(usuario.debe_cambiar_password)),
     catchError(() =>
       of(router.createUrlTree(['/entrar'], { queryParams: { volverA: estado.url } })),
     ),

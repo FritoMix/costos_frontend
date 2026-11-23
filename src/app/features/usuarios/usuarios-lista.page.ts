@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import type { Usuario } from '../../core/modelos/identidad.model';
 import { AuthService } from '../../core/servicios/auth.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
+import { ClaveTemporalComponent } from './clave-temporal.component';
 import { UsuariosService } from '../../core/servicios/usuarios.service';
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
@@ -14,14 +15,25 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
 @Component({
   selector: 'app-usuarios-lista',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TarjetaComponent, BotonComponent, CargandoComponent, ConfirmarComponent],
+  imports: [
+    RouterLink,
+    TarjetaComponent,
+    BotonComponent,
+    CargandoComponent,
+    ConfirmarComponent,
+    ClaveTemporalComponent,
+  ],
   template: `
     <div class="pagina-contenido">
       <header class="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Usuarios & Accesos</h1>
-            <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-mono font-bold text-slate-600 border border-slate-200">
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+              Usuarios & Accesos
+            </h1>
+            <span
+              class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-mono font-bold text-slate-600 border border-slate-200"
+            >
               {{ usuarios().length }}
             </span>
           </div>
@@ -30,9 +42,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
           </p>
         </div>
         <a routerLink="/usuarios/nuevo">
-          <app-boton variante="primario">
-            + Nuevo Usuario
-          </app-boton>
+          <app-boton variante="primario"> + Nuevo Usuario </app-boton>
         </a>
       </header>
 
@@ -56,13 +66,18 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                   <tr class="hover:bg-slate-50/70 transition-colors">
                     <td>
                       <div class="flex items-center gap-3">
-                        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 font-mono text-xs font-bold text-slate-700 border border-slate-200/80">
+                        <span
+                          class="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 font-mono text-xs font-bold text-slate-700 border border-slate-200/80"
+                        >
                           {{ iniciales(usuario.nombre_completo) }}
                         </span>
                         <div>
                           <div class="font-bold text-slate-900">{{ usuario.nombre_completo }}</div>
                           @if (usuario.id === auth.usuario()?.id) {
-                            <span class="text-[10px] font-bold text-marca-700 uppercase tracking-wide">Tu sesión actual</span>
+                            <span
+                              class="text-[10px] font-bold text-marca-700 uppercase tracking-wide"
+                              >Tu sesión actual</span
+                            >
                           }
                         </div>
                       </div>
@@ -77,15 +92,29 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                       >
                         {{ usuario.rol.nombre }}
                       </span>
+                      @if (usuario.linea && usuario.linea.codigo !== 'papa') {
+                        <span class="ml-1 text-[11px] font-semibold text-slate-500">{{
+                          usuario.linea.nombre
+                        }}</span>
+                      }
+                      @if (usuario.debe_cambiar_password) {
+                        <span class="ml-1 text-[11px] font-semibold text-amber-700"
+                          >· clave temporal</span
+                        >
+                      }
                     </td>
                     <td>
                       @if (usuario.activo) {
-                        <span class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700">
+                        <span
+                          class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700"
+                        >
                           <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
                           Activo
                         </span>
                       } @else {
-                        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                        <span
+                          class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400"
+                        >
                           <span class="h-2 w-2 rounded-full bg-slate-300"></span>
                           Inactivo
                         </span>
@@ -100,6 +129,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                           Editar
                         </a>
                         @if (usuario.id !== auth.usuario()?.id) {
+                          <app-clave-temporal [usuario]="usuario" />
                           <button
                             type="button"
                             class="rounded-lg border border-red-200 bg-white px-2.5 py-1 text-xs font-bold text-red-600 shadow-2xs hover:bg-red-50 transition"
@@ -192,4 +222,3 @@ export class UsuariosListaPage {
     });
   }
 }
-

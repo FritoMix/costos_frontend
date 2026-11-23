@@ -1,7 +1,7 @@
 import type { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
 import { AlarmaService } from '../../core/servicios/alarma.service';
@@ -11,7 +11,7 @@ import { BotonComponent } from '../../ui/boton.component';
 @Component({
   selector: 'app-login',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, BotonComponent],
+  imports: [ReactiveFormsModule, RouterLink, BotonComponent],
   templateUrl: './login.page.html',
 })
 export class LoginPage {
