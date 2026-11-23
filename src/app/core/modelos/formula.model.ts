@@ -3,7 +3,12 @@
 import type { UsuarioRef } from './produccion.model';
 
 export type EstadoFormula =
-  'sin_formula' | 'lista' | 'en_produccion' | 'finalizada' | 'cancelada' | 'no_aplica';
+  | 'sin_formula'
+  | 'lista'
+  | 'en_produccion'
+  | 'finalizada'
+  | 'cancelada'
+  | 'no_aplica';
 
 export interface FormulaReferencia {
   referencia_id: number;

@@ -117,4 +117,5 @@ describe('cacheInterceptor', () => {
     pendiente.flush([{ id: 1 }]);
     segunda.flush([{ id: 2 }]);
   });
+
 });
