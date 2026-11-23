@@ -436,7 +436,12 @@
                 <app-paso-aceite-horno [(valor)]="aceiteInicial" />
               }
               @case ('aceite_final') {
-                <app-paso-aceite-horno [(valor)]="aceiteFinal" [consumoCm]="consumoCm()" />
+                <app-paso-aceite-horno
+                  [(valor)]="aceiteFinal"
+                  [consumoCm]="consumoCm()"
+                  [pedirAgregado]="true"
+                  [(agregado)]="aceiteAgregado"
+                />
               }
 
               <!-- 7. Desperdicio -->

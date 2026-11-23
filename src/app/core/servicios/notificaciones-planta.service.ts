@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import type { Observable, Subscription} from 'rxjs';
+import type { Observable, Subscription } from 'rxjs';
 import { switchMap, timer } from 'rxjs';
 
 import { environment } from '../../../environments/environment';

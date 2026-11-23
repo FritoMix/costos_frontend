@@ -165,6 +165,7 @@ export class HornoAsistentePage {
   protected readonly operariosZonaHumeda = signal(0);
   protected readonly aceiteInicial = signal('0');
   protected readonly aceiteFinal = signal('0');
+  protected readonly aceiteAgregado = signal('0');
   protected readonly hayDesperdicio = signal(false);
   protected readonly tipoDesperdicioId = signal<number | null>(null);
   protected readonly cantidadDesperdicio = signal('0');
@@ -252,6 +253,7 @@ export class HornoAsistentePage {
     operariosZonaHumeda: this.operariosZonaHumeda(),
     aceiteInicial: this.aceiteInicial(),
     aceiteFinal: this.aceiteFinal(),
+    aceiteAgregado: this.aceiteAgregado(),
     hayDesperdicio: this.hayDesperdicio(),
     tipoDesperdicioId: this.tipoDesperdicioId(),
     cantidadDesperdicio: this.cantidadDesperdicio(),
@@ -275,6 +277,7 @@ export class HornoAsistentePage {
       this.operariosZonaHumeda(),
       this.aceiteInicial(),
       this.aceiteFinal(),
+      this.aceiteAgregado(),
       this.hayDesperdicio(),
       this.tipoDesperdicioId(),
       this.cantidadDesperdicio(),

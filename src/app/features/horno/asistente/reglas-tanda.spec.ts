@@ -153,6 +153,12 @@ describe('Reglas del asistente de horno: comportamiento existente', () => {
       valido: false,
     },
     {
+      nombre: 'nivel que sube con litros agregados',
+      paso: 'aceite_final',
+      cambios: { aceiteFinal: '51', aceiteAgregado: '40' },
+      valido: true,
+    },
+    {
       nombre: 'aceite final igual al inicial',
       paso: 'aceite_final',
       cambios: { aceiteFinal: '50' },
@@ -200,6 +206,16 @@ describe('Reglas del asistente de horno: comportamiento existente', () => {
 });
 
 describe('Solicitud de una tanda de horno', () => {
+  it('envía los litros de aceite agregados solo cuando hay', () => {
+    const conAceite = construirRegistroHorno(datos({ aceiteFinal: '52', aceiteAgregado: '30' }), {
+      inicio: '08:00',
+      fin: '09:00',
+    });
+    expect(conAceite.aceite_agregado_litros).toBe(30);
+    const sinAceite = construirRegistroHorno(datos(), { inicio: '08:00', fin: '09:00' });
+    expect('aceite_agregado_litros' in sinAceite).toBeFalse();
+  });
+
   it('serializa fórmula con varias referencias sin mutar el formulario ni enviar la cabecera histórica', () => {
     const entrada = datos({
       mezcla: [

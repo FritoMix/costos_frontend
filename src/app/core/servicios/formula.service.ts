@@ -31,9 +31,6 @@ export class FormulaService {
   }
 
   proyectar(ordenId: number, datos: FormulaProyeccionGuardar): Observable<FormulaProyeccion> {
-    return this.http.post<FormulaProyeccion>(
-      `${this.base}/${ordenId}/formula/proyeccion`,
-      datos,
-    );
+    return this.http.post<FormulaProyeccion>(`${this.base}/${ordenId}/formula/proyeccion`, datos);
   }
 }

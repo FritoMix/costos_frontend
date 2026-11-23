@@ -13,4 +13,17 @@ import { TecladoNumericoComponent } from '../../../ui/teclado-numerico.component
 export class PasoAceiteHornoComponent {
   readonly valor = model.required<string>();
   readonly consumoCm = input<number | null>(null);
+  /** Solo en el nivel final: litros agregados al tanque en la tanda (V18). */
+  readonly pedirAgregado = input(false);
+  readonly agregado = model('0');
+
+  protected cambiarAgregado(texto: string): void {
+    const limpio = texto.replace(',', '.').trim();
+    this.agregado.set(limpio === '' ? '0' : limpio);
+  }
+
+  protected litrosAgregados(): number {
+    const numero = Number(this.agregado());
+    return Number.isFinite(numero) && numero > 0 ? numero : 0;
+  }
 }

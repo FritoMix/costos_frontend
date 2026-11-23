@@ -27,11 +27,29 @@ export interface TurnoGuardar {
   activo: boolean;
 }
 
+/** Aceite de fritura con densidad fija (V18). */
+export interface TipoAceite {
+  id: number;
+  nombre: string;
+  densidad_kg_por_litro: number;
+  proveedor: string | null;
+  activo: boolean;
+}
+
+export interface TipoAceiteGuardar {
+  nombre: string;
+  densidad_kg_por_litro: number;
+  proveedor: string | null;
+  activo: boolean;
+}
+
 export interface Horno {
   id: number;
   nombre: string;
   activo: boolean;
   tipo_aceite: string | null;
+  /** Aceite del catálogo; su densidad solo se usa si el horno no tiene muestras. */
+  aceite?: TipoAceite | null;
   apto_exportacion: boolean;
   tanque_diametro_cm: number | null;
   litros_por_cm_manual: number | null;
@@ -45,6 +63,7 @@ export interface HornoGuardar {
   nombre: string;
   activo: boolean;
   tipo_aceite: string | null;
+  aceite_id?: number | null;
   apto_exportacion: boolean;
   tanque_diametro_cm: number | null;
   litros_por_cm_manual: number | null;

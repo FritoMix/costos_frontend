@@ -33,6 +33,10 @@ export function construirRegistroHorno(
     operarios_horno: datos.operariosZonaHumeda,
     nivel_aceite_inicial_cm: numeroDeTexto(datos.aceiteInicial),
     nivel_aceite_final_cm: numeroDeTexto(datos.aceiteFinal),
+    // Solo viaja si se repuso aceite: el cuerpo de siempre no cambia.
+    ...(numeroDeTexto(datos.aceiteAgregado ?? '0') > 0
+      ? { aceite_agregado_litros: numeroDeTexto(datos.aceiteAgregado ?? '0') }
+      : {}),
     temperatura_aceite_c: numeroDeTexto(datos.temperatura),
     observaciones: null,
     tipo_desperdicio_id: conDesperdicio ? datos.tipoDesperdicioId : null,
