@@ -48,7 +48,7 @@ interface OpcionMenu {
               ariaCurrentWhenActive="page"
               [routerLinkActiveOptions]="{ exact: opcion.ruta === '/inicio' }"
               (click)="menuAbierto.set(false)"
-              class="nav-link flex min-h-11 items-center justify-center rounded-lg px-3 text-center text-sm font-semibold transition-colors hover:bg-marca-200/70 focus-visible:bg-marca-200/70 focus-visible:outline-2 focus-visible:outline-marca-700 xl:whitespace-nowrap xl:text-xs"
+              class="nav-link flex min-h-11 items-center justify-center rounded-lg px-3 text-center text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-marca-700 xl:whitespace-nowrap xl:text-xs"
             >
               <span>{{ opcion.texto }}</span>
             </a>
@@ -90,8 +90,18 @@ interface OpcionMenu {
   `,
   styles: `
     .nav-link.active-link {
-      background: #bae6fd;
-      color: #08283e;
+      background-color: var(--color-marca-200);
+      color: var(--color-marca-950);
+    }
+
+    .nav-link:focus-visible {
+      background-color: var(--color-marca-300);
+    }
+
+    @media (hover: hover) {
+      .nav-link:hover {
+        background-color: var(--color-marca-300);
+      }
     }
   `,
 })
