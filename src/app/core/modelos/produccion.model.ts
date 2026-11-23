@@ -49,6 +49,8 @@ export interface Orden {
   formula_estado: EstadoFormula;
   /** Las órdenes nuevas exigen fórmula antes de iniciar; las históricas no. */
   formula_obligatoria: boolean;
+  /** La puso la app con la fórmula de la noche; Bodega debe confirmarla. */
+  formula_automatica?: boolean;
   supervisor: UsuarioRef;
   turno: Referencia;
   horno: Referencia;

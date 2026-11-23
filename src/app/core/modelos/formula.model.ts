@@ -88,3 +88,19 @@ export interface FormulaProyeccion {
   mensaje: string | null;
   referencias: FormulaProyeccionReferencia[];
 }
+
+/** Fórmula de la noche de un horno: la que Bodega deja antes de irse. */
+export interface FormulaNocheFila {
+  referencia_papa_id: number;
+  nombre: string;
+  bultos_por_tanda: number;
+}
+
+export interface FormulaNoche {
+  horno_id: number;
+  horno: string;
+  filas: FormulaNocheFila[];
+  total_bultos_por_tanda: number;
+  actualizado_por: string | null;
+  fecha_actualizacion: string | null;
+}

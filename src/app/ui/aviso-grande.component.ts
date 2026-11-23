@@ -37,6 +37,15 @@ import { NotificacionesPlantaService } from '../core/servicios/notificaciones-pl
             </p>
           </div>
           <div class="flex flex-wrap justify-center gap-3 px-6 py-5">
+            @if (a.tipo === 'recordar_formula_noche') {
+              <button
+                type="button"
+                (click)="irANoche()"
+                class="min-w-36 rounded-2xl bg-marca-700 px-5 py-3.5 text-base font-semibold text-white shadow-md hover:bg-marca-800"
+              >
+                Dejar la fórmula
+              </button>
+            }
             @if (a.orden_id) {
               <button
                 type="button"
@@ -73,6 +82,8 @@ export class AvisoGrandeComponent {
         return { fondo: 'bg-rose-50', circulo: 'bg-rose-200', icono: '🛑' };
       case 'orden_cerrada_sola':
         return { fondo: 'bg-emerald-50', circulo: 'bg-emerald-200', icono: '✅' };
+      case 'recordar_formula_noche':
+        return { fondo: 'bg-indigo-50', circulo: 'bg-indigo-200', icono: '🌙' };
       case 'formula_lista':
         return { fondo: 'bg-emerald-50', circulo: 'bg-emerald-200', icono: '🧪' };
       default:
@@ -101,6 +112,11 @@ export class AvisoGrandeComponent {
     return this.auth.esOperarioHorno() || this.auth.esOperarioSaborizado()
       ? 'Ir a mi pantalla'
       : 'Ver la orden';
+  }
+
+  protected irANoche(): void {
+    this.servicio.cerrarDestacado();
+    void this.router.navigate(['/formula-produccion/noche']);
   }
 
   protected abrir(a: Notificacion): void {
