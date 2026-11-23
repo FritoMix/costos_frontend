@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import type { Observable} from 'rxjs';
+import type { Observable } from 'rxjs';
 import { shareReplay, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
@@ -11,6 +11,8 @@ import type {
   Horno,
   HornoCapacidadGuardar,
   HornoGuardar,
+  TipoAceite,
+  TipoAceiteGuardar,
   ItemCatalogo,
   MuestraDensidad,
   Producto,
@@ -218,10 +220,7 @@ export class CatalogosService {
       .pipe(tap(() => (this.cacheHornos$ = null)));
   }
 
-  actualizarCapacidadHorno(
-    id: number,
-    datos: HornoCapacidadGuardar,
-  ): Observable<Horno> {
+  actualizarCapacidadHorno(id: number, datos: HornoCapacidadGuardar): Observable<Horno> {
     return this.http
       .patch<Horno>(`${this.base}/hornos/${id}/capacidad`, datos)
       .pipe(tap(() => (this.cacheHornos$ = null)));
@@ -308,5 +307,26 @@ export class CatalogosService {
   }): Observable<MuestraDensidad> {
     return this.http.post<MuestraDensidad>(`${this.base}/densidad-aceite`, datos);
   }
-}
 
+  // --- Tipos de aceite (V18) ---
+
+  listarAceites(soloActivos = false): Observable<TipoAceite[]> {
+    return this.http.get<TipoAceite[]>(`${this.base}/aceites`, {
+      params: soloActivos ? { solo_activos: true } : {},
+    });
+  }
+
+  crearAceite(datos: TipoAceiteGuardar): Observable<TipoAceite> {
+    return this.http.post<TipoAceite>(`${this.base}/aceites`, datos);
+  }
+
+  actualizarAceite(id: number, datos: TipoAceiteGuardar): Observable<TipoAceite> {
+    return this.http
+      .put<TipoAceite>(`${this.base}/aceites/${id}`, datos)
+      .pipe(tap(() => (this.cacheHornos$ = null)));
+  }
+
+  eliminarAceite(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/aceites/${id}`);
+  }
+}

@@ -252,6 +252,11 @@ export const rutas: Routes = [
               import('./features/catalogos/configuracion.page').then((m) => m.ConfiguracionPage),
           },
           {
+            path: 'aceites',
+            title: 'Tipos de aceite - DATACONTROL',
+            loadComponent: () => import('./features/catalogos/aceites.page').then((m) => m.AceitesPage),
+          },
+          {
             path: 'densidad-aceite',
             title: 'Densidad del aceite - DATACONTROL',
             loadComponent: () =>

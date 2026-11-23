@@ -23,6 +23,8 @@ export interface DatosTandaHorno {
   operariosZonaHumeda: number;
   aceiteInicial: string;
   aceiteFinal: string;
+  /** Litros agregados al tanque durante la tanda (V18). Vacío = 0. */
+  aceiteAgregado?: string;
   hayDesperdicio: boolean;
   tipoDesperdicioId: number | null;
   cantidadDesperdicio: string;
@@ -74,7 +76,10 @@ export function pasoTandaValido(
     case 'aceite_final':
       return (
         numeroDeTexto(datos.aceiteFinal) >= 0 &&
-        (consumoAceiteCm(datos.aceiteInicial, datos.aceiteFinal) ?? -1) >= 0
+        numeroDeTexto(datos.aceiteAgregado ?? '0') >= 0 &&
+        // Si el nivel subió, tienen que indicar los litros que agregaron.
+        ((consumoAceiteCm(datos.aceiteInicial, datos.aceiteFinal) ?? -1) >= 0 ||
+          numeroDeTexto(datos.aceiteAgregado ?? '0') > 0)
       );
     case 'desperdicio':
       return (

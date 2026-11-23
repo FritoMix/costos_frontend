@@ -2,9 +2,14 @@ import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 
-import type { Horno, HornoGuardar, ItemCatalogo } from '../../core/modelos/catalogos.model';
+import type {
+  Horno,
+  HornoGuardar,
+  ItemCatalogo,
+  TipoAceite,
+} from '../../core/modelos/catalogos.model';
 import { AuthService } from '../../core/servicios/auth.service';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
@@ -185,6 +190,21 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                   formControlName="tipo_aceite"
                   placeholder="Ej. Palma Saborizado, Alto Oleico…"
                 />
+              </div>
+              <div>
+                <label
+                  class="etiqueta text-xs font-bold text-slate-700 mb-1.5 block"
+                  for="aceite_id"
+                  >Aceite del catálogo</label
+                >
+                <select id="aceite_id" class="campo" formControlName="aceite_id">
+                  <option [ngValue]="null">Sin asignar</option>
+                  @for (aceite of aceites(); track aceite.id) {
+                    <option [ngValue]="aceite.id">
+                      {{ aceite.nombre }} ({{ aceite.densidad_kg_por_litro }} kg/L)
+                    </option>
+                  }
+                </select>
               </div>
             </div>
 
@@ -532,6 +552,7 @@ export class HornosPage {
   protected readonly enviandoCapacidad = signal(false);
   protected readonly hornos = signal<Horno[]>([]);
   protected readonly categorias = signal<ItemCatalogo[]>([]);
+  protected readonly aceites = signal<TipoAceite[]>([]);
   protected readonly categoriasElegidas = signal<number[]>([]);
   protected readonly editando = signal<Horno | null>(null);
   protected readonly aEliminar = signal<Horno | null>(null);
@@ -539,6 +560,7 @@ export class HornosPage {
   protected readonly formulario = this.fb.group({
     nombre: this.fb.nonNullable.control('', Validators.required),
     tipo_aceite: this.fb.control<string | null>(null),
+    aceite_id: this.fb.control<number | null>(null),
     tanque_diametro_cm: this.fb.control<number | null>(null),
     litros_por_cm_manual: this.fb.control<number | null>(null),
     capacidad_bultos_hora: this.fb.control<number | null>(null, [
@@ -570,10 +592,13 @@ export class HornosPage {
     forkJoin({
       hornos: this.catalogos.listarHornos(),
       categorias: this.catalogos.listarCategorias(),
+      // El catálogo de aceites es opcional: si falla, el formulario sigue.
+      aceites: this.catalogos.listarAceites().pipe(catchError(() => of([] as TipoAceite[]))),
     }).subscribe({
-      next: ({ hornos, categorias }) => {
+      next: ({ hornos, categorias, aceites }) => {
         this.hornos.set(hornos);
         this.categorias.set(categorias);
+        this.aceites.set(aceites);
         if (this.esSupervisor() && hornos.length > 0) {
           const primero = hornos[0];
           this.formCapacidad.setValue({
@@ -600,6 +625,7 @@ export class HornosPage {
     this.formulario.setValue({
       nombre: horno.nombre,
       tipo_aceite: horno.tipo_aceite,
+      aceite_id: horno.aceite?.id ?? null,
       tanque_diametro_cm: horno.tanque_diametro_cm ? Number(horno.tanque_diametro_cm) : null,
       litros_por_cm_manual: horno.litros_por_cm_manual ? Number(horno.litros_por_cm_manual) : null,
       capacidad_bultos_hora:
@@ -631,6 +657,7 @@ export class HornosPage {
       nombre: valores.nombre,
       activo: valores.activo,
       tipo_aceite: valores.tipo_aceite || null,
+      aceite_id: valores.aceite_id ?? null,
       apto_exportacion: valores.apto_exportacion,
       tanque_diametro_cm: valores.tanque_diametro_cm ? Number(valores.tanque_diametro_cm) : null,
       litros_por_cm_manual: valores.litros_por_cm_manual

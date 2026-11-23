@@ -97,6 +97,11 @@
       <dd class="text-sm font-extrabold text-slate-900">
         {{ numero(datos().aceiteInicial) }} → {{ numero(datos().aceiteFinal) }} cm
         <span class="font-medium text-slate-500">({{ consumoCm() | number: '1.0-2' }} cm)</span>
+        @if (numero(datos().aceiteAgregado ?? '0') > 0) {
+          <span class="block font-medium text-slate-500">
+            + {{ numero(datos().aceiteAgregado ?? '0') | number: '1.0-2' }} L agregados
+          </span>
+        }
       </dd>
     </div>
     <div class="flex items-center justify-between gap-4 px-5 py-3">

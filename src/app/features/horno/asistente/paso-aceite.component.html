@@ -1,14 +1,35 @@
 <div class="anim-entrada">
   <app-teclado-numerico [(valor)]="valor" unidad="centímetros" />
+  @if (pedirAgregado()) {
+    <label class="mt-4 block rounded-2xl border border-slate-200 bg-white px-4 py-3">
+      <span class="block text-sm font-semibold text-slate-600">
+        ¿Agregaron aceite al tanque en esta tanda? Litros (0 si no)
+      </span>
+      <input
+        type="number"
+        inputmode="decimal"
+        min="0"
+        step="0.1"
+        data-testid="aceite-agregado"
+        class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-3 text-lg font-bold"
+        [value]="agregado() === '0' ? '' : agregado()"
+        placeholder="0"
+        (input)="cambiarAgregado($any($event.target).value)"
+      />
+    </label>
+  }
   @if (consumoCm() !== null) {
     <p
       class="mt-4 text-center text-sm font-bold"
-      [class]="consumoCm()! >= 0 ? 'text-emerald-700' : 'text-rose-600'"
+      [class]="consumoCm()! >= 0 || litrosAgregados() > 0 ? 'text-emerald-700' : 'text-rose-600'"
     >
       @if (consumoCm()! >= 0) {
         Consumo de aceite: {{ consumoCm() | number: '1.0-2' }} cm
+      } @else if (litrosAgregados() > 0) {
+        El nivel subió {{ -consumoCm()! | number: '1.0-2' }} cm por los
+        {{ litrosAgregados() | number: '1.0-2' }} L agregados
       } @else {
-        El nivel final no puede ser mayor que el inicial
+        El nivel final no puede ser mayor que el inicial. Si agregaron aceite, indica los litros.
       }
     </p>
   }

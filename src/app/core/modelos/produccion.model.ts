@@ -112,6 +112,7 @@ export interface RegistroHorno {
   operarios_horno: number;
   nivel_aceite_inicial_cm: number;
   nivel_aceite_final_cm: number;
+  aceite_agregado_litros?: number;
   diferencia_aceite_cm: number;
   temperatura_aceite_c: number | null;
   litros_por_cm_usado: number | null;
@@ -145,6 +146,8 @@ export interface RegistroHornoGuardar {
   operarios_horno: number;
   nivel_aceite_inicial_cm: number;
   nivel_aceite_final_cm: number;
+  /** Litros agregados al tanque en la tanda (V18). */
+  aceite_agregado_litros?: number;
   temperatura_aceite_c: number;
   observaciones: string | null;
   tipo_desperdicio_id: number | null;
