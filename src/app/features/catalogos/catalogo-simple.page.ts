@@ -3,7 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import type { Observable } from 'rxjs';
 
-import type { CatalogoGuardar, ItemCatalogo } from '../../core/modelos/catalogos.model';
+import type { CatalogoGuardar, CategoriaCatalogo, ItemCatalogo } from '../../core/modelos/catalogos.model';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
 import { BotonComponent } from '../../ui/boton.component';
@@ -101,6 +101,38 @@ interface Textos {
                 </label>
               </div>
 
+              @if (esCategorias) {
+                <div data-testid="sabores-categoria">
+                  <span class="etiqueta text-xs font-bold text-slate-700 mb-1 block">Sabores de la categoría</span>
+                  <p class="mb-2.5 text-[11px] font-medium text-slate-500">
+                    En saborizado solo se ofrecen los marcados. Si no marcas ninguno, se ofrecen todos los activos.
+                  </p>
+                  <div class="flex flex-wrap gap-2">
+                    @for (sabor of saboresDisponibles(); track sabor.id) {
+                      <button
+                        type="button"
+                        data-testid="sabor-categoria"
+                        (click)="alternarSabor(sabor.id)"
+                        [attr.aria-pressed]="saboresElegidos().has(sabor.id)"
+                        class="inline-flex min-h-10 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all"
+                        [class]="saboresElegidos().has(sabor.id)
+                          ? 'border-marca-600 bg-marca-600 text-white shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'"
+                      >
+                        @if (saboresElegidos().has(sabor.id)) {
+                          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                          </svg>
+                        }
+                        {{ sabor.nombre }}
+                      </button>
+                    } @empty {
+                      <span class="text-xs text-slate-400">No hay sabores activos. Créalos en Catálogos → Sabores.</span>
+                    }
+                  </div>
+                </div>
+              }
+
               <div class="acciones-formulario">
                 <app-boton tipo="submit" variante="primario" [anchoCompleto]="true" [cargando]="enviando()">
                   {{ editando() ? 'Guardar Cambios' : 'Agregar ' + textos().singular }}
@@ -138,6 +170,9 @@ interface Textos {
                   <thead>
                     <tr>
                       <th class="py-3.5 px-6 text-xs font-bold uppercase tracking-wider text-slate-500">Nombre</th>
+                      @if (esCategorias) {
+                        <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500">Sabores</th>
+                      }
                       <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500">Estado</th>
                       <th class="py-3.5 px-6 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Acciones</th>
                     </tr>
@@ -146,6 +181,19 @@ interface Textos {
                     @for (item of items(); track item.id) {
                       <tr class="hover:bg-sky-50/40 transition-colors">
                         <td class="py-4 px-6 font-bold text-slate-900 text-sm">{{ item.nombre }}</td>
+                        @if (esCategorias) {
+                          <td class="py-4 px-4">
+                            @if (nombresSabores(item); as nombres) {
+                              <div class="flex max-w-64 flex-wrap gap-1">
+                                @for (nombre of nombres; track nombre) {
+                                  <span class="rounded-md border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[11px] font-semibold text-sky-900">{{ nombre }}</span>
+                                }
+                              </div>
+                            } @else {
+                              <span class="text-xs font-medium text-slate-400">Todos los activos</span>
+                            }
+                          </td>
+                        }
                         <td class="py-4 px-4">
                           @if (item.activo) {
                             <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 border border-emerald-200/60">
@@ -180,7 +228,7 @@ interface Textos {
                       </tr>
                     } @empty {
                       <tr>
-                        <td colspan="3" class="px-6 py-12 text-center text-slate-400 font-medium">
+                        <td [attr.colspan]="esCategorias ? 4 : 3" class="px-6 py-12 text-center text-slate-400 font-medium">
                           Todavía no hay registros en este catálogo.
                         </td>
                       </tr>
@@ -213,6 +261,12 @@ export class CatalogoSimplePage {
   private readonly ruta = inject(ActivatedRoute);
 
   private readonly tipo: TipoCatalogo = this.ruta.snapshot.data['catalogo'] ?? 'categorias';
+  protected readonly esCategorias = this.tipo === 'categorias';
+
+  /** Sabores para elegir por categoría (activos y los ya asignados). */
+  protected readonly saboresDisponibles = signal<ItemCatalogo[]>([]);
+  protected readonly saboresElegidos = signal<Set<number>>(new Set());
+  private readonly todosLosSabores = signal<ItemCatalogo[]>([]);
 
   protected readonly cargando = signal(true);
   protected readonly enviando = signal(false);
@@ -235,7 +289,7 @@ export class CatalogoSimplePage {
         return {
           titulo: 'Sabores',
           singular: 'sabor',
-          descripcion: 'Los sabores disponibles al registrar una recepción de saborizado.',
+          descripcion: 'Los sabores de saborizado. Qué sabores lleva cada categoría se elige en Categorías.',
         };
       case 'tipos-desperdicio':
         return {
@@ -247,13 +301,43 @@ export class CatalogoSimplePage {
         return {
           titulo: 'Categorías de producto',
           singular: 'categoría',
-          descripcion: 'Cambiar el tamaño de la hojuela no crea una categoría nueva.',
+          descripcion: 'Cada categoría con sus sabores: en saborizado solo se ofrecen esos.',
         };
     }
   }
 
+  protected alternarSabor(id: number): void {
+    this.saboresElegidos.update((actual) => {
+      const nuevo = new Set(actual);
+      if (nuevo.has(id)) {
+        nuevo.delete(id);
+      } else {
+        nuevo.add(id);
+      }
+      return nuevo;
+    });
+  }
+
+  /** Nombres de los sabores asignados; null si la categoría acepta todos. */
+  protected nombresSabores(item: CategoriaCatalogo): string[] | null {
+    const ids = item.sabor_ids ?? [];
+    if (!ids.length) return null;
+    return this.todosLosSabores().filter((s) => ids.includes(s.id)).map((s) => s.nombre);
+  }
+
+  private actualizarDisponibles(): void {
+    const elegidos = this.saboresElegidos();
+    this.saboresDisponibles.set(this.todosLosSabores().filter((s) => s.activo || elegidos.has(s.id)));
+  }
+
   private cargar(): void {
     this.cargando.set(true);
+    if (this.esCategorias) {
+      this.catalogos.listarSabores(false, true).subscribe((sabores) => {
+        this.todosLosSabores.set(sabores);
+        this.actualizarDisponibles();
+      });
+    }
     const peticion =
       this.tipo === 'sabores'
         ? this.catalogos.listarSabores()
@@ -273,11 +357,15 @@ export class CatalogoSimplePage {
   protected editar(item: ItemCatalogo): void {
     this.editando.set(item);
     this.formulario.setValue({ nombre: item.nombre, activo: item.activo });
+    this.saboresElegidos.set(new Set((item as CategoriaCatalogo).sabor_ids ?? []));
+    this.actualizarDisponibles();
   }
 
   protected cancelarEdicion(): void {
     this.editando.set(null);
     this.formulario.reset({ nombre: '', activo: true });
+    this.saboresElegidos.set(new Set());
+    this.actualizarDisponibles();
   }
 
   protected guardar(): void {
@@ -286,7 +374,10 @@ export class CatalogoSimplePage {
       return;
     }
 
-    const datos = this.formulario.getRawValue() as CatalogoGuardar;
+    const datos: CatalogoGuardar = this.formulario.getRawValue();
+    if (this.esCategorias) {
+      datos.sabor_ids = [...this.saboresElegidos()];
+    }
     const editando = this.editando();
     this.enviando.set(true);
 

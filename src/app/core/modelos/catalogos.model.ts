@@ -9,6 +9,13 @@ export interface ItemCatalogo {
 export interface CatalogoGuardar {
   nombre: string;
   activo: boolean;
+  /** Solo categorías: sabores permitidos. Sin enviarlo, se conservan. */
+  sabor_ids?: number[];
+}
+
+/** Categoría con sus sabores permitidos (vacío: acepta todos los activos). */
+export interface CategoriaCatalogo extends ItemCatalogo {
+  sabor_ids?: number[];
 }
 
 export interface Turno {
