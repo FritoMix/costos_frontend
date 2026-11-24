@@ -75,7 +75,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                           <div class="font-bold text-slate-900">{{ usuario.nombre_completo }}</div>
                           @if (usuario.id === auth.usuario()?.id) {
                             <span
-                              class="text-[10px] font-bold text-marca-700 uppercase tracking-wide"
+                              class="text-xs font-bold text-marca-700 uppercase tracking-wide"
                               >Tu sesión actual</span
                             >
                           }
@@ -93,12 +93,12 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                         {{ usuario.rol.nombre }}
                       </span>
                       @if (usuario.linea && usuario.linea.codigo !== 'papa') {
-                        <span class="ml-1 text-[11px] font-semibold text-slate-500">{{
+                        <span class="ml-1 text-xs font-semibold text-slate-500">{{
                           usuario.linea.nombre
                         }}</span>
                       }
                       @if (usuario.debe_cambiar_password) {
-                        <span class="ml-1 text-[11px] font-semibold text-amber-700"
+                        <span class="ml-1 text-xs font-semibold text-amber-700"
                           >· clave temporal</span
                         >
                       }

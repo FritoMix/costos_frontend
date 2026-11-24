@@ -14,6 +14,7 @@ import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 import { EstadoVacioComponent } from '../../ui/estado-vacio.component';
 import { TarjetaComponent } from '../../ui/tarjeta.component';
+import { IconoComponent } from '../../ui/icono.component';
 
 /**
  * Panel de operador de horno: Órdenes activas en producción para registro rápido en planta.
@@ -21,7 +22,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
 @Component({
   selector: 'app-horno-lista',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [IconoComponent, 
     RouterLink,
     DecimalPipe,
     DatePipe,
@@ -57,9 +58,9 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
       <!-- Órdenes pendientes: el operario las toma y arranca la producción
            sin tener que esperar a que el supervisor las inicie. -->
       @if (!cargando() && !error() && pendientes().length > 0) {
-        <section class="overflow-hidden rounded-3xl border border-amber-200/80 bg-amber-50/40">
+        <section class="overflow-hidden rounded-2xl border border-amber-200/80 bg-amber-50/40">
           <header class="flex items-center gap-2 border-b border-amber-200/60 px-5 py-3.5">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500 text-sm text-white">📥</span>
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500 text-sm text-white"><app-icono nombre="bandeja" [tamano]="20" /></span>
             <div>
               <p class="text-sm font-extrabold text-slate-900">Órdenes por tomar</p>
               <p class="text-xs font-medium text-slate-500">
@@ -70,7 +71,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
 
           <ul class="divide-y divide-amber-200/50">
             @for (orden of pendientes(); track orden.id) {
-              <li class="flex flex-wrap items-center justify-between gap-3 bg-white/70 px-5 py-4">
+              <li class="flex flex-wrap items-center justify-between gap-3 bg-white px-5 py-4">
                 <div class="min-w-0">
                   <p class="font-extrabold text-slate-900">
                     {{ orden.producto.nombre_comercial }}
@@ -87,15 +88,15 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
                   @if (orden.formula_estado === 'sin_formula') {
-                    <span class="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-800">
+                    <span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">
                       Fórmula por verificar al iniciar
                     </span>
                   } @else if (orden.formula_estado === 'lista') {
-                    <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-800">
+                    <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
                       Fórmula lista
                     </span>
                   } @else if (orden.formula_estado === 'no_aplica') {
-                    <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600">
+                    <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
                       Sin fórmula (histórica)
                     </span>
                   }
@@ -138,14 +139,14 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
         <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           @for (orden of ordenes(); track orden.id) {
             <div
-              class="group relative flex flex-col justify-between rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs transition-all duration-200 hover:border-slate-300 hover:shadow-md"
+              class="group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs transition-all duration-200 hover:border-slate-300 hover:shadow-md"
               [attr.data-testid]="'horno-orden-' + orden.id"
             >
               <div>
                 <!-- Top metadata -->
                 <div class="flex items-center justify-between gap-2 mb-3">
                   <span class="inline-flex items-center gap-1.5 rounded-xl bg-marca-50 px-3 py-1 text-xs font-extrabold text-marca-800 border border-marca-200/60">
-                    <span>♨️</span> {{ orden.horno.nombre }}
+                    <span><app-icono nombre="llama" [tamano]="20" /></span> {{ orden.horno.nombre }}
                   </span>
                   <span class="font-mono font-bold text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200/70">
                     #{{ orden.numero_orden }}
@@ -163,7 +164,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                 <!-- Metric box -->
                 <div class="mt-4 rounded-2xl bg-slate-50 p-3.5 border border-slate-200/60 flex items-center justify-between">
                   <div>
-                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Programado</span>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Programado</span>
                     <span class="font-mono font-extrabold text-slate-900 text-base">
                       @if (sinKg(orden)) {
                         {{ orden.meta_texto }}
@@ -173,14 +174,14 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                     </span>
                   </div>
                   <div class="text-right">
-                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Turno</span>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Turno</span>
                     <span class="text-xs font-bold text-slate-700">
                       {{ orden.turno.nombre }}
                     </span>
                   </div>
                 </div>
                 @if (orden.horas_produccion) {
-                  <p class="mt-2 text-[11px] font-semibold text-slate-400">
+                  <p class="mt-2 text-xs font-semibold text-slate-400">
                     Tope de registro: {{ orden.horas_produccion }}
                     {{ orden.horas_produccion === 1 ? 'hora' : 'horas' }} en horno
                   </p>

@@ -9,6 +9,7 @@ import { CatalogosService } from '../../core/servicios/catalogos.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
+import { IconoComponent } from '../../ui/icono.component';
 
 /**
  * Muestreos de densidad del aceite.
@@ -16,7 +17,7 @@ import { CargandoComponent } from '../../ui/cargando.component';
 @Component({
   selector: 'app-densidad-aceite',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [IconoComponent, 
     ReactiveFormsModule,
     RouterLink,
     DatePipe,
@@ -38,7 +39,7 @@ import { CargandoComponent } from '../../ui/cargando.component';
           <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
             <span>Densidad del Aceite</span>
             <span class="rounded-full bg-amber-100 px-3 py-0.5 text-xs font-extrabold text-amber-800 border border-amber-200">
-              🛢️ Control Volumétrico
+              <app-icono nombre="barril" [tamano]="16" /> Control Volumétrico
             </span>
           </h1>
           <p class="mt-1 text-sm text-slate-500 font-medium">
@@ -50,32 +51,32 @@ import { CargandoComponent } from '../../ui/cargando.component';
       <!-- Seccion 1: Tarjetas de Densidad Vigente por Horno -->
       <div class="space-y-4">
         <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-          <span>📊 Densidad Vigente por Horno</span>
+          <span><app-icono nombre="grafica" [tamano]="16" /> Densidad Vigente por Horno</span>
         </h2>
 
         @if (cargando()) {
-          <div class="p-8 rounded-3xl border border-slate-200/90 bg-white">
+          <div class="p-8 rounded-2xl border border-slate-200/90 bg-white">
             <app-cargando texto="Cargando densidades vigentes…" />
           </div>
         } @else {
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             @for (vigente of vigentes(); track vigente.horno_id) {
-              <div class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs flex flex-col justify-between hover:border-sky-300 transition-all">
+              <div class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
                 <div class="flex items-center justify-between gap-3 mb-3">
                   <span class="text-sm font-bold text-slate-900">{{ vigente.horno_nombre }}</span>
-                  <span class="text-[11px] font-mono font-semibold text-slate-400">
+                  <span class="text-xs font-mono font-semibold text-slate-400">
                     {{ vigente.fecha ? (vigente.fecha | date: 'dd/MM/yyyy') : 'Sin fecha' }}
                   </span>
                 </div>
                 <div class="mt-2 flex items-baseline gap-2">
                   @if (vigente.densidad_kg_por_litro !== null) {
-                    <span class="text-2xl font-black font-mono text-sky-700">
+                    <span class="text-2xl font-black font-mono text-marca-700">
                       {{ vigente.densidad_kg_por_litro | number: '1.0-4' }}
                     </span>
                     <span class="text-xs font-bold text-slate-500">kg/L</span>
                   } @else {
                     <span class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800 border border-amber-200">
-                      ⚠️ Sin muestras registradas
+                      <app-icono nombre="alerta" [tamano]="16" /> Sin muestras registradas
                     </span>
                   }
                 </div>
@@ -90,11 +91,11 @@ import { CargandoComponent } from '../../ui/cargando.component';
         
         <!-- Columna Izquierda: Formulario de Registro de Muestra -->
         <div class="lg:col-span-5">
-          <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-xs transition-all">
+          <div class="rounded-2xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-xs transition-all">
             <div class="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
               <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-100 text-sky-700 text-xs">
-                  🧪
+                <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-marca-100 text-marca-700 text-xs">
+                  <app-icono nombre="probeta" [tamano]="20" />
                 </span>
                 Registrar Nueva Muestra
               </h2>
@@ -142,7 +143,7 @@ import { CargandoComponent } from '../../ui/cargando.component';
 
         <!-- Columna Derecha: Historial de Muestras -->
         <div class="lg:col-span-7">
-          <div class="rounded-3xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+          <div class="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
               <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">
                 Historial de Muestras Registradas
@@ -168,14 +169,14 @@ import { CargandoComponent } from '../../ui/cargando.component';
                   </thead>
                   <tbody class="divide-y divide-slate-100">
                     @for (muestra of muestras(); track muestra.id) {
-                      <tr class="hover:bg-sky-50/40 transition-colors">
+                      <tr class="hover:bg-marca-50 transition-colors">
                         <td class="py-4 px-6 font-mono font-bold text-slate-800 text-xs">
                           {{ muestra.fecha | date: 'dd/MM/yyyy' }}
                         </td>
                         <td class="py-4 px-4 font-bold text-slate-900 text-sm">
                           {{ nombreHorno(muestra.horno_id) }}
                         </td>
-                        <td class="py-4 px-6 text-right font-mono font-bold text-sky-700 text-sm">
+                        <td class="py-4 px-6 text-right font-mono font-bold text-marca-700 text-sm">
                           {{ muestra.densidad_kg_por_litro | number: '1.0-4' }} kg/L
                         </td>
                       </tr>

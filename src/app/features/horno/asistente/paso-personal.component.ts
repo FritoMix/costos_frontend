@@ -16,7 +16,7 @@ export class PasoPersonalHornoComponent {
 
   protected claseValorGrande(activo: boolean): string {
     const base =
-      'flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl border-2 text-4xl font-extrabold ' +
+      'flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border-2 text-4xl font-extrabold ' +
       'tabular-nums shadow-2xs transition active:scale-95';
     return `${base} ${colorTecla(activo)}`;
   }

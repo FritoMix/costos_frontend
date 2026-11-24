@@ -40,7 +40,7 @@ import { CargandoComponent } from '../../ui/cargando.component';
       } @else {
         @for (linea of lineasConVariedad(); track linea.id) {
           <section
-            class="mt-6 rounded-3xl border border-slate-200 bg-white p-5"
+            class="mt-6 rounded-2xl border border-slate-200 bg-white p-5"
             [attr.data-testid]="'variedades-' + linea.codigo"
           >
             <h2 class="text-lg font-extrabold text-slate-900">{{ linea.nombre }}</h2>

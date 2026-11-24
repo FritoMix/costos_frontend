@@ -34,19 +34,21 @@ interface OpcionMenu {
   ],
   animations: [animacionRuta],
   template: `
-    <div class="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800">
+    <div class="flex min-h-screen flex-col bg-slate-100 font-sans text-slate-900">
       <header
-        class="sticky top-0 z-30 flex min-h-16 items-center justify-between gap-2 border-b border-sky-200 bg-marca-100 px-2.5 sm:px-4"
+        class="sticky top-0 z-30 flex min-h-17 items-center justify-between gap-3 bg-marca-950 px-3 text-white shadow-md shadow-marca-950/20 sm:px-5"
         (keydown.escape)="cerrarMenu(botonMenu)"
       >
         <a routerLink="/inicio" (click)="menuAbierto.set(false)"
-          class="flex min-w-0 shrink items-center gap-1.5 rounded-lg text-xs font-extrabold text-marca-950 sm:gap-2 sm:text-sm">
-          <img src="/logo.png" alt="Frito Mix" class="size-8 shrink-0 object-contain sm:size-10" />
+          class="flex min-w-0 shrink items-center gap-2.5 rounded-lg text-sm font-extrabold tracking-wide text-white focus-visible:outline-2 focus-visible:outline-marca-300 sm:text-base">
+          <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-white shadow-sm">
+            <img src="/logo.png" alt="Frito Mix" class="size-8 object-contain" />
+          </span>
           <span>{{ appNombre }}</span>
         </a>
 
         <nav #menuModulos id="menu-modulos" aria-label="Módulos"
-          class="absolute inset-x-0 top-full max-h-[60dvh] grid-cols-2 gap-1 overflow-y-auto border-b border-sky-200 bg-marca-100 p-2 text-marca-950 shadow-lg xl:static xl:flex xl:max-h-none xl:items-center xl:justify-center xl:overflow-visible xl:border-0 xl:bg-transparent xl:p-0 xl:shadow-none"
+          class="absolute inset-x-0 top-full max-h-[60dvh] grid-cols-2 gap-1 overflow-y-auto border-t border-white/10 bg-marca-950 p-2 text-white shadow-lg xl:static xl:flex xl:max-h-none xl:items-center xl:justify-center xl:gap-0.5 xl:overflow-visible xl:border-0 xl:bg-transparent xl:p-0 xl:shadow-none"
           [class.hidden]="!menuAbierto()"
           [class.grid]="menuAbierto()">
           @for (opcion of menuVisible(); track opcion.ruta) {
@@ -56,7 +58,7 @@ interface OpcionMenu {
               [class.active-link]="moduloActivo() === opcion.ruta"
               [attr.aria-current]="moduloActivo() === opcion.ruta ? 'page' : null"
               (click)="menuAbierto.set(false)"
-              class="nav-link flex min-h-11 items-center justify-center rounded-lg px-3 text-center text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-marca-700 xl:whitespace-nowrap xl:text-xs"
+              class="nav-link flex min-h-11 items-center justify-center rounded-lg px-3.5 text-center text-[0.95rem] font-semibold text-slate-200 transition-colors focus-visible:outline-2 focus-visible:outline-marca-300 xl:whitespace-nowrap xl:text-[0.9rem]"
             >
               <span>{{ opcion.texto }}</span>
             </a>
@@ -67,15 +69,16 @@ interface OpcionMenu {
           <app-campana-avisos />
           <a routerLink="/mi-cuenta" aria-label="Mi cuenta" [attr.title]="etiquetaRol()"
             (click)="menuAbierto.set(false)"
-            class="grid size-9 place-items-center rounded-full bg-marca-700 text-xs font-bold text-white">
+            class="grid size-10 place-items-center rounded-full bg-marca-500 text-sm font-bold text-white ring-2 ring-white/20 hover:bg-marca-400 focus-visible:outline-2 focus-visible:outline-marca-300">
             {{ inicialesUsuario() }}
           </a>
           <button type="button" (click)="auth.cerrarSesion()"
-            class="min-h-11 rounded-lg px-1 text-xs font-semibold text-rose-800 hover:bg-rose-50">
-            Salir
+            class="flex min-h-11 items-center gap-1.5 rounded-lg px-2.5 text-sm font-semibold text-slate-200 hover:bg-white hover:text-white focus-visible:outline-2 focus-visible:outline-marca-300">
+            <svg aria-hidden="true" class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l5-5-5-5"/><path d="M15 12H4"/></svg>
+            <span class="hidden sm:inline">Salir</span>
           </button>
           <button #botonMenu type="button"
-            class="grid size-10 place-items-center rounded-lg text-marca-950 hover:bg-marca-200 xl:hidden"
+            class="grid size-11 place-items-center rounded-lg text-white hover:bg-white xl:hidden"
             (click)="alternarMenu(menuModulos)"
             aria-controls="menu-modulos"
             [attr.aria-expanded]="menuAbierto()"
@@ -99,17 +102,19 @@ interface OpcionMenu {
   `,
   styles: `
     .nav-link.active-link {
-      background-color: var(--color-marca-200);
+      background-color: #ffffff;
       color: var(--color-marca-950);
+      font-weight: 700;
     }
 
     .nav-link:focus-visible {
-      background-color: var(--color-marca-300);
+      background-color: rgb(255 255 255 / 0.12);
     }
 
     @media (hover: hover) {
-      .nav-link:hover {
-        background-color: var(--color-marca-300);
+      .nav-link:not(.active-link):hover {
+        background-color: rgb(255 255 255 / 0.1);
+        color: #ffffff;
       }
     }
   `,

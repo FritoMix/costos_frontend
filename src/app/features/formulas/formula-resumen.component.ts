@@ -6,10 +6,10 @@ import type { EstadoFormula, Formula } from '../../core/modelos/formula.model';
 const ETIQUETAS_ESTADO: Record<EstadoFormula, { texto: string; clases: string }> = {
   sin_formula: { texto: 'Por definir', clases: 'bg-amber-50 text-amber-800 ring-amber-500/20' },
   lista: { texto: 'Lista', clases: 'bg-emerald-50 text-emerald-800 ring-emerald-500/20' },
-  en_produccion: { texto: 'Congelada', clases: 'bg-sky-50 text-sky-800 ring-sky-500/20' },
-  finalizada: { texto: 'Finalizada', clases: 'bg-sky-50 text-slate-700 ring-sky-200/80' },
+  en_produccion: { texto: 'Congelada', clases: 'bg-slate-50 text-marca-800 ring-marca-500/20' },
+  finalizada: { texto: 'Finalizada', clases: 'bg-slate-50 text-slate-700 ring-marca-200/80' },
   cancelada: { texto: 'Cancelada', clases: 'bg-rose-50 text-rose-700 ring-rose-500/20' },
-  no_aplica: { texto: 'No aplica', clases: 'bg-sky-50/70 text-slate-600 ring-sky-200/60' },
+  no_aplica: { texto: 'No aplica', clases: 'bg-slate-50 text-slate-600 ring-marca-200/60' },
 };
 
 /**
@@ -53,7 +53,7 @@ const ETIQUETAS_ESTADO: Record<EstadoFormula, { texto: string; clases: string }>
         @if (formula().avance_bultos_porcentaje !== null) {
           <div class="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
             <div
-              class="h-full rounded-full bg-gradient-to-r from-sky-400 to-marca-600 transition-all duration-500"
+              class="h-full rounded-full bg-marca-600 transition-all duration-500"
               [style.width.%]="min(100, formula().avance_bultos_porcentaje ?? 0)"
             ></div>
           </div>
@@ -61,7 +61,7 @@ const ETIQUETAS_ESTADO: Record<EstadoFormula, { texto: string; clases: string }>
 
         <div class="tabla-contenedor">
           <table class="tabla min-w-125">
-            <thead class="border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <thead class="border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-400">
               <tr>
                 <th class="py-2 pr-3">Referencia</th>
                 <th class="px-3 py-2 text-right">%</th>
@@ -81,7 +81,7 @@ const ETIQUETAS_ESTADO: Record<EstadoFormula, { texto: string; clases: string }>
                   <td class="py-2.5 pr-3">
                     <p class="font-bold text-slate-800">{{ fila.nombre }}</p>
                     @if (fila.tipo) {
-                      <p class="text-[11px] font-medium text-slate-400">{{ fila.tipo }}</p>
+                      <p class="text-xs font-medium text-slate-400">{{ fila.tipo }}</p>
                     }
                   </td>
                   <td class="px-3 py-2.5 text-right font-mono text-slate-600">
@@ -147,7 +147,7 @@ const ETIQUETAS_ESTADO: Record<EstadoFormula, { texto: string; clases: string }>
         </div>
 
         @if (formula().notas) {
-          <p class="rounded-2xl bg-sky-50/60 px-4 py-2.5 text-xs font-medium text-sky-900">
+          <p class="rounded-2xl bg-slate-50 px-4 py-2.5 text-xs font-medium text-marca-900">
             <span class="font-bold">Notas de Bodega:</span> {{ formula().notas }}
           </p>
         }

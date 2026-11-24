@@ -60,8 +60,8 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
             class="shrink-0 rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold tracking-tight whitespace-nowrap transition-all duration-150 cursor-pointer"
             [class]="
               filtro() === opcion.valor
-                ? 'bg-gradient-to-r from-sky-500 to-marca-600 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-sky-50'
+                ? 'bg-marca-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-marca-50'
             "
           >
             {{ opcion.texto }}
@@ -73,7 +73,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
         @if (errorCarga()) {
           <div role="alert" class="p-6 text-center">
             <p>No se pudo cargar el listado. Revisa la conexión e intenta de nuevo.</p>
-            <button type="button" class="mt-3 font-bold text-sky-700" (click)="recargar()">Reintentar</button>
+            <button type="button" class="mt-3 font-bold text-marca-700" (click)="recargar()">Reintentar</button>
           </div>
         } @else if (cargando()) {
           <app-cargando texto="Cargando listado de órdenes…" />
@@ -105,7 +105,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                           #{{ orden.numero_orden }}
                         </span>
                         @if (orden.destino === 'exportacion') {
-                          <span class="rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-bold text-sky-700 border border-sky-200">
+                          <span class="rounded bg-slate-50 px-1.5 py-0.5 text-xs font-bold text-marca-700 border border-slate-200">
                             EXP
                           </span>
                         }
@@ -134,12 +134,12 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                         </div>
                       }
                       @if (orden.linea && orden.linea.codigo !== 'papa') {
-                        <div class="text-[11px] font-medium text-slate-500">
+                        <div class="text-xs font-medium text-slate-500">
                           {{ orden.linea.nombre }}@if (orden.variedad) { · {{ orden.variedad.nombre }} }
                         </div>
                       }
                       @if (orden.unidad_solicitada === 'canastillas') {
-                        <div class="text-[11px] font-medium text-slate-500">
+                        <div class="text-xs font-medium text-slate-500">
                           {{ orden.cantidad_canastillas_solicitadas | number: '1.0-2' }} canastillas
                         </div>
                       }
@@ -150,17 +150,17 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                         @if (orden.formula_obligatoria) {
                           @switch (orden.formula_estado) {
                             @case ('sin_formula') {
-                              <span class="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 ring-1 ring-inset ring-amber-500/20">
+                              <span class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-800 ring-1 ring-inset ring-amber-500/20">
                                 Fórmula por definir
                               </span>
                             }
                             @case ('lista') {
-                              <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 ring-1 ring-inset ring-emerald-500/20">
+                              <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-800 ring-1 ring-inset ring-emerald-500/20">
                                 Fórmula lista
                               </span>
                             }
                             @default {
-                              <span class="rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-800 ring-1 ring-inset ring-sky-500/20">
+                              <span class="rounded-full bg-slate-50 px-2 py-0.5 text-xs font-bold text-marca-800 ring-1 ring-inset ring-marca-500/20">
                                 Fórmula congelada
                               </span>
                             }

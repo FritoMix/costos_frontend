@@ -9,6 +9,7 @@ import { NotificacionesService } from '../../core/servicios/notificaciones.servi
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 import { ConfirmarComponent } from '../../ui/confirmar.component';
+import { IconoComponent } from '../../ui/icono.component';
 
 type TipoCatalogo = 'categorias' | 'sabores' | 'tipos-desperdicio';
 
@@ -25,7 +26,7 @@ interface Textos {
 @Component({
   selector: 'app-catalogo-simple',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [IconoComponent, 
     ReactiveFormsModule,
     RouterLink,
     BotonComponent,
@@ -45,7 +46,7 @@ interface Textos {
           </a>
           <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
             <span>{{ textos().titulo }}</span>
-            <span class="rounded-full bg-sky-100 px-3 py-0.5 text-xs font-extrabold text-sky-800 border border-sky-200">
+            <span class="rounded-full bg-marca-100 px-3 py-0.5 text-xs font-extrabold text-marca-800 border border-slate-200">
               {{ items().length }} {{ items().length === 1 ? 'registro' : 'registros' }}
             </span>
           </h1>
@@ -57,17 +58,17 @@ interface Textos {
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         <!-- Columna Izquierda: Formulario de Registro / Edición -->
-        <div class="lg:col-span-5">
-          <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-xs transition-all">
+        <div class="lg:col-span-4">
+          <div class="rounded-2xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-xs transition-all">
             <div class="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
               <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-100 text-sky-700 text-xs">
-                  {{ editando() ? '✏️' : '➕' }}
+                <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-marca-100 text-marca-700 text-xs">
+                  @if (editando()) {<app-icono nombre="lapiz" [tamano]="20" />} @else {<app-icono nombre="mas" [tamano]="20" />}
                 </span>
                 {{ editando() ? 'Modificar ' + textos().singular : 'Agregar ' + textos().singular }}
               </h2>
               @if (editando()) {
-                <span class="rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">
+                <span class="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
                   Modo Edición
                 </span>
               }
@@ -91,7 +92,7 @@ interface Textos {
                 <label class="flex items-center justify-between cursor-pointer select-none">
                   <div>
                     <span class="text-xs font-bold text-slate-800 block">Estado del catálogo</span>
-                    <span class="text-[11px] text-slate-500 font-medium">Habilitar este ítem en el sistema</span>
+                    <span class="text-xs text-slate-500 font-medium">Habilitar este ítem en el sistema</span>
                   </div>
                   <input
                     type="checkbox"
@@ -104,7 +105,7 @@ interface Textos {
               @if (esCategorias) {
                 <div data-testid="sabores-categoria">
                   <span class="etiqueta text-xs font-bold text-slate-700 mb-1 block">Sabores de la categoría</span>
-                  <p class="mb-2.5 text-[11px] font-medium text-slate-500">
+                  <p class="mb-2.5 text-xs font-medium text-slate-500">
                     En saborizado solo se ofrecen los marcados. Si no marcas ninguno, se ofrecen todos los activos.
                   </p>
                   <div class="flex flex-wrap gap-2">
@@ -149,8 +150,8 @@ interface Textos {
         </div>
 
         <!-- Columna Derecha: Tabla de Registros -->
-        <div class="lg:col-span-7">
-          <div class="rounded-3xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+        <div class="lg:col-span-8">
+          <div class="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
               <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">
                 Listado de {{ textos().titulo }}
@@ -179,14 +180,14 @@ interface Textos {
                   </thead>
                   <tbody class="divide-y divide-slate-100">
                     @for (item of items(); track item.id) {
-                      <tr class="hover:bg-sky-50/40 transition-colors">
+                      <tr class="hover:bg-marca-50 transition-colors">
                         <td class="py-4 px-6 font-bold text-slate-900 text-sm">{{ item.nombre }}</td>
                         @if (esCategorias) {
                           <td class="py-4 px-4">
                             @if (nombresSabores(item); as nombres) {
                               <div class="flex max-w-64 flex-wrap gap-1">
                                 @for (nombre of nombres; track nombre) {
-                                  <span class="rounded-md border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[11px] font-semibold text-sky-900">{{ nombre }}</span>
+                                  <span class="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-xs font-semibold text-marca-900">{{ nombre }}</span>
                                 }
                               </div>
                             } @else {
@@ -211,17 +212,17 @@ interface Textos {
                           <div class="inline-flex items-center gap-2 justify-end">
                             <button
                               type="button"
-                              class="inline-flex items-center gap-1 rounded-xl bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 hover:bg-sky-100 hover:text-sky-900 border border-sky-200/80 transition-all cursor-pointer"
+                              class="inline-flex items-center gap-1 rounded-xl bg-slate-50 px-3 py-1.5 text-xs font-bold text-marca-700 hover:bg-marca-100 hover:text-marca-900 border border-slate-200 transition-all cursor-pointer"
                               (click)="editar(item)"
                             >
-                              ✏️ Corregir
+                              <app-icono nombre="lapiz" [tamano]="16" /> Corregir
                             </button>
                             <button
                               type="button"
                               class="inline-flex items-center gap-1 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 hover:text-rose-900 border border-rose-200/80 transition-all cursor-pointer"
                               (click)="aEliminar.set(item)"
                             >
-                              🗑️ Eliminar
+                              <app-icono nombre="basura" [tamano]="16" /> Eliminar
                             </button>
                           </div>
                         </td>

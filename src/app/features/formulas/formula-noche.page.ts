@@ -10,6 +10,7 @@ import { FormulaService } from '../../core/servicios/formula.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
+import { IconoComponent } from '../../ui/icono.component';
 
 interface FilaEdicion {
   referencia_papa_id: number | null;
@@ -24,17 +25,17 @@ interface FilaEdicion {
 @Component({
   selector: 'app-formula-noche',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, RouterLink, BotonComponent, CargandoComponent],
+  imports: [IconoComponent, DatePipe, RouterLink, BotonComponent, CargandoComponent],
   template: `
     <div class="pagina-contenido" data-testid="formula-noche">
       <header class="border-b border-slate-200/80 pb-5">
         <a
           routerLink="/formula-produccion"
-          class="mb-2 inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 transition hover:text-sky-800"
+          class="mb-2 inline-flex items-center gap-1.5 text-xs font-bold text-marca-600 transition hover:text-marca-800"
           >← Volver a Fórmula de producción</a
         >
         <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-          🌙 Fórmula de la noche
+          <app-icono nombre="luna" [tamano]="16" /> Fórmula de la noche
         </h1>
         <p class="mt-1 max-w-3xl text-sm font-medium text-slate-500">
           Deja por horno la papa que despachaste para la noche (bultos por tanda). Si en la noche se
@@ -49,7 +50,7 @@ interface FilaEdicion {
         <div class="grid gap-4 lg:grid-cols-2">
           @for (horno of hornos(); track horno.horno_id) {
             <section
-              class="rounded-3xl border border-slate-200 bg-white p-5 shadow-2xs"
+              class="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs"
               [attr.data-testid]="'noche-horno-' + horno.horno_id"
             >
               <div class="flex items-start justify-between gap-3">
@@ -112,7 +113,7 @@ interface FilaEdicion {
                 }
                 <button
                   type="button"
-                  class="text-sm font-bold text-sky-700 hover:text-sky-900"
+                  class="text-sm font-bold text-marca-700 hover:text-marca-900"
                   (click)="agregar(horno.horno_id)"
                 >
                   + Agregar papa

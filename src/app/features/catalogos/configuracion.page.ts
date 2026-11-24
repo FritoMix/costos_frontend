@@ -6,6 +6,7 @@ import { CatalogosService } from '../../core/servicios/catalogos.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
+import { IconoComponent } from '../../ui/icono.component';
 
 /**
  * Valores generales de la planta.
@@ -13,7 +14,7 @@ import { CargandoComponent } from '../../ui/cargando.component';
 @Component({
   selector: 'app-configuracion',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, BotonComponent, CargandoComponent],
+  imports: [IconoComponent, ReactiveFormsModule, RouterLink, BotonComponent, CargandoComponent],
   template: `
     <div class="pagina-contenido mx-auto max-w-4xl">
       <!-- Encabezado Espacioso -->
@@ -35,11 +36,11 @@ import { CargandoComponent } from '../../ui/cargando.component';
       </header>
 
       @if (cargando()) {
-        <div class="p-8 rounded-3xl border border-slate-200/90 bg-white">
+        <div class="p-8 rounded-2xl border border-slate-200/90 bg-white">
           <app-cargando texto="Cargando configuración vigente…" />
         </div>
       } @else {
-        <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xs">
+        <div class="rounded-2xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xs">
           <form [formGroup]="formulario" (ngSubmit)="guardar()" class="space-y-6">
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -49,7 +50,7 @@ import { CargandoComponent } from '../../ui/cargando.component';
                 <div>
                   <div class="flex items-center gap-3 mb-2">
                     <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-800 text-base font-bold">
-                      🥔
+                      <app-icono nombre="bulto" [tamano]="20" />
                     </span>
                     <h2 class="text-sm font-bold text-slate-900">
                       Peso Bulto Papa Cruda
@@ -81,8 +82,8 @@ import { CargandoComponent } from '../../ui/cargando.component';
               <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-6 space-y-4 flex flex-col justify-between">
                 <div>
                   <div class="flex items-center gap-3 mb-2">
-                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-100 text-sky-800 text-base font-bold">
-                      🧺
+                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-marca-100 text-marca-800 text-base font-bold">
+                      <app-icono nombre="canasta" [tamano]="20" />
                     </span>
                     <h2 class="text-sm font-bold text-slate-900">
                       Peso Canastilla (General)

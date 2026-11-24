@@ -4,7 +4,7 @@ export type VarianteBoton = 'primario' | 'secundario' | 'peligro' | 'texto' | 'a
 export type TamanoBoton = 'normal' | 'grande' | 'pequeno';
 
 /**
- * Botón futurista en Azul Cálido / Zafiro de alto contraste y ergonomía táctil.
+ * Botón de DATACONTROL: colores sólidos de la marca, alto contraste y tamaño táctil.
  */
 @Component({
   selector: 'app-boton',
@@ -56,27 +56,28 @@ export class BotonComponent {
 
   protected readonly clases = computed(() => {
     const base =
-      'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 ' +
+      'inline-flex items-center justify-center gap-2 rounded-xl font-bold tracking-tight ' +
+      'transition-[background-color,border-color,color,box-shadow,transform] duration-150 ' +
       'cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 select-none ' +
-      'active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2';
+      'active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2';
 
+    // Un solo lenguaje: colores sólidos de la marca, sin degradados.
     const porVariante: Record<VarianteBoton, string> = {
       primario:
-        'rounded-2xl bg-gradient-to-b from-sky-500 to-marca-600 text-white shadow-md hover:from-sky-600 hover:to-marca-700 hover:shadow-lg hover:shadow-sky-500/25 outline-sky-600 border border-sky-400/40',
+        'bg-marca-600 text-white shadow-sm shadow-marca-900/20 hover:bg-marca-700 hover:shadow-md outline-marca-600',
       secundario:
-        'rounded-2xl border border-sky-200/90 bg-white/90 text-sky-900 shadow-xs hover:bg-sky-50 hover:border-sky-300 hover:text-sky-950 outline-sky-400',
+        'border-[1.5px] border-slate-300 bg-white text-marca-950 shadow-xs hover:border-marca-400 hover:bg-marca-50 outline-marca-500',
       acento:
-        'rounded-2xl bg-gradient-to-b from-slate-800 to-slate-900 text-white shadow-sm hover:from-slate-700 hover:to-slate-800 outline-slate-800 border border-slate-700/40',
+        'bg-marca-950 text-white shadow-sm hover:bg-marca-900 hover:shadow-md outline-marca-900',
       peligro:
-        'rounded-2xl bg-gradient-to-b from-rose-500 to-rose-600 text-white shadow-sm hover:from-rose-600 hover:to-rose-700 hover:shadow-md hover:shadow-rose-500/25 outline-rose-600 border border-rose-500/40',
-      texto:
-        'rounded-xl text-sky-700 hover:bg-sky-50/80 hover:text-sky-800 outline-sky-600 px-2 py-1',
+        'bg-rose-600 text-white shadow-sm shadow-rose-900/20 hover:bg-rose-700 hover:shadow-md outline-rose-600',
+      texto: 'text-marca-700 hover:bg-marca-50 hover:text-marca-900 outline-marca-600 px-2 py-1',
     };
 
     const porTamano: Record<TamanoBoton, string> = {
-      pequeno: 'min-h-[38px] px-3 py-1.5 text-xs',
-      normal: 'min-h-[44px] px-4 py-2.5 text-sm tracking-tight',
-      grande: 'min-h-[50px] px-6 py-3 text-base tracking-tight',
+      pequeno: 'min-h-10 px-3.5 py-1.5 text-sm',
+      normal: 'min-h-12 px-5 py-2.5 text-[0.95rem]',
+      grande: 'min-h-14 px-6 py-3 text-base',
     };
 
     return [

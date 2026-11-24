@@ -17,6 +17,7 @@ import { NotificacionesService } from '../../core/servicios/notificaciones.servi
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 import { ConfirmarComponent } from '../../ui/confirmar.component';
+import { IconoComponent } from '../../ui/icono.component';
 
 /**
  * Hornos: categorías que produce, exportación y calibración de tanque de aceite.
@@ -24,7 +25,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
 @Component({
   selector: 'app-hornos',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [IconoComponent, 
     ReactiveFormsModule,
     RouterLink,
     DecimalPipe,
@@ -63,7 +64,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
           >
             <span>Líneas y Hornos de Fritura</span>
             <span
-              class="rounded-full bg-sky-100 px-3 py-0.5 text-xs font-extrabold text-sky-800 border border-sky-200"
+              class="rounded-full bg-marca-100 px-3 py-0.5 text-xs font-extrabold text-marca-800 border border-slate-200"
             >
               {{ hornos().length }} hornos
             </span>
@@ -81,12 +82,12 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
       </header>
 
       @if (esSupervisor()) {
-        <div class="rounded-3xl border border-sky-200/80 bg-white p-6 sm:p-8 shadow-xs">
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs">
           <div class="mb-5 border-b border-slate-100 pb-4">
             <h2 class="flex items-center gap-2 text-lg font-bold text-slate-900">
               <span
-                class="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sm text-sky-700"
-                >⚙️</span
+                class="flex h-8 w-8 items-center justify-center rounded-xl bg-marca-100 text-sm text-marca-700"
+                ><app-icono nombre="engranaje" [tamano]="20" /></span
               >
               Capacidad de producción
             </h2>
@@ -146,13 +147,13 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
           </form>
         </div>
       } @else {
-        <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xs">
+        <div class="rounded-2xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xs">
           <div class="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
             <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
               <span
                 class="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-700 text-sm"
               >
-                {{ editando() ? '✏️' : '♨️' }}
+                @if (editando()) {<app-icono nombre="lapiz" [tamano]="20" />} @else {<app-icono nombre="llama" [tamano]="20" />}
               </span>
               {{ editando() ? 'Corregir Configuración de Horno' : 'Agregar Nueva Línea / Horno' }}
             </h2>
@@ -219,7 +220,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                       <option [ngValue]="linea.id">{{ linea.nombre }}</option>
                     }
                   </select>
-                  <p class="mt-1 text-[11px] text-slate-500 font-medium">
+                  <p class="mt-1 text-xs text-slate-500 font-medium">
                     Las órdenes de este horno serán de esta línea.
                   </p>
                 </div>
@@ -227,11 +228,11 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
             </div>
 
             <!-- Capacidad productiva del horno -->
-            <div class="rounded-2xl border border-sky-200/80 bg-sky-50/60 p-5">
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
               <h3
-                class="text-xs font-extrabold uppercase tracking-wider text-sky-900 flex items-center gap-1.5"
+                class="text-xs font-extrabold uppercase tracking-wider text-marca-900 flex items-center gap-1.5"
               >
-                ⚙️ Capacidad de producción
+                <app-icono nombre="engranaje" [tamano]="16" /> Capacidad de producción
               </h3>
               <div class="mt-3 grid gap-6 md:grid-cols-2">
                 <div>
@@ -254,7 +255,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                     formControlName="capacidad_bultos_hora"
                   />
                 </div>
-                <p class="self-end text-[11px] font-medium text-sky-900">
+                <p class="self-end text-xs font-medium text-marca-900">
                   Con esta capacidad y la participación de cada referencia, Bodega proyecta la
                   distribución de bultos, kg crudos y kg fritos estimados.
                 </p>
@@ -266,15 +267,15 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
               <h3
                 class="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-1.5"
               >
-                🏷️ Categorías que puede producir este horno
+                <app-icono nombre="etiqueta" [tamano]="16" /> Categorías que puede producir este horno
               </h3>
               <div class="flex flex-wrap gap-3">
                 @for (categoria of categorias(); track categoria.id) {
                   <label
                     class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold cursor-pointer transition-all select-none"
-                    [class.bg-sky-500]="categoriasElegidas().includes(categoria.id)"
+                    [class.bg-marca-500]="categoriasElegidas().includes(categoria.id)"
                     [class.text-white]="categoriasElegidas().includes(categoria.id)"
-                    [class.border-sky-600]="categoriasElegidas().includes(categoria.id)"
+                    [class.border-marca-600]="categoriasElegidas().includes(categoria.id)"
                     [class.bg-white]="!categoriasElegidas().includes(categoria.id)"
                     [class.text-slate-700]="!categoriasElegidas().includes(categoria.id)"
                     [class.border-slate-200]="!categoriasElegidas().includes(categoria.id)"
@@ -296,7 +297,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
               <h3
                 class="text-xs font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5"
               >
-                📐 Calibración del Tanque de Aceite
+                <app-icono nombre="regla" [tamano]="16" /> Calibración del Tanque de Aceite
               </h3>
               <div class="grid gap-6 md:grid-cols-2">
                 <div>
@@ -316,7 +317,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                     class="campo font-mono"
                     formControlName="tanque_diametro_cm"
                   />
-                  <p class="mt-1 text-[11px] text-slate-500 font-medium">
+                  <p class="mt-1 text-xs text-slate-500 font-medium">
                     La app estima los litros por cm asumiendo un tanque cilíndrico.
                   </p>
                 </div>
@@ -337,7 +338,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                     class="campo font-mono"
                     formControlName="litros_por_cm_manual"
                   />
-                  <p class="mt-1 text-[11px] text-slate-500 font-medium">
+                  <p class="mt-1 text-xs text-slate-500 font-medium">
                     Si se especifica este valor, tiene prioridad sobre el diámetro teórico.
                   </p>
                 </div>
@@ -352,7 +353,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                 <input
                   type="checkbox"
                   formControlName="apto_exportacion"
-                  class="h-5 w-5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                  class="h-5 w-5 rounded border-slate-300 text-marca-600 focus:ring-marca-500"
                 />
                 <span>Apto para Exportación</span>
               </label>
@@ -382,7 +383,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
       }
 
       <!-- Tabla de Hornos -->
-      <div class="rounded-3xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+      <div class="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
         <div
           class="px-6 py-4 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between"
         >
@@ -432,22 +433,22 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
               </thead>
               <tbody class="divide-y divide-slate-100">
                 @for (horno of hornos(); track horno.id) {
-                  <tr class="hover:bg-sky-50/40 transition-colors">
+                  <tr class="hover:bg-marca-50 transition-colors">
                     <td class="py-4 px-6 font-bold text-slate-900 text-sm">
                       <div class="flex items-center gap-2">
                         <span>{{ horno.nombre }}</span>
                         @if (horno.linea && horno.linea.codigo !== 'papa') {
                           <span
-                            class="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-200/80"
+                            class="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-800 border border-amber-200/80"
                           >
                             {{ horno.linea.nombre }}
                           </span>
                         }
                         @if (horno.apto_exportacion) {
                           <span
-                            class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 border border-indigo-200/80"
+                            class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700 border border-indigo-200/80"
                           >
-                            ✈️ Exportación
+                            <app-icono nombre="avion" [tamano]="16" /> Exportación
                           </span>
                         }
                       </div>
@@ -456,7 +457,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                       <div class="flex flex-wrap gap-1">
                         @for (categoria of horno.categorias; track categoria.id) {
                           <span
-                            class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-700"
+                            class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700"
                           >
                             {{ categoria.nombre }}
                           </span>
@@ -473,9 +474,9 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                         {{ horno.litros_por_cm | number: '1.0-4' }} L/cm
                       } @else {
                         <span
-                          class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 border border-amber-200"
+                          class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-800 border border-amber-200"
                         >
-                          ⚠️ Sin calibrar
+                          <app-icono nombre="alerta" [tamano]="16" /> Sin calibrar
                         </span>
                       }
                     </td>
@@ -484,9 +485,9 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                         {{ horno.capacidad_bultos_hora | number: '1.0-0' }}
                       } @else {
                         <span
-                          class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 border border-amber-200"
+                          class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-800 border border-amber-200"
                         >
-                          ⚠️ Sin configurar
+                          <app-icono nombre="alerta" [tamano]="16" /> Sin configurar
                         </span>
                       }
                     </td>
@@ -512,25 +513,25 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                         @if (esSupervisor()) {
                           <button
                             type="button"
-                            class="inline-flex items-center gap-1 rounded-xl bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 hover:bg-sky-100 hover:text-sky-900 border border-sky-200/80 transition-all cursor-pointer"
+                            class="inline-flex items-center gap-1 rounded-xl bg-slate-50 px-3 py-1.5 text-xs font-bold text-marca-700 hover:bg-marca-100 hover:text-marca-900 border border-slate-200 transition-all cursor-pointer"
                             (click)="prepararCapacidad(horno)"
                           >
-                            ⚙️ Capacidad
+                            <app-icono nombre="engranaje" [tamano]="16" /> Capacidad
                           </button>
                         } @else {
                           <button
                             type="button"
-                            class="inline-flex items-center gap-1 rounded-xl bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 hover:bg-sky-100 hover:text-sky-900 border border-sky-200/80 transition-all cursor-pointer"
+                            class="inline-flex items-center gap-1 rounded-xl bg-slate-50 px-3 py-1.5 text-xs font-bold text-marca-700 hover:bg-marca-100 hover:text-marca-900 border border-slate-200 transition-all cursor-pointer"
                             (click)="editar(horno)"
                           >
-                            ✏️ Corregir
+                            <app-icono nombre="lapiz" [tamano]="16" /> Corregir
                           </button>
                           <button
                             type="button"
                             class="inline-flex items-center gap-1 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 hover:text-rose-900 border border-rose-200/80 transition-all cursor-pointer"
                             (click)="aEliminar.set(horno)"
                           >
-                            🗑️ Eliminar
+                            <app-icono nombre="basura" [tamano]="16" /> Eliminar
                           </button>
                         }
                       </div>

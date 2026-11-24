@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import type { Notificacion } from '../core/modelos/notificacion.model';
 import { AuthService } from '../core/servicios/auth.service';
 import { NotificacionesPlantaService } from '../core/servicios/notificaciones-planta.service';
+import { IconoComponent, type NombreIcono } from './icono.component';
 
 /**
  * Aviso de planta en grande, en el centro de la pantalla, cuando llega uno
@@ -13,23 +14,24 @@ import { NotificacionesPlantaService } from '../core/servicios/notificaciones-pl
 @Component({
   selector: 'app-aviso-grande',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IconoComponent],
   template: `
     @if (aviso(); as a) {
       <div
-        class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 px-4 backdrop-blur-sm"
+        class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 px-4"
         role="alertdialog"
         aria-modal="true"
         data-testid="aviso-grande"
       >
         <div
-          class="anim-entrada w-full max-w-md overflow-hidden rounded-3xl bg-white text-center shadow-2xl"
+          class="anim-entrada w-full max-w-md overflow-hidden rounded-2xl bg-white text-center shadow-2xl"
         >
           <div class="px-6 pb-5 pt-8" [class]="estilo().fondo">
             <span
-              class="mx-auto flex h-20 w-20 animate-pulse items-center justify-center rounded-full text-4xl shadow-lg"
+              class="mx-auto flex h-20 w-20 animate-pulse items-center justify-center rounded-full shadow-lg"
               [class]="estilo().circulo"
               aria-hidden="true"
-              >{{ estilo().icono }}</span
+              ><app-icono [nombre]="estilo().icono" [tamano]="40" [grosor]="1.6" /></span
             >
             <h2 class="mt-5 text-2xl font-bold tracking-tight text-slate-900">{{ a.titulo }}</h2>
             <p class="mx-auto mt-2 max-w-sm text-base font-medium text-slate-600">
@@ -86,19 +88,19 @@ export class AvisoGrandeComponent {
   protected readonly estilo = computed(() => {
     switch (this.aviso()?.tipo) {
       case 'produccion_por_terminar':
-        return { fondo: 'bg-amber-50', circulo: 'bg-amber-200', icono: '⏰' };
+        return { fondo: 'bg-amber-50', circulo: 'bg-amber-200', icono: 'reloj' as NombreIcono };
       case 'produccion_terminada':
-        return { fondo: 'bg-rose-50', circulo: 'bg-rose-200', icono: '🛑' };
+        return { fondo: 'bg-rose-50', circulo: 'bg-rose-200', icono: 'alto' as NombreIcono };
       case 'orden_cerrada_sola':
-        return { fondo: 'bg-emerald-50', circulo: 'bg-emerald-200', icono: '✅' };
+        return { fondo: 'bg-emerald-50', circulo: 'bg-emerald-200', icono: 'checkCirculo' as NombreIcono };
       case 'recordar_formula_noche':
-        return { fondo: 'bg-indigo-50', circulo: 'bg-indigo-200', icono: '🌙' };
+        return { fondo: 'bg-indigo-50', circulo: 'bg-indigo-200', icono: 'luna' as NombreIcono };
       case 'recuperar_password':
-        return { fondo: 'bg-amber-50', circulo: 'bg-amber-200', icono: '🔑' };
+        return { fondo: 'bg-amber-50', circulo: 'bg-amber-200', icono: 'llave' as NombreIcono };
       case 'formula_lista':
-        return { fondo: 'bg-emerald-50', circulo: 'bg-emerald-200', icono: '🧪' };
+        return { fondo: 'bg-emerald-50', circulo: 'bg-emerald-200', icono: 'probeta' as NombreIcono };
       default:
-        return { fondo: 'bg-marca-50', circulo: 'bg-marca-200', icono: '🆕' };
+        return { fondo: 'bg-marca-50', circulo: 'bg-marca-200', icono: 'info' as NombreIcono };
     }
   });
 

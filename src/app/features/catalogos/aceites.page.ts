@@ -36,7 +36,7 @@ import { CargandoComponent } from '../../ui/cargando.component';
       </header>
 
       <form
-        class="mt-6 grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 sm:grid-cols-4"
+        class="mt-6 grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:grid-cols-4"
         [formGroup]="formulario"
         (ngSubmit)="guardar()"
       >
@@ -103,7 +103,7 @@ import { CargandoComponent } from '../../ui/cargando.component';
             Aún no hay aceites registrados.
           </p>
         } @else {
-          <ul class="divide-y divide-slate-100 rounded-3xl border border-slate-200 bg-white">
+          <ul class="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
             @for (aceite of aceites(); track aceite.id) {
               <li class="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
                 <div>

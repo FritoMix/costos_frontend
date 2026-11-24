@@ -70,13 +70,13 @@ export interface BarraDato {
             <!-- Sub-etiqueta: muestra meta cuando aplica -->
             @if (dato.meta != null && dato.meta > 0) {
               <div class="mt-1 flex items-center gap-1.5">
-                <span class="text-[10px] font-medium text-slate-400">
+                <span class="text-xs font-medium text-slate-400">
                   Meta: {{ dato.meta | number: '1.0-2' }} {{ unidad() }}
                 </span>
                 @if (cumpleMeta(dato)) {
-                  <span class="text-[10px] font-bold text-emerald-600">✓ Cumplida</span>
+                  <span class="text-xs font-bold text-emerald-600">✓ Cumplida</span>
                 } @else {
-                  <span class="text-[10px] font-bold text-red-500">✗ No cumplida</span>
+                  <span class="text-xs font-bold text-red-500">✗ No cumplida</span>
                 }
               </div>
             }
@@ -125,11 +125,11 @@ export class GraficaBarrasComponent {
   protected colorBarra(dato: BarraDato): string {
     if (dato.meta != null && Number(dato.meta) > 0) {
       return this.cumpleMeta(dato)
-        ? 'bg-gradient-to-r from-emerald-400 via-green-500 to-emerald-600'
-        : 'bg-gradient-to-r from-red-400 via-rose-500 to-red-600';
+        ? 'bg-emerald-600'
+        : 'bg-rose-600';
     }
     // Sin meta: barra neutra (gris azulado)
-    return this.minimalista() ? 'bg-zinc-500' : 'bg-gradient-to-r from-slate-400 via-slate-500 to-slate-600';
+    return this.minimalista() ? 'bg-slate-500' : 'bg-slate-500';
   }
 }
 
