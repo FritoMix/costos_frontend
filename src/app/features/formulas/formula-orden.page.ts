@@ -23,6 +23,7 @@ import { CargandoComponent } from '../../ui/cargando.component';
 import { EtiquetaEstadoComponent } from '../../ui/etiqueta-estado.component';
 import { TarjetaComponent } from '../../ui/tarjeta.component';
 import { FormulaResumenComponent } from './formula-resumen.component';
+import { IconoComponent } from '../../ui/icono.component';
 
 interface FilaMezcla {
   referencia_papa_id: number | null;
@@ -49,7 +50,7 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
   selector: 'app-formula-orden',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.inert]': 'guardando() ? "" : null' },
-  imports: [
+  imports: [IconoComponent, 
     RouterLink,
     FormsModule,
     DecimalPipe,
@@ -66,7 +67,7 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
         <div>
           <a
             routerLink="/formula-produccion"
-            class="inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 hover:text-sky-800 transition mb-2"
+            class="inline-flex items-center gap-1.5 text-xs font-bold text-marca-600 hover:text-marca-800 transition mb-2"
           >
             ← Volver a Fórmula de producción
           </a>
@@ -87,7 +88,7 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
       @if (cargando()) {
         <app-cargando texto="Cargando la orden…" />
       } @else if (errorCarga()) {
-        <div class="rounded-3xl border border-rose-200 bg-rose-50/60 p-6 text-center">
+        <div class="rounded-2xl border border-rose-200 bg-rose-50/60 p-6 text-center">
           <p class="text-sm font-bold text-rose-800">{{ errorCarga() }}</p>
           <div class="mt-3 flex justify-center">
             <app-boton variante="secundario" (click)="cargar()">Reintentar</app-boton>
@@ -96,11 +97,11 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
       } @else if (orden(); as actual) {
         @if (actual.formula_automatica) {
           <div
-            class="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-amber-200 bg-amber-50 p-5"
+            class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5"
             data-testid="aviso-formula-noche"
           >
             <div>
-              <p class="font-extrabold text-amber-900">🌙 Esta orden tomó la fórmula de la noche</p>
+              <p class="font-extrabold text-amber-900"><app-icono nombre="luna" [tamano]="16" /> Esta orden tomó la fórmula de la noche</p>
               <p class="text-sm font-medium text-amber-800">
                 La puso la app porque el producto no tenía fórmula activa. Confírmala si está bien
                 o corrígela abajo (mientras la orden esté pendiente).
@@ -115,14 +116,14 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
         <app-tarjeta titulo="Orden solicitada por el supervisor" [sinRelleno]="true">
           <div class="grid gap-x-6 gap-y-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Producto</p>
+              <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Producto</p>
               <p class="mt-0.5 text-sm font-extrabold text-slate-900">
                 {{ actual.producto.nombre_comercial }}
               </p>
               <p class="text-xs font-medium text-slate-400">{{ actual.categoria.nombre }}</p>
             </div>
             <div>
-              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Cantidad pedida</p>
+              <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Cantidad pedida</p>
               <p class="mt-0.5 font-mono text-sm font-extrabold text-slate-900">
                 {{ actual.cantidad_programada | number: '1.0-2' }}
                 {{ actual.unidad_solicitada === 'kg' ? 'kg' : 'canastillas' }}
@@ -134,14 +135,14 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
               }
             </div>
             <div>
-              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Horas / horno</p>
+              <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Horas / horno</p>
               <p class="mt-0.5 text-sm font-extrabold text-slate-900">
                 {{ actual.horas_produccion }} h · {{ actual.horno.nombre }}
               </p>
               <p class="text-xs font-medium text-slate-400">{{ actual.turno.nombre }}</p>
             </div>
             <div>
-              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Estado</p>
+              <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Estado</p>
               <div class="mt-1 flex flex-wrap items-center gap-2">
                 <app-etiqueta-estado [estado]="actual.estado" [texto]="actual.estado_etiqueta" />
                 @if (actual.destino === 'exportacion') {
@@ -159,7 +160,7 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
               {{ avisoEstado() }}
             </p>
             @if (formula()?.fecha_actualizacion) {
-              <p class="mt-0.5 text-[11px] font-medium text-slate-400">
+              <p class="mt-0.5 text-xs font-medium text-slate-400">
                 Última actualización: {{ formula()!.fecha_actualizacion | date: 'dd/MM/yyyy HH:mm' }}
                 @if (formula()!.actualizada_por) {
                   · {{ formula()!.actualizada_por!.nombre_completo }}
@@ -282,7 +283,7 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
               @if (proyeccion(); as proy) {
                 <div class="grid gap-4 sm:grid-cols-3 pt-2">
                   <div class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs flex flex-col justify-between">
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">
                       Bultos por tanda
                     </p>
                     <p class="font-mono mt-0.5 text-xl font-black text-slate-900" data-testid="formula-total-tanda">
@@ -330,7 +331,7 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
                       {{ proy.tandas_programadas }} programadas
                     </p>
                     @if (proyectando()) {
-                      <p class="mt-2 text-[11px] font-semibold text-sky-600">Actualizando vista previa…</p>
+                      <p class="mt-2 text-xs font-semibold text-marca-600">Actualizando vista previa…</p>
                     }
                   </div>
                 </div>
@@ -348,7 +349,7 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
               }
 
               <label class="block">
-                <span class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <span class="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400">
                   Notas para horno (opcional)
                 </span>
                 <textarea
@@ -381,7 +382,7 @@ const AVISOS_ESTADO: Record<EstadoFormula, string> = {
               @if (advertencias().length > 0) {
                 <ul class="space-y-1 rounded-2xl bg-amber-50 px-4 py-3">
                   @for (advertencia of advertencias(); track advertencia) {
-                    <li class="text-xs font-semibold text-amber-900">⚠️ {{ advertencia }}</li>
+                    <li class="text-xs font-semibold text-amber-900"><app-icono nombre="alerta" [tamano]="20" /> {{ advertencia }}</li>
                   }
                 </ul>
               }

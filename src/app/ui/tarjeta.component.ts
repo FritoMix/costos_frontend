@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 /**
- * Contenedor tarjeta con glassmorphism cálido, soporte para título, subtítulo, badges y acciones.
+ * Tarjeta blanca de DATACONTROL, con título, subtítulo y acciones opcionales.
  * Espaciado amplio y jerarquía visual nítida.
  */
 @Component({
@@ -10,20 +10,18 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   host: { class: 'block min-w-0' },
   template: `
     <section [class]="minimalista()
-      ? 'rounded-xl border border-zinc-200 bg-white overflow-hidden'
+      ? 'rounded-xl border border-slate-200 bg-white overflow-hidden'
       : 'tarjeta overflow-hidden'">
       @if (titulo() || subtitulo()) {
         <header
-          class="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4 sm:px-7 sm:py-4.5"
-          [class]="minimalista() ? 'border-zinc-200 bg-zinc-50' : 'border-sky-100/90'"
-          [style.background]="minimalista() ? null : 'linear-gradient(135deg, rgba(240,249,255,0.7) 0%, rgba(224,242,254,0.35) 100%)'"
+          class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50/70 px-5 py-4 sm:px-6"
         >
           <div class="min-w-0">
             @if (titulo()) {
-              <h2 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">{{ titulo() }}</h2>
+              <h2 class="text-lg font-bold tracking-tight text-marca-950">{{ titulo() }}</h2>
             }
             @if (subtitulo()) {
-              <p class="mt-1 text-xs sm:text-sm text-slate-500 font-medium">{{ subtitulo() }}</p>
+              <p class="mt-0.5 text-sm text-slate-600">{{ subtitulo() }}</p>
             }
           </div>
           <div class="flex flex-wrap items-center gap-3">
@@ -31,7 +29,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
           </div>
         </header>
       }
-      <div [class]="sinRelleno() ? '' : 'p-5 sm:p-7 lg:p-8'">
+      <div [class]="sinRelleno() ? '' : 'p-5 sm:p-6'">
         <ng-content />
       </div>
     </section>

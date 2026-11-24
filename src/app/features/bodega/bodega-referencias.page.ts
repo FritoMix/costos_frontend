@@ -18,6 +18,7 @@ import { NotificacionesService } from '../../core/servicios/notificaciones.servi
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 import { ConfirmarComponent } from '../../ui/confirmar.component';
+import { IconoComponent } from '../../ui/icono.component';
 
 /**
  * Catalogo de referencias de papa y proyeccion de produccion.
@@ -31,7 +32,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
   selector: 'app-bodega-referencias',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.inert]': 'enviando() ? "" : null' },
-  imports: [
+  imports: [IconoComponent, 
     ReactiveFormsModule,
     RouterLink,
     DatePipe,
@@ -87,19 +88,19 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
 
       <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
         <section class="lg:col-span-5">
-          <div class="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs sm:p-7">
+          <div class="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs sm:p-7">
             <div class="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
               <h2 class="flex items-center gap-2 text-base font-bold text-slate-900">
                 <span
                   class="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-100 text-xs text-lime-800"
                 >
-                  {{ editando() ? '✏️' : '➕' }}
+                  @if (editando()) {<app-icono nombre="lapiz" [tamano]="20" />} @else {<app-icono nombre="mas" [tamano]="20" />}
                 </span>
                 {{ editando() ? 'Corregir referencia' : 'Nueva referencia' }}
               </h2>
               @if (editando()) {
                 <span
-                  class="rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800"
+                  class="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800"
                 >
                   Modo edición
                 </span>
@@ -155,7 +156,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                 <label class="flex cursor-pointer select-none items-center justify-between">
                   <div>
                     <span class="block text-xs font-bold text-slate-800">Referencia activa</span>
-                    <span class="text-[11px] font-medium text-slate-500">
+                    <span class="text-xs font-medium text-slate-500">
                       Disponible para nuevas tandas de horno
                     </span>
                   </div>
@@ -186,7 +187,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
         </section>
 
         <section class="lg:col-span-7">
-          <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-xs">
+          <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs">
             <div
               class="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-6 py-4"
             >
@@ -214,22 +215,22 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                   <thead>
                     <tr>
                       <th
-                        class="px-4 py-3.5 whitespace-normal text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-500"
+                        class="px-4 py-3.5 whitespace-normal text-xs font-bold uppercase leading-tight tracking-wide text-slate-500"
                       >
                         Referencia
                       </th>
                       <th
-                        class="px-2 py-3.5 text-right whitespace-normal text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-500"
+                        class="px-2 py-3.5 text-right whitespace-normal text-xs font-bold uppercase leading-tight tracking-wide text-slate-500"
                       >
                         Peso / bulto
                       </th>
                       <th
-                        class="px-2 py-3.5 whitespace-normal text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-500"
+                        class="px-2 py-3.5 whitespace-normal text-xs font-bold uppercase leading-tight tracking-wide text-slate-500"
                       >
                         Estado
                       </th>
                       <th
-                        class="px-3 py-3.5 text-right whitespace-nowrap text-[10px] font-bold uppercase tracking-wide text-slate-500"
+                        class="px-3 py-3.5 text-right whitespace-nowrap text-xs font-bold uppercase tracking-wide text-slate-500"
                       >
                         Acciones
                       </th>
@@ -243,7 +244,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                       >
                         <td class="px-4 py-4">
                           <p class="text-sm font-bold text-slate-900">{{ referencia.nombre }}</p>
-                          <p class="mt-0.5 text-[11px] font-medium text-slate-400">
+                          <p class="mt-0.5 text-xs font-medium text-slate-400">
                             Creada {{ referencia.fecha_creacion | date: 'dd/MM/yyyy' }}
                           </p>
                         </td>
@@ -276,7 +277,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                               aria-label="Corregir referencia"
                               (click)="editar(referencia)"
                             >
-                              ✏️
+                              <app-icono nombre="lapiz" [tamano]="20" />
                             </button>
                             <button
                               type="button"
@@ -285,7 +286,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                               aria-label="Eliminar referencia"
                               (click)="aEliminar.set(referencia)"
                             >
-                              🗑️
+                              <app-icono nombre="basura" [tamano]="20" />
                             </button>
                           </div>
                         </td>
@@ -307,7 +308,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
           </div>
 
           <div
-            class="mt-4 rounded-2xl border border-sky-200/70 bg-sky-50/60 px-5 py-4 text-xs font-medium text-sky-900"
+            class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-xs font-medium text-marca-900"
           >
             <p class="font-bold">Mezcla por orden</p>
             <p class="mt-1 leading-relaxed">
@@ -320,7 +321,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
 
       @if (puedeProyectar()) {
         <section
-          class="rounded-3xl border border-sky-200/80 bg-white p-6 shadow-xs sm:p-7"
+          class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs sm:p-7"
           data-testid="bodega-proyeccion"
         >
           <div
@@ -330,7 +331,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
               <div class="flex flex-wrap items-center gap-2">
                 <h2 class="text-lg font-black text-slate-900">Proyección planificada</h2>
                 <span
-                  class="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[11px] font-extrabold text-sky-800"
+                  class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-extrabold text-marca-800"
                 >
                   No es producción real
                 </span>
@@ -342,7 +343,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
             </div>
             <a
               [routerLink]="rutaConfigHornos()"
-              class="inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:border-sky-300 hover:text-sky-800"
+              class="inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:border-slate-300 hover:text-marca-800"
             >
               Configurar hornos
             </a>
@@ -391,7 +392,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
               <div class="sm:col-span-2 lg:col-span-2 flex items-end">
                 <button
                   type="button"
-                  class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-marca-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-marca-800 disabled:cursor-not-allowed disabled:opacity-50"
                   [disabled]="cargandoProyeccion() || hornoSinCapacidad()"
                   (click)="proyectar()"
                 >
@@ -433,7 +434,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
             @if (proyeccion(); as plan) {
               <div class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
                 <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                  <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500"
+                  <span class="text-xs font-bold uppercase tracking-wider text-slate-500"
                     >Capacidad</span
                   >
                   <p class="mt-1 font-mono text-xl font-black text-slate-900">
@@ -441,19 +442,19 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                     <span class="text-xs font-semibold text-slate-500">bultos/hora</span>
                   </p>
                 </div>
-                <div class="rounded-2xl border border-sky-200 bg-sky-50/70 p-4">
-                  <span class="text-[11px] font-bold uppercase tracking-wider text-sky-700"
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <span class="text-xs font-bold uppercase tracking-wider text-marca-700"
                     >Total bultos</span
                   >
                   <p
-                    class="mt-1 font-mono text-xl font-black text-sky-900"
+                    class="mt-1 font-mono text-xl font-black text-marca-900"
                     data-testid="proyeccion-bultos"
                   >
                     {{ plan.total_bultos | number: '1.0-0' }}
                   </p>
                 </div>
                 <div class="rounded-2xl border border-lime-200 bg-lime-50/70 p-4">
-                  <span class="text-[11px] font-bold uppercase tracking-wider text-lime-700"
+                  <span class="text-xs font-bold uppercase tracking-wider text-lime-700"
                     >Kg crudos</span
                   >
                   <p
@@ -464,7 +465,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                   </p>
                 </div>
                 <div class="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
-                  <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700"
+                  <span class="text-xs font-bold uppercase tracking-wider text-amber-700"
                     >Kg fritos estimados</span
                   >
                   <p
@@ -552,7 +553,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                       >
                         Total
                       </td>
-                      <td class="px-3 py-3 text-right font-mono text-sm font-black text-sky-900">
+                      <td class="px-3 py-3 text-right font-mono text-sm font-black text-marca-900">
                         {{ plan.total_bultos }}
                       </td>
                       <td class="px-3 py-3 text-right font-mono text-sm font-black text-lime-900">
@@ -571,7 +572,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                 </table>
               </div>
 
-              <p class="mt-3 text-[11px] font-medium leading-relaxed text-slate-500">
+              <p class="mt-3 text-xs font-medium leading-relaxed text-slate-500">
                 Cálculo para {{ plan.horas }} hora(s) en {{ plan.horno_nombre }}. La distribución
                 garantiza que la suma de bultos sea exactamente la capacidad. Los kg reales se
                 registran en cada tanda de horno y no se reemplazan por esta proyección.

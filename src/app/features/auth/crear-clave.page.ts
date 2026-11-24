@@ -16,7 +16,7 @@ import { BotonComponent } from '../../ui/boton.component';
   imports: [FormsModule, BotonComponent],
   template: `
     <main class="flex min-h-dvh items-center justify-center bg-marca-50 px-6 py-10">
-      <div class="w-full max-w-md rounded-3xl bg-white p-8 shadow-xl">
+      <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
         <img src="/logo.png" alt="FritoMix" class="h-12 w-16 object-contain" />
         <h1 class="mt-4 text-2xl font-extrabold tracking-tight text-marca-950">
           Crea tu contraseña

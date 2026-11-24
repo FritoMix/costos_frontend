@@ -1,5 +1,5 @@
 <div class="anim-entrada mx-auto max-w-sm">
-  <div class="rounded-3xl border-2 border-marca-300 bg-marca-50/60 px-6 py-7">
+  <div class="rounded-2xl border-2 border-marca-300 bg-marca-50/60 px-6 py-7">
     @if (numeroTanda()) {
       <p class="mb-4 text-center text-sm font-extrabold text-marca-800" data-testid="numero-tanda">
         Tanda {{ numeroTanda() }}
@@ -10,7 +10,7 @@
     }
     <div class="flex items-center justify-center gap-5">
       <div class="text-center">
-        <p class="text-[11px] font-extrabold uppercase tracking-widest text-slate-500">Inicio</p>
+        <p class="text-xs font-extrabold uppercase tracking-widest text-slate-500">Inicio</p>
         <p class="mt-1 text-3xl font-extrabold text-slate-900 tabular-nums">
           {{ horaInicio() }}
         </p>
@@ -29,7 +29,7 @@
         />
       </svg>
       <div class="text-center">
-        <p class="text-[11px] font-extrabold uppercase tracking-widest text-slate-500">Fin</p>
+        <p class="text-xs font-extrabold uppercase tracking-widest text-slate-500">Fin</p>
         <p class="mt-1 text-3xl font-extrabold text-slate-900 tabular-nums">
           {{ horaFin() }}
         </p>

@@ -26,6 +26,7 @@ import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 import { revisarCantidadOrden, revisarHoras, type Revision } from '../../core/poka-yoke';
 import { RevisionPasoComponent } from '../../ui/revision-paso.component';
+import { IconoComponent, type NombreIcono } from '../../ui/icono.component';
 
 type ClavePaso =
   | 'linea'
@@ -62,13 +63,13 @@ type ClavePaso =
   selector: 'app-orden-asistente',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.inert]': 'enviando() ? "" : null' },
-  imports: [RouterLink, DecimalPipe, BotonComponent, CargandoComponent, RevisionPasoComponent],
+  imports: [IconoComponent, RouterLink, DecimalPipe, BotonComponent, CargandoComponent, RevisionPasoComponent],
   template: `
     <div class="mx-auto w-full max-w-xl">
       @if (cargando()) {
         <app-cargando texto="Preparando el asistente…" />
       } @else {
-        <div class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-300/30">
+        <div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl shadow-slate-300/30">
           <!-- Cabecera: progreso + contador + salida -->
           <header class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 sm:px-7">
             <a
@@ -82,7 +83,7 @@ type ClavePaso =
             </a>
             <div class="relative h-3 flex-1 overflow-hidden rounded-full bg-slate-200/90">
               <div
-                class="h-full rounded-full bg-gradient-to-r from-marca-400 to-marca-600 transition-all duration-500 ease-out"
+                class="h-full rounded-full bg-marca-600 transition-all duration-500 ease-out"
                 [style.width.%]="progreso()"
               ></div>
             </div>
@@ -95,7 +96,7 @@ type ClavePaso =
           <div class="px-5 py-8 sm:px-8" [attr.data-testid]="'paso-' + pasoActual()">
             <!-- Encabezado del paso (centrado y coherente en todos) -->
             <div class="mx-auto max-w-md text-center">
-              <span class="text-[11px] font-extrabold uppercase tracking-widest text-marca-500">
+              <span class="text-xs font-extrabold uppercase tracking-widest text-marca-500">
                 {{ etiquetaPaso() }} · Paso {{ indicePaso() + 1 }}
               </span>
               <h2 class="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 text-balance sm:text-[26px]">
@@ -146,7 +147,7 @@ type ClavePaso =
                       (click)="elegirDestino('nacional')"
                       [class]="claseTeja(destino() === 'nacional')"
                     >
-                      <span [class]="claseIcono(destino() === 'nacional')">🏭</span>
+                      <span [class]="claseIcono(destino() === 'nacional')"><app-icono nombre="fabrica" [tamano]="30" /></span>
                       <span class="text-base font-extrabold text-slate-900">Nacional</span>
                       <span class="text-xs font-medium text-slate-500">Consumo en el país</span>
                       @if (destino() === 'nacional') { <span [class]="claseBadge()" [innerHTML]="iconoCheck"></span> }
@@ -157,7 +158,7 @@ type ClavePaso =
                       (click)="elegirDestino('exportacion')"
                       [class]="claseTeja(destino() === 'exportacion')"
                     >
-                      <span [class]="claseIcono(destino() === 'exportacion')">🌎</span>
+                      <span [class]="claseIcono(destino() === 'exportacion')"><app-icono nombre="mundo" [tamano]="30" /></span>
                       <span class="text-base font-extrabold text-slate-900">Exportación</span>
                       <span class="text-xs font-medium text-slate-500">Hornos habilitados</span>
                       @if (destino() === 'exportacion') { <span [class]="claseBadge()" [innerHTML]="iconoCheck"></span> }
@@ -247,7 +248,7 @@ type ClavePaso =
                           [class]="claseHora(horas() === opcion)"
                         >
                           <span class="text-xl font-extrabold">{{ opcion }}</span>
-                          <span class="text-[10px] font-bold uppercase tracking-wider opacity-70">
+                          <span class="text-xs font-bold uppercase tracking-wider opacity-70">
                             {{ opcion === 1 ? 'hora' : 'horas' }}
                           </span>
                         </button>
@@ -255,7 +256,7 @@ type ClavePaso =
                     </div>
 
                     <!-- Ajuste fino -->
-                    <div class="mt-4 rounded-3xl border border-slate-200 bg-slate-50/70 px-5 py-6">
+                    <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-6">
                       <div class="flex items-center justify-center gap-5">
                         <button
                           type="button"
@@ -303,7 +304,7 @@ type ClavePaso =
                         (click)="elegirHorno(horno.id)"
                         [class]="claseFila(hornoId() === horno.id)"
                       >
-                        <span [class]="claseAvatar(hornoId() === horno.id)">🔥</span>
+                        <span [class]="claseAvatar(hornoId() === horno.id)"><app-icono nombre="llama" [tamano]="26" /></span>
                         <span class="min-w-0 flex-1 text-left">
                           <span class="block truncate font-bold text-slate-900">{{ horno.nombre }}</span>
                           <span class="block truncate text-xs font-medium text-slate-500">
@@ -328,7 +329,7 @@ type ClavePaso =
                         (click)="elegirTurno(turno.id)"
                         [class]="claseFila(turnoId() === turno.id)"
                       >
-                        <span [class]="claseAvatar(turnoId() === turno.id)">🕒</span>
+                        <span [class]="claseAvatar(turnoId() === turno.id)"><app-icono nombre="reloj" [tamano]="26" /></span>
                         <span class="min-w-0 flex-1 text-left">
                           <span class="block truncate font-bold text-slate-900">{{ turno.nombre }}</span>
                         </span>
@@ -350,7 +351,7 @@ type ClavePaso =
                         (click)="elegirUnidad(opcion)"
                         [class]="claseTeja(unidad() === opcion)"
                       >
-                        <span [class]="claseIcono(unidad() === opcion)">{{ iconoUnidad(opcion) }}</span>
+                        <span [class]="claseIcono(unidad() === opcion)"><app-icono [nombre]="iconoUnidad(opcion)" [tamano]="30" /></span>
                         <span class="text-base font-extrabold text-slate-900">{{ nombreUnidad(opcion) }}</span>
                         <span class="text-xs font-medium text-slate-500">{{ ayudaUnidad(opcion) }}</span>
                         @if (unidad() === opcion) { <span [class]="claseBadge()" [innerHTML]="iconoCheck"></span> }
@@ -363,7 +364,7 @@ type ClavePaso =
                 @case ('cantidad') {
                   <div class="anim-entrada mx-auto max-w-sm">
                     <!-- Pantalla del monto -->
-                    <div class="rounded-3xl border border-slate-200 bg-slate-50/70 px-5 py-6 text-center">
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-6 text-center">
                       <input
                         type="text"
                         data-testid="cantidad-input"
@@ -1004,7 +1005,7 @@ export class OrdenAsistentePage {
   /** Teja grande centrada (destino, unidad). */
   protected claseTeja(seleccionada: boolean): string {
     const base =
-      'relative flex flex-col items-center gap-1.5 rounded-3xl border-2 px-4 py-7 text-center transition-all ' +
+      'relative flex flex-col items-center gap-1.5 rounded-2xl border-2 px-4 py-7 text-center transition-all ' +
       'duration-150 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca-500';
     return seleccionada
       ? `${base} border-marca-500 bg-marca-50/70 shadow-lg shadow-marca-500/10 ring-4 ring-marca-500/10`
@@ -1083,8 +1084,9 @@ export class OrdenAsistentePage {
     return NOMBRE_UNIDAD[unidad] ?? unidad;
   }
 
-  protected iconoUnidad(unidad: UnidadSolicitada): string {
-    return { kg: '⚖️', canastillas: '🧺', mojes: '🥣', baches: '🛢️', bultos: '📦' }[unidad] ?? '🔢';
+  protected iconoUnidad(unidad: UnidadSolicitada): NombreIcono {
+    const iconos: Record<string, NombreIcono> = { kg: 'balanza', canastillas: 'canasta', mojes: 'cuenco', baches: 'barril', bultos: 'caja' };
+    return iconos[unidad] ?? 'numero';
   }
 
   protected ayudaUnidad(unidad: UnidadSolicitada): string {

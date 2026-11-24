@@ -19,6 +19,7 @@ import { CargandoComponent } from '../../ui/cargando.component';
 import { ConfirmarComponent } from '../../ui/confirmar.component';
 import { EstadoVacioComponent } from '../../ui/estado-vacio.component';
 import { EtiquetaEstadoComponent } from '../../ui/etiqueta-estado.component';
+import { IconoComponent, type NombreIcono } from '../../ui/icono.component';
 
 interface BadgeFormula {
   texto: string;
@@ -28,10 +29,10 @@ interface BadgeFormula {
 const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
   sin_formula: { texto: 'Por definir', clases: 'bg-amber-50 text-amber-800 ring-amber-500/20' },
   lista: { texto: 'Lista', clases: 'bg-emerald-50 text-emerald-800 ring-emerald-500/20' },
-  en_produccion: { texto: 'Congelada', clases: 'bg-sky-50 text-sky-800 ring-sky-500/20' },
-  finalizada: { texto: 'Finalizada', clases: 'bg-sky-50 text-slate-700 ring-sky-200/80' },
+  en_produccion: { texto: 'Congelada', clases: 'bg-slate-50 text-marca-800 ring-marca-500/20' },
+  finalizada: { texto: 'Finalizada', clases: 'bg-slate-50 text-slate-700 ring-marca-200/80' },
   cancelada: { texto: 'Cancelada', clases: 'bg-rose-50 text-rose-700 ring-rose-500/20' },
-  no_aplica: { texto: 'No aplica', clases: 'bg-sky-50/70 text-slate-600 ring-sky-200/60' },
+  no_aplica: { texto: 'No aplica', clases: 'bg-slate-50 text-slate-600 ring-marca-200/60' },
 };
 
 /**
@@ -43,7 +44,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
 @Component({
   selector: 'app-formula-produccion',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [IconoComponent, 
     RouterLink,
     FormsModule,
     DecimalPipe,
@@ -67,7 +68,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
         </div>
         <div class="flex items-center gap-3">
           <a routerLink="/formula-produccion/noche" data-testid="ir-formula-noche">
-            <app-boton variante="secundario">🌙 Fórmula de la noche</app-boton>
+            <app-boton variante="secundario"><app-icono nombre="luna" [tamano]="16" /> Fórmula de la noche</app-boton>
           </a>
           @if (ultimaActualizacion()) {
             <span class="hidden sm:block text-xs font-semibold text-slate-400">
@@ -85,18 +86,18 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
       </header>
 
       @if (cambiandoEstado() !== null) {
-        <p role="status" class="text-sm font-semibold text-sky-700">Procesando el cambio de fórmula…</p>
+        <p role="status" class="text-sm font-semibold text-marca-700">Procesando el cambio de fórmula…</p>
       }
       <!-- Secciones del módulo -->
       <div
-        class="flex flex-wrap items-center gap-2 rounded-2xl border border-sky-100/90 bg-white p-1.5 shadow-2xs"
+        class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xs"
       >
         <button
           type="button"
           class="rounded-xl px-4 py-2 text-xs font-bold tracking-tight transition-all duration-150 sm:text-sm"
           [class]="seccion() === 'formulas'
-            ? 'bg-gradient-to-r from-sky-500 to-marca-600 text-white shadow-sm'
-            : 'text-slate-600 hover:bg-sky-50 hover:text-sky-700'"
+            ? 'bg-marca-600 text-white shadow-sm'
+            : 'text-slate-600 hover:bg-marca-50 hover:text-marca-700'"
           data-testid="seccion-formulas"
           (click)="cambiarSeccion('formulas')"
         >
@@ -106,8 +107,8 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
           type="button"
           class="rounded-xl px-4 py-2 text-xs font-bold tracking-tight transition-all duration-150 sm:text-sm"
           [class]="seccion() === 'ordenes'
-            ? 'bg-gradient-to-r from-sky-500 to-marca-600 text-white shadow-sm'
-            : 'text-slate-600 hover:bg-sky-50 hover:text-sky-700'"
+            ? 'bg-marca-600 text-white shadow-sm'
+            : 'text-slate-600 hover:bg-marca-50 hover:text-marca-700'"
           data-testid="seccion-ordenes"
           (click)="cambiarSeccion('ordenes')"
         >
@@ -132,14 +133,14 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
         @if (cargandoFormulas()) {
           <app-cargando texto="Consultando fórmulas…" />
         } @else if (errorFormulas()) {
-          <div class="rounded-3xl border border-rose-200 bg-rose-50/60 p-6 text-center">
+          <div class="rounded-2xl border border-rose-200 bg-rose-50/60 p-6 text-center">
             <p class="text-sm font-bold text-rose-800">{{ errorFormulas() }}</p>
             <div class="mt-3 flex justify-center">
               <app-boton variante="secundario" (click)="cargarFormulas()">Reintentar</app-boton>
             </div>
           </div>
         } @else if (formulas().length === 0) {
-          <div class="rounded-3xl border border-sky-100/90 bg-white/85 shadow-xs">
+          <div class="rounded-2xl border border-slate-200 bg-white shadow-xs">
             <app-estado-vacio
               titulo="Todavía no hay fórmulas"
               descripcion="Crea la primera con las referencias de papa de Bodega y actívala para que las órdenes nuevas la apliquen solas."
@@ -157,10 +158,10 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
           <div class="grid gap-4 lg:grid-cols-2">
             @for (formula of formulas(); track formula.id) {
               <div
-                class="rounded-3xl border bg-white/90 p-5 shadow-xs transition-all duration-200"
+                class="rounded-2xl border bg-white p-5 shadow-xs transition-all duration-200"
                 [class]="formula.activa
                   ? 'border-emerald-300 ring-2 ring-emerald-200/60'
-                  : 'border-sky-100/90'"
+                  : 'border-slate-200'"
                 [attr.data-testid]="'formula-papa-' + formula.id"
               >
                 <div class="flex items-start justify-between gap-3">
@@ -171,10 +172,10 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
                     </p>
                   </div>
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset"
+                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ring-1 ring-inset"
                     [class]="formula.activa
                       ? 'bg-emerald-50 text-emerald-800 ring-emerald-500/20'
-                      : 'bg-sky-50/70 text-slate-600 ring-sky-200/60'"
+                      : 'bg-slate-50 text-slate-600 ring-marca-200/60'"
                   >
                     <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
                     {{ formula.activa ? 'Activa' : 'Inactiva' }}
@@ -184,7 +185,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
                 <div class="mt-3 flex flex-wrap gap-1.5">
                   @for (fila of formula.referencias; track fila.referencia_id) {
                     <span
-                      class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600"
+                      class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600"
                     >
                       {{ fila.nombre }} · {{ fila.bultos_por_tanda }} bts
                     </span>
@@ -197,7 +198,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
                   {{ formula.total_kg_fritos_estimados | number: '1.0-2' }} kg fritos
                 </p>
 
-                <div class="mt-6 flex flex-wrap items-center gap-3 border-t border-sky-100 pt-5">
+                <div class="mt-6 flex flex-wrap items-center gap-3 border-t border-slate-200 pt-5">
                   <a
                     [routerLink]="['/formula-produccion', 'formulas', formula.id]"
                     [queryParams]="{ seccion: 'formulas' }"
@@ -247,30 +248,30 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
         @for (contador of contadores(); track contador.clave) {
           <button
             type="button"
-            class="flex items-center justify-between rounded-3xl border bg-white/85 px-5 py-4 text-left shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            class="flex items-center justify-between rounded-2xl border bg-white px-5 py-4 text-left shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
             [class]="filtroActivo() === contador.clave
-              ? 'border-sky-400 ring-2 ring-sky-300/60'
-              : 'border-sky-100/90'"
+              ? 'border-slate-300 ring-2 ring-marca-300/60'
+              : 'border-slate-200'"
             (click)="aplicarContador(contador.clave)"
           >
             <div>
-              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <p class="text-xs font-bold uppercase tracking-wider text-slate-400">
                 {{ contador.titulo }}
               </p>
               <p class="mt-1 font-mono text-2xl font-black tabular-nums" [class]="contador.clases">
                 {{ contador.total }}
               </p>
             </div>
-            <span class="text-2xl">{{ contador.icono }}</span>
+            <span class="grid size-11 place-items-center rounded-xl bg-marca-50 text-marca-700"><app-icono [nombre]="contador.icono" [tamano]="22" /></span>
           </button>
         }
       </div>
 
       <!-- Filtros -->
-      <section class="rounded-3xl border border-sky-100/90 bg-white/85 p-5 shadow-xs">
+      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
         <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
           <label class="block">
-            <span class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Desde</span>
+            <span class="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400">Desde</span>
             <input
               type="date"
               [(ngModel)]="filtroFechaDesde"
@@ -279,7 +280,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
             />
           </label>
           <label class="block">
-            <span class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Hasta</span>
+            <span class="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400">Hasta</span>
             <input
               type="date"
               [(ngModel)]="filtroFechaHasta"
@@ -288,7 +289,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
             />
           </label>
           <label class="block">
-            <span class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Estado</span>
+            <span class="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400">Estado</span>
             <select
               [(ngModel)]="filtroEstado"
               (change)="cargar()"
@@ -301,7 +302,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
             </select>
           </label>
           <label class="block">
-            <span class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Producto</span>
+            <span class="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400">Producto</span>
             <select
               [(ngModel)]="filtroProductoId"
               (change)="cargar()"
@@ -314,7 +315,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
             </select>
           </label>
           <label class="block">
-            <span class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Destino</span>
+            <span class="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-400">Destino</span>
             <select
               [(ngModel)]="filtroDestino"
               (change)="cargar()"
@@ -333,8 +334,8 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
               type="button"
               class="rounded-full px-3.5 py-1.5 text-xs font-bold transition-all duration-200"
               [class]="filtroActivo() === chip.clave
-                ? 'bg-gradient-to-r from-sky-500 to-marca-600 text-white shadow-sm'
-                : 'bg-slate-100 text-slate-600 hover:bg-sky-50 hover:text-sky-700'"
+                ? 'bg-marca-600 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-600 hover:bg-marca-50 hover:text-marca-700'"
               (click)="aplicarContador(chip.clave)"
             >
               {{ chip.texto }}
@@ -345,7 +346,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
               type="checkbox"
               [(ngModel)]="filtroSoloSinFormula"
               (change)="cargar()"
-              class="h-4 w-4 rounded border-slate-300 text-sky-600"
+              class="h-4 w-4 rounded border-slate-300 text-marca-600"
             />
             Solo sin fórmula
           </label>
@@ -355,14 +356,14 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
       @if (cargando()) {
         <app-cargando texto="Consultando órdenes…" />
       } @else if (error()) {
-        <div class="rounded-3xl border border-rose-200 bg-rose-50/60 p-6 text-center">
+        <div class="rounded-2xl border border-rose-200 bg-rose-50/60 p-6 text-center">
           <p class="text-sm font-bold text-rose-800">{{ error() }}</p>
           <div class="mt-3 flex justify-center">
             <app-boton variante="secundario" (click)="cargar()">Reintentar</app-boton>
           </div>
         </div>
       } @else if (ordenes().length === 0) {
-        <div class="rounded-3xl border border-sky-100/90 bg-white/85 shadow-xs">
+        <div class="rounded-2xl border border-slate-200 bg-white shadow-xs">
           <app-estado-vacio
             titulo="No hay órdenes con estos filtros"
             descripcion="Prueba con otro rango de fechas o limpia los filtros para ver todas las órdenes."
@@ -373,10 +374,10 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
         </div>
       } @else {
         <!-- Tabla de escritorio -->
-        <div class="hidden overflow-hidden rounded-3xl border border-sky-100/90 bg-white/85 shadow-xs md:block">
+        <div class="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs md:block">
           <div class="overflow-x-auto">
             <table class="w-full min-w-225 text-left text-sm">
-              <thead class="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <thead class="border-b border-slate-200 bg-slate-50/80 text-xs font-bold uppercase tracking-wider text-slate-400">
                 <tr>
                   <th class="px-5 py-3">Orden</th>
                   <th class="px-3 py-3">Estado</th>
@@ -390,13 +391,13 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
               <tbody class="divide-y divide-slate-100">
                 @for (orden of ordenes(); track orden.id) {
                   <tr
-                    class="cursor-pointer transition-colors duration-150 hover:bg-sky-50/40"
+                    class="cursor-pointer transition-colors duration-150 hover:bg-marca-50"
                     [attr.data-testid]="'bodega-orden-' + orden.id"
                     (click)="abrir(orden)"
                   >
                     <td class="px-5 py-3.5">
                       <p class="font-mono font-bold text-slate-900">#{{ orden.numero_orden }}</p>
-                      <p class="text-[11px] font-medium text-slate-400">{{ orden.fecha | date: 'dd/MM/yyyy' }}</p>
+                      <p class="text-xs font-medium text-slate-400">{{ orden.fecha | date: 'dd/MM/yyyy' }}</p>
                     </td>
                     <td class="px-3 py-3.5">
                       <app-etiqueta-estado
@@ -406,7 +407,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
                     </td>
                     <td class="px-3 py-3.5">
                       <p class="font-bold text-slate-800">{{ orden.producto.nombre_comercial }}</p>
-                      <p class="text-[11px] font-medium text-slate-400">{{ orden.categoria.nombre }}</p>
+                      <p class="text-xs font-medium text-slate-400">{{ orden.categoria.nombre }}</p>
                     </td>
                     <td class="px-3 py-3.5">
                       <p class="font-mono font-bold text-slate-800">
@@ -418,7 +419,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
                       <p class="font-bold text-slate-700">
                         {{ orden.horas_produccion }} h · {{ orden.horno.nombre }}
                       </p>
-                      <p class="text-[11px] font-medium text-slate-400">{{ orden.turno.nombre }}</p>
+                      <p class="text-xs font-medium text-slate-400">{{ orden.turno.nombre }}</p>
                     </td>
                     <td class="px-3 py-3.5">
                       <span
@@ -430,9 +431,9 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
                       </span>
                       @if (orden.formula_automatica) {
                         <span
-                          class="mt-1 block text-[11px] font-bold text-amber-700"
+                          class="mt-1 block text-xs font-bold text-amber-700"
                           data-testid="formula-noche-por-confirmar"
-                          >🌙 De la noche · por confirmar</span
+                          ><app-icono nombre="luna" [tamano]="16" /> De la noche · por confirmar</span
                         >
                       }
                     </td>
@@ -444,11 +445,11 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
                         </p>
                         <div class="mt-1 h-2 w-40 overflow-hidden rounded-full bg-slate-100">
                           <div
-                            class="h-full rounded-full bg-gradient-to-r from-sky-400 to-marca-600"
+                            class="h-full rounded-full bg-marca-600"
                             [style.width.%]="min(100, orden.avance_bultos_porcentaje ?? 0)"
                           ></div>
                         </div>
-                        <p class="mt-1 text-[11px] font-semibold text-slate-400">
+                        <p class="mt-1 text-xs font-semibold text-slate-400">
                           {{ orden.tandas_registradas }} / {{ orden.tandas_programadas ?? '—' }} tandas
                         </p>
                       } @else {
@@ -467,7 +468,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
           @for (orden of ordenes(); track orden.id) {
             <a
               [routerLink]="['/formula-produccion/ordenes', orden.id]"
-              class="block rounded-3xl border border-sky-100/90 bg-white/90 p-5 shadow-xs transition-all duration-200 active:scale-[0.99]"
+              class="block rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition-all duration-200 active:scale-[0.99]"
               [attr.data-testid]="'bodega-orden-' + orden.id"
             >
               <div class="flex items-start justify-between gap-3">
@@ -481,7 +482,7 @@ const BADGES_FORMULA: Record<EstadoFormula, BadgeFormula> = {
                   </p>
                 </div>
                 <span
-                  class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset"
+                  class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ring-1 ring-inset"
                   [class]="badge(orden.formula_estado).clases"
                 >
                   {{ badge(orden.formula_estado).texto }}
@@ -562,22 +563,22 @@ export class FormulaProduccionPage {
         clave: 'sin_formula',
         titulo: 'Pendientes de fórmula',
         total: ordenes.filter((orden) => orden.formula_estado === 'sin_formula').length,
-        icono: '📝',
+        icono: 'documento' as NombreIcono,
         clases: 'text-amber-600',
       },
       {
         clave: 'con_formula',
         titulo: 'Listas para producir',
         total: ordenes.filter((orden) => orden.formula_estado === 'lista').length,
-        icono: '✅',
+        icono: 'checkCirculo' as NombreIcono,
         clases: 'text-emerald-600',
       },
       {
         clave: 'en_produccion',
         titulo: 'En producción',
         total: ordenes.filter((orden) => orden.estado === 'en_produccion').length,
-        icono: '♨️',
-        clases: 'text-sky-600',
+        icono: 'llama' as NombreIcono,
+        clases: 'text-marca-600',
       },
     ];
   });

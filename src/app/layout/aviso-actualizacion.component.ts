@@ -19,11 +19,11 @@ import { ActualizacionesService } from '../core/servicios/actualizaciones.servic
         data-testid="aviso-actualizacion"
       >
         <div
-          class="pointer-events-auto flex w-full max-w-2xl flex-col gap-3 rounded-2xl border border-sky-200/80 bg-white/95 px-4 py-3.5 shadow-xl sm:flex-row sm:items-center"
+          class="pointer-events-auto flex w-full max-w-2xl flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-xl sm:flex-row sm:items-center"
           style="backdrop-filter: blur(14px) saturate(1.2);"
         >
           <span
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-100 to-blue-50 text-sky-700"
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-marca-50 text-marca-700"
           >
             <svg
               class="h-5 w-5"
@@ -44,7 +44,7 @@ import { ActualizacionesService } from '../core/servicios/actualizaciones.servic
             <p class="text-sm font-extrabold text-slate-900">Nueva versión disponible</p>
             <p class="mt-0.5 text-xs font-medium leading-relaxed text-slate-600">
               La aplicación se actualizará automáticamente en
-              <span class="font-mono font-black text-sky-700">
+              <span class="font-mono font-black text-marca-700">
                 {{ servicio.segundosRestantes() }} s
               </span>
               .
@@ -62,7 +62,7 @@ import { ActualizacionesService } from '../core/servicios/actualizaciones.servic
             </button>
             <button
               type="button"
-              class="rounded-xl bg-gradient-to-r from-sky-600 to-blue-700 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:from-sky-700 hover:to-blue-800"
+              class="rounded-xl bg-marca-700 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-marca-900"
               (click)="servicio.actualizarAhora()"
               data-testid="actualizar-ahora"
             >

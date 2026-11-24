@@ -192,37 +192,37 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
 
             @if (referenciaSeleccionada(); as ref) {
               <div
-                class="rounded-2xl border border-sky-200/80 bg-sky-50/60 p-5"
+                class="rounded-2xl border border-slate-200 bg-slate-50 p-5"
                 data-testid="horno-preview"
               >
                 <div class="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-sky-900">
+                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-marca-900">
                       Vista previa de la tanda
                     </h3>
-                    <p class="mt-0.5 text-xs font-medium text-sky-800">
+                    <p class="mt-0.5 text-xs font-medium text-marca-800">
                       {{ ref.nombre }} · {{ ref.tipo }} ·
                       {{ ref.peso_promedio_bulto_kg | number: '1.2-2' }} kg/bulto · rendimiento
                       {{ ref.rendimiento_fritura_pct | number: '1.2-2' }} %
                     </p>
                   </div>
                   <span
-                    class="rounded-full border border-sky-300 bg-white/80 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-800"
+                    class="rounded-full border border-slate-300 bg-white px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-marca-800"
                   >
                     Cálculo preliminar
                   </span>
                 </div>
                 <div class="mt-3 grid grid-cols-2 gap-3">
-                  <div class="rounded-xl border border-lime-200 bg-white/80 px-4 py-2.5">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-lime-700"
+                  <div class="rounded-xl border border-lime-200 bg-white px-4 py-2.5">
+                    <span class="text-xs font-bold uppercase tracking-wider text-lime-700"
                       >Kg crudos</span
                     >
                     <p class="font-mono text-lg font-black text-lime-900">
                       {{ kgCrudos() | number: '1.0-2' }}
                     </p>
                   </div>
-                  <div class="rounded-xl border border-amber-200 bg-white/80 px-4 py-2.5">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-amber-700"
+                  <div class="rounded-xl border border-amber-200 bg-white px-4 py-2.5">
+                    <span class="text-xs font-bold uppercase tracking-wider text-amber-700"
                       >Kg fritos estimados</span
                     >
                     <p class="font-mono text-lg font-black text-amber-900">
@@ -230,7 +230,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                     </p>
                   </div>
                 </div>
-                <p class="mt-2 text-[11px] font-medium text-sky-800">
+                <p class="mt-2 text-xs font-medium text-marca-800">
                   El backend calcula y congela estos valores con Decimal al guardar. No se envían
                   desde el navegador.
                 </p>

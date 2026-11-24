@@ -8,6 +8,7 @@ import { NotificacionesService } from '../../core/servicios/notificaciones.servi
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 import { ConfirmarComponent } from '../../ui/confirmar.component';
+import { IconoComponent } from '../../ui/icono.component';
 
 /**
  * Turnos de la planta.
@@ -16,7 +17,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
 @Component({
   selector: 'app-turnos',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [IconoComponent, 
     ReactiveFormsModule,
     RouterLink,
     BotonComponent,
@@ -36,7 +37,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
           </a>
           <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
             <span>Turnos Operativos</span>
-            <span class="rounded-full bg-sky-100 px-3 py-0.5 text-xs font-extrabold text-sky-800 border border-sky-200">
+            <span class="rounded-full bg-marca-100 px-3 py-0.5 text-xs font-extrabold text-marca-800 border border-slate-200">
               {{ turnos().length }} turnos
             </span>
           </h1>
@@ -50,17 +51,17 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         <!-- Columna Izquierda: Formulario -->
-        <div class="lg:col-span-5">
-          <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-xs transition-all">
+        <div class="lg:col-span-4">
+          <div class="rounded-2xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-xs transition-all">
             <div class="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
               <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-100 text-sky-700 text-xs">
-                  {{ editando() ? '✏️' : '⏱️' }}
+                <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-marca-100 text-marca-700 text-xs">
+                  @if (editando()) {<app-icono nombre="lapiz" [tamano]="20" />} @else {<app-icono nombre="reloj" [tamano]="20" />}
                 </span>
                 {{ editando() ? 'Corregir Turno' : 'Agregar Turno' }}
               </h2>
               @if (editando()) {
-                <span class="rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">
+                <span class="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
                   Modo Edición
                 </span>
               }
@@ -93,7 +94,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                 <label class="flex items-center justify-between cursor-pointer select-none">
                   <div>
                     <span class="text-xs font-bold text-slate-800 block">Turno Activo</span>
-                    <span class="text-[11px] text-slate-500 font-medium">Habilitado para asignación automática</span>
+                    <span class="text-xs text-slate-500 font-medium">Habilitado para asignación automática</span>
                   </div>
                   <input
                     type="checkbox"
@@ -118,8 +119,8 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
         </div>
 
         <!-- Columna Derecha: Tabla de Turnos -->
-        <div class="lg:col-span-7">
-          <div class="rounded-3xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
+        <div class="lg:col-span-8">
+          <div class="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
               <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">
                 Turnos Configurados
@@ -146,7 +147,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                   </thead>
                   <tbody class="divide-y divide-slate-100">
                     @for (turno of turnos(); track turno.id) {
-                      <tr class="hover:bg-sky-50/40 transition-colors">
+                      <tr class="hover:bg-marca-50 transition-colors">
                         <td class="py-4 px-6 font-bold text-slate-900 text-sm">
                           {{ turno.nombre }}
                         </td>
@@ -156,8 +157,8 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                               {{ turno.hora_inicio }} – {{ turno.hora_fin }}
                             </span>
                             @if (turno.cruza_medianoche) {
-                              <span class="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 mt-0.5">
-                                🌙 Cruza medianoche
+                              <span class="inline-flex items-center gap-1 text-xs font-bold text-indigo-700 mt-0.5">
+                                <app-icono nombre="luna" [tamano]="16" /> Cruza medianoche
                               </span>
                             }
                           </div>
@@ -179,17 +180,17 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
                           <div class="inline-flex items-center gap-2 justify-end">
                             <button
                               type="button"
-                              class="inline-flex items-center gap-1 rounded-xl bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 hover:bg-sky-100 hover:text-sky-900 border border-sky-200/80 transition-all cursor-pointer"
+                              class="inline-flex items-center gap-1 rounded-xl bg-slate-50 px-3 py-1.5 text-xs font-bold text-marca-700 hover:bg-marca-100 hover:text-marca-900 border border-slate-200 transition-all cursor-pointer"
                               (click)="editar(turno)"
                             >
-                              ✏️ Corregir
+                              <app-icono nombre="lapiz" [tamano]="16" /> Corregir
                             </button>
                             <button
                               type="button"
                               class="inline-flex items-center gap-1 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 hover:text-rose-900 border border-rose-200/80 transition-all cursor-pointer"
                               (click)="aEliminar.set(turno)"
                             >
-                              🗑️ Eliminar
+                              <app-icono nombre="basura" [tamano]="16" /> Eliminar
                             </button>
                           </div>
                         </td>

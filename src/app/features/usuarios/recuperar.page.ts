@@ -37,7 +37,7 @@ import { ClaveTemporalComponent } from './clave-temporal.component';
       @if (cargando()) {
         <app-cargando texto="Cargando usuarios…" />
       } @else {
-        <ul class="mt-4 divide-y divide-slate-100 rounded-3xl border border-slate-200 bg-white">
+        <ul class="mt-4 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
           @for (usuario of visibles(); track usuario.id) {
             <li class="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
               <div>

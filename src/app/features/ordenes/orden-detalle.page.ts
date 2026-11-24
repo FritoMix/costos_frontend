@@ -15,6 +15,7 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
 import { EtiquetaEstadoComponent } from '../../ui/etiqueta-estado.component';
 import { TarjetaComponent } from '../../ui/tarjeta.component';
 import { FormulaResumenComponent } from '../formulas/formula-resumen.component';
+import { IconoComponent } from '../../ui/icono.component';
 
 type TabDetalle = 'resumen' | 'horno' | 'saborizado';
 
@@ -25,7 +26,7 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
 @Component({
   selector: 'app-orden-detalle',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [IconoComponent, 
     RouterLink,
     DatePipe,
     DecimalPipe,
@@ -70,8 +71,8 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
                 [texto]="datos.orden.estado_etiqueta"
               />
               @if (datos.orden.destino === 'exportacion') {
-                <span class="rounded-xl bg-sky-50 px-3 py-1 text-xs font-bold text-sky-800 border border-sky-200">
-                  ✈️ Lote de Exportación
+                <span class="rounded-xl bg-slate-50 px-3 py-1 text-xs font-bold text-marca-800 border border-slate-200">
+                  <app-icono nombre="avion" [tamano]="16" /> Lote de Exportación
                 </span>
               }
             </div>
@@ -138,11 +139,11 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
         </header>
 
         <!-- Hoja de pedido: en lenguaje claro, qué se debe producir -->
-        <section class="overflow-hidden rounded-3xl border border-marca-200/70 bg-gradient-to-br from-marca-50 via-white to-white shadow-sm">
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div class="px-6 py-7 sm:px-9">
             <div class="flex items-center gap-2">
-              <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-marca-600 text-white text-sm">📋</span>
-              <p class="text-[11px] font-extrabold uppercase tracking-widest text-marca-600">Qué se debe producir</p>
+              <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-marca-600 text-white text-sm"><app-icono nombre="portapapeles" [tamano]="20" /></span>
+              <p class="text-xs font-extrabold uppercase tracking-widest text-marca-600">Qué se debe producir</p>
             </div>
             <h2 class="mt-3 text-2xl sm:text-[28px] font-extrabold tracking-tight text-slate-900 leading-snug text-balance">
               Producir
@@ -174,9 +175,9 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
                reparten de a dos y el supervisor ocupa el ancho completo,
                así nunca queda una celda descolgada. -->
           <div class="grid grid-cols-2 gap-px border-t border-marca-200/50 bg-marca-200/40 lg:grid-cols-5">
-            <div class="bg-white/90 px-5 py-4">
-              <p class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                <span aria-hidden="true">📦</span> Cantidad pedida
+            <div class="bg-white px-5 py-4">
+              <p class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                <span aria-hidden="true"><app-icono nombre="caja" [tamano]="20" /></span> Cantidad pedida
               </p>
               <p class="mt-1 text-base font-extrabold text-slate-900">
                 @if (datos.orden.unidad_solicitada === 'canastillas') {
@@ -188,9 +189,9 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
                 }
               </p>
             </div>
-            <div class="bg-white/90 px-5 py-4">
-              <p class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                <span aria-hidden="true">⏱️</span> Duración programada
+            <div class="bg-white px-5 py-4">
+              <p class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                <span aria-hidden="true"><app-icono nombre="reloj" [tamano]="20" /></span> Duración programada
               </p>
               <p class="mt-1 text-base font-extrabold text-slate-900">
                 @if (datos.orden.horas_produccion) {
@@ -200,21 +201,21 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
                 }
               </p>
             </div>
-            <div class="bg-white/90 px-5 py-4">
-              <p class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                <span aria-hidden="true">🔥</span> Horno asignado
+            <div class="bg-white px-5 py-4">
+              <p class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                <span aria-hidden="true"><app-icono nombre="llama" [tamano]="20" /></span> Horno asignado
               </p>
               <p class="mt-1 text-base font-extrabold text-slate-900">{{ datos.orden.horno.nombre }}</p>
             </div>
-            <div class="bg-white/90 px-5 py-4">
-              <p class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                <span aria-hidden="true">🕒</span> Turno
+            <div class="bg-white px-5 py-4">
+              <p class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                <span aria-hidden="true"><app-icono nombre="reloj" [tamano]="20" /></span> Turno
               </p>
               <p class="mt-1 truncate text-base font-extrabold text-slate-900">{{ datos.orden.turno.nombre }}</p>
             </div>
-            <div class="col-span-2 bg-white/90 px-5 py-4 lg:col-span-1">
-              <p class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                <span aria-hidden="true">👤</span> Supervisor
+            <div class="col-span-2 bg-white px-5 py-4 lg:col-span-1">
+              <p class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                <span aria-hidden="true"><app-icono nombre="usuario" [tamano]="20" /></span> Supervisor
               </p>
               <p class="mt-1 truncate text-base font-extrabold text-slate-900">{{ datos.orden.supervisor.nombre_completo }}</p>
             </div>
@@ -245,8 +246,8 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
                 <div
                   class="h-full rounded-full transition-all duration-500"
                   [class]="datos.totales.avance_porcentaje >= 100
-                    ? 'bg-gradient-to-r from-emerald-500 to-green-500'
-                    : 'bg-gradient-to-r from-red-400 to-rose-500'"
+                    ? 'bg-emerald-500'
+                    : 'bg-rose-500'"
                   [style.width.%]="porcentajeBarra(datos.totales.avance_porcentaje)"
                 ></div>
               </div>
@@ -261,7 +262,7 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
             data-testid="tab-resumen"
             (click)="tabActiva.set('resumen')"
             class="flex shrink-0 items-center gap-2 rounded-xl px-3.5 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold transition-all duration-150 whitespace-nowrap"
-            [class]="tabActiva() === 'resumen' ? 'bg-gradient-to-r from-sky-500 to-marca-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-sky-50'"
+            [class]="tabActiva() === 'resumen' ? 'bg-marca-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-marca-50'"
           >
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
             Ficha & Resumen Operativo
@@ -272,13 +273,13 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
             data-testid="tab-horno"
             (click)="tabActiva.set('horno')"
             class="flex shrink-0 items-center gap-2 rounded-xl px-3.5 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold transition-all duration-150 whitespace-nowrap"
-            [class]="tabActiva() === 'horno' ? 'bg-gradient-to-r from-sky-500 to-marca-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-sky-50'"
+            [class]="tabActiva() === 'horno' ? 'bg-marca-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-marca-50'"
           >
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" /></svg>
             Tandas de Horno
             <span
               class="rounded-full px-2 py-0.5 text-xs font-mono font-bold"
-              [class]="tabActiva() === 'horno' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'"
+              [class]="tabActiva() === 'horno' ? 'bg-white text-white' : 'bg-slate-100 text-slate-700'"
             >
               {{ datos.registros_horno.length }}
             </span>
@@ -289,13 +290,13 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
             data-testid="tab-saborizado"
             (click)="tabActiva.set('saborizado')"
             class="flex shrink-0 items-center gap-2 rounded-xl px-3.5 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold transition-all duration-150 whitespace-nowrap"
-            [class]="tabActiva() === 'saborizado' ? 'bg-gradient-to-r from-sky-500 to-marca-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-sky-50'"
+            [class]="tabActiva() === 'saborizado' ? 'bg-marca-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-marca-50'"
           >
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-16.5-.52l-.54.075A2.25 2.25 0 003 7.27v7.46c0 1.096.786 2.03 1.875 2.18m14.25-11.94c.36.052.716.11 1.07.175A2.25 2.25 0 0122 7.27v7.46c0 1.096-.786 2.03-1.875 2.18" /></svg>
             Recepciones Saborizado
             <span
               class="rounded-full px-2 py-0.5 text-xs font-mono font-bold"
-              [class]="tabActiva() === 'saborizado' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'"
+              [class]="tabActiva() === 'saborizado' ? 'bg-white text-white' : 'bg-slate-100 text-slate-700'"
             >
               {{ datos.recepciones.length }}
             </span>
@@ -473,7 +474,7 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
                               {{ registro.cantidad_bultos | number: '1.0-2' }} bto
                             }
                             @if (registro.referencias.length > 0) {
-                              <div class="mt-1 flex flex-wrap gap-1 font-sans font-semibold text-[10px] text-slate-500">
+                              <div class="mt-1 flex flex-wrap gap-1 font-sans font-semibold text-xs text-slate-500">
                                 @for (fila of registro.referencias; track fila.referencia_papa_id) {
                                   <span class="rounded-full bg-slate-100 px-2 py-0.5">
                                     {{ fila.nombre }} · {{ fila.cantidad_bultos | number: '1.0-0' }} bts
@@ -481,7 +482,7 @@ type TabDetalle = 'resumen' | 'horno' | 'saborizado';
                                 }
                               </div>
                             } @else if (registro.referencia_papa; as referencia) {
-                              <div class="mt-1 font-sans font-semibold text-[10px] text-slate-500">
+                              <div class="mt-1 font-sans font-semibold text-xs text-slate-500">
                                 {{ referencia.nombre }}
                               </div>
                             }

@@ -48,6 +48,7 @@ import {
 } from '../../core/poka-yoke';
 import { RevisionPasoComponent } from '../../ui/revision-paso.component';
 import { resumirMezcla } from './asistente/proyeccion-mezcla';
+import { IconoComponent } from '../../ui/icono.component';
 
 /**
  * Registro de una tanda de fritura, paso a paso (mismo estilo del asistente
@@ -65,7 +66,7 @@ import { resumirMezcla } from './asistente/proyeccion-mezcla';
   selector: 'app-horno-asistente',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.inert]': 'enviando() ? "" : null' },
-  imports: [
+  imports: [IconoComponent, 
     PasoMezclaHornoComponent,
     PasoResumenHornoComponent,
     PasoHorarioHornoComponent,
@@ -481,7 +482,7 @@ export class HornoAsistentePage {
 
   protected claseTarjetaGrande(seleccionada: boolean): string {
     const base =
-      'relative flex flex-col items-center gap-1.5 rounded-3xl border-2 px-4 py-7 text-center transition-all ' +
+      'relative flex flex-col items-center gap-1.5 rounded-2xl border-2 px-4 py-7 text-center transition-all ' +
       'duration-150 active:scale-[0.98]';
     return seleccionada
       ? `${base} border-marca-500 bg-marca-50/70 shadow-lg ring-4 ring-marca-500/10`

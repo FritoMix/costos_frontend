@@ -148,12 +148,12 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
       @if (cargando()) {
         <app-cargando texto="Calculando indicadores consolidados de planta…" />
       } @else if (errorIndicadores()) {
-        <p role="alert" class="text-sm text-zinc-700">No se pudieron cargar los indicadores.</p>
+        <p role="alert" class="text-sm text-slate-700">No se pudieron cargar los indicadores.</p>
       } @else if (indicadores(); as datos) {
         <!-- Sección 1: Volumen y Balance de Masa -->
         <div class="space-y-3">
           <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 class="text-base font-semibold text-zinc-900">Balance de Masa & Producción</h2>
+            <h2 class="text-base font-semibold text-slate-900">Balance de Masa & Producción</h2>
             <span class="text-xs text-slate-500 font-medium">Totales del período seleccionado</span>
           </div>
           <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -186,7 +186,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
         <!-- Sección 2: Eficiencia & Rendimiento -->
         <div class="space-y-3">
           <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 class="text-base font-semibold text-zinc-900">Eficiencia Operativa & Consumos</h2>
+            <h2 class="text-base font-semibold text-slate-900">Eficiencia Operativa & Consumos</h2>
             <span class="text-xs text-slate-500 font-medium">Indicadores clave de proceso</span>
           </div>
           <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -222,7 +222,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
 
         <!-- Gráficas de Distribución Espaciosas -->
         <div class="space-y-4">
-          <h2 class="text-base font-semibold text-zinc-900">Distribución Operativa</h2>
+          <h2 class="text-base font-semibold text-slate-900">Distribución Operativa</h2>
           <div class="grid gap-6 lg:grid-cols-2">
             <app-tarjeta [minimalista]="true" titulo="Producción por Horno" subtitulo="Distribución de kilogramos procesados en cada equipo">
               <app-grafica-barras [minimalista]="true" [datos]="datos.por_horno" />
@@ -243,7 +243,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
 
         <!-- Cuadro por Categoría -->
         @if (errorCategorias()) {
-          <p role="alert" class="text-sm text-zinc-700">No se pudo cargar el desglose por categoría.</p>
+          <p role="alert" class="text-sm text-slate-700">No se pudo cargar el desglose por categoría.</p>
         }
         @if (porCategoria().length > 0) {
           <div class="space-y-4">
@@ -295,7 +295,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
             <app-cargando texto="Cargando tandas…" />
           } @else if (errorBaches()) {
             <div class="flex items-center gap-3 p-5">
-              <p role="alert" class="text-sm text-zinc-700">No se pudieron cargar las tandas.</p>
+              <p role="alert" class="text-sm text-slate-700">No se pudieron cargar las tandas.</p>
               <button type="button" class="kpi-boton" (click)="cargarBaches(paginaBaches())">Reintentar</button>
             </div>
           } @else if (baches().length === 0) {
@@ -342,9 +342,9 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
                         @if (fila.tipos_papa?.length) {
                           <div class="flex flex-col gap-1">
                             @for (tipo of fila.tipos_papa; track tipo.tipo) {
-                              <span class="inline-flex w-fit items-center gap-1.5 whitespace-nowrap rounded-md border border-sky-200 bg-sky-50 px-2 py-0.5 font-semibold text-sky-900">
+                              <span class="inline-flex w-fit items-center gap-1.5 whitespace-nowrap rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-semibold text-marca-900">
                                 {{ tipo.tipo }}
-                                <span class="font-mono font-normal text-sky-700">{{ tipo.bultos | number: '1.0-2' }} bt</span>
+                                <span class="font-mono font-normal text-marca-700">{{ tipo.bultos | number: '1.0-2' }} bt</span>
                               </span>
                             }
                           </div>
@@ -401,10 +401,10 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
             </div>
           }
           @if (paginaBaches() > 1 || haySiguienteBaches()) {
-            <nav aria-label="Paginación de tandas" class="flex flex-wrap items-center justify-end gap-2 border-t border-zinc-200 p-3">
+            <nav aria-label="Paginación de tandas" class="flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 p-3">
               <button type="button" class="kpi-boton" [disabled]="cargandoBaches() || paginaBaches() === 1"
                 (click)="cargarBaches(paginaBaches() - 1)">Anterior</button>
-              <span class="text-sm text-zinc-700">Página {{ paginaBaches() }}</span>
+              <span class="text-sm text-slate-700">Página {{ paginaBaches() }}</span>
               <button type="button" class="kpi-boton" [disabled]="cargandoBaches() || !haySiguienteBaches()"
                 (click)="cargarBaches(paginaBaches() + 1)">Siguiente</button>
             </nav>

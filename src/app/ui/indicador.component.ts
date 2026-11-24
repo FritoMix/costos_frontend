@@ -4,7 +4,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 export type TonoIndicador = 'neutral' | 'marca' | 'verde' | 'azul' | 'ambar' | 'morado' | 'rojo';
 
 /**
- * KPI Métrico con fondo de color intenso y vibrante según el tono asignado.
+ * Indicador (KPI): tarjeta blanca con el valor grande; el tono colorea el ícono.
  */
 @Component({
   selector: 'app-indicador',
@@ -13,36 +13,26 @@ export type TonoIndicador = 'neutral' | 'marca' | 'verde' | 'azul' | 'ambar' | '
   imports: [DecimalPipe],
   template: `
     @if (minimalista()) {
-      <div class="flex h-full flex-col rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-        <p class="text-sm font-medium text-zinc-700">{{ nombre() }}</p>
-        <p class="mt-2 flex flex-wrap items-baseline gap-x-2 text-2xl font-semibold tabular-nums text-zinc-900">
+      <div class="flex h-full flex-col rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <p class="text-sm font-medium text-slate-700">{{ nombre() }}</p>
+        <p class="mt-2 flex flex-wrap items-baseline gap-x-2 text-2xl font-semibold tabular-nums text-slate-900">
           {{ (valor() | number: '1.0-2') ?? '—' }}
           @if (valor() != null && unidad()) {
-            <span class="text-sm font-medium text-zinc-600">{{ unidad() }}</span>
+            <span class="text-sm font-medium text-slate-600">{{ unidad() }}</span>
           }
         </p>
         @if (valor() == null && faltante()) {
-          <p class="mt-1 text-xs text-zinc-700">{{ faltante() }}</p>
+          <p class="mt-1 text-xs text-slate-700">{{ faltante() }}</p>
         }
         @if (subtexto()) {
-          <p class="mt-auto pt-2 text-xs leading-relaxed text-zinc-600">{{ subtexto() }}</p>
+          <p class="mt-auto pt-2 text-xs leading-relaxed text-slate-600">{{ subtexto() }}</p>
         }
       </div>
     } @else {
       <div
-        class="group relative flex flex-col justify-between overflow-hidden rounded-3xl border-2 p-4 sm:p-5 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+        class="group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-5 shadow-sm transition-shadow duration-200 hover:shadow-md"
         [style]="estiloContenedor()"
       >
-        <!-- Círculo decorativo grande -->
-        <div
-          class="pointer-events-none absolute -bottom-8 -right-8 h-32 w-32 rounded-full opacity-40 group-hover:opacity-60 transition-opacity duration-300"
-          [style]="glowStyle()"
-        ></div>
-        <!-- Círculo pequeño arriba -->
-        <div
-          class="pointer-events-none absolute -top-4 -left-4 h-16 w-16 rounded-full opacity-20 group-hover:opacity-35 transition-opacity duration-300"
-          [style]="glowStyle()"
-        ></div>
 
         <!-- Top header con título e ícono -->
         <div class="relative flex items-start justify-between gap-3">
@@ -50,7 +40,7 @@ export type TonoIndicador = 'neutral' | 'marca' | 'verde' | 'azul' | 'ambar' | '
             {{ nombre() }}
           </p>
           <div
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg shadow-md"
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"
             [style]="estiloIconoFondo()"
           >
             <span [style]="estiloIconoColor()" [innerHTML]="svgIcono()"></span>
@@ -74,7 +64,7 @@ export type TonoIndicador = 'neutral' | 'marca' | 'verde' | 'azul' | 'ambar' | '
                 {{ valor() | number: '1.0-2' }}
               </span>
               @if (unidad()) {
-                <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg border-2" [style]="estiloUnidad()">
+                <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg border" [style]="estiloUnidad()">
                   {{ unidad() }}
                 </span>
               }
@@ -83,7 +73,7 @@ export type TonoIndicador = 'neutral' | 'marca' | 'verde' | 'azul' | 'ambar' | '
         </div>
 
         @if (subtexto()) {
-          <p class="mt-3 text-xs font-semibold border-t-2 pt-2.5 relative" [style]="estiloSubtexto()">
+          <p class="mt-3 text-sm font-medium border-t pt-2.5 relative" [style]="estiloSubtexto()">
             {{ subtexto() }}
           </p>
         }
@@ -102,67 +92,68 @@ export class IndicadorComponent {
   readonly icono = input<string>('');
 
   /** Paletas de color intensas por tono */
+  /** Tarjeta blanca; el tono solo pinta el ícono. */
   private readonly paleta = computed(() => {
     switch (this.tono()) {
       case 'azul':
       case 'verde':
       case 'morado':
         return {
-          bg: 'linear-gradient(135deg, #92d4f2 0%, #b4e3f7 50%, #d8f1fc 100%)',
-          border: '#38bdf8',
-          iconBg: '#0284c7',
-          iconBorder: '#0369a1',
+          bg: '#ffffff',
+          border: '#e2e8f0',
+          iconBg: '#0369a1',
+          iconBorder: '#075985',
           iconColor: '#ffffff',
-          titleColor: '#0c4a6e',
-          valueColor: '#082f49',
-          unitBg: '#0284c7',
-          unitBorder: '#0369a1',
-          unitColor: '#ffffff',
-          subtextBorder: '#7dd3fc',
-          subtextColor: '#0369a1',
-          accent: '#38bdf8',
-          faltanteBg: '#f0f9ff',
-          faltanteBorder: '#92d4f2',
-          faltanteColor: '#0369a1',
+          titleColor: '#475569',
+          valueColor: '#08283e',
+          unitBg: '#f1f5f9',
+          unitBorder: '#e2e8f0',
+          unitColor: '#334155',
+          subtextBorder: '#f1f5f9',
+          subtextColor: '#475569',
+          accent: '#0284c7',
+          faltanteBg: '#f8fafc',
+          faltanteBorder: '#e2e8f0',
+          faltanteColor: '#475569',
         };
       case 'ambar':
       case 'marca':
       case 'rojo':
         return {
-          bg: 'linear-gradient(135deg, #ffffc5 0%, #fef9c3 50%, #fefce8 100%)',
-          border: '#eab308',
-          iconBg: '#ca8a04',
-          iconBorder: '#a16207',
+          bg: '#ffffff',
+          border: '#e2e8f0',
+          iconBg: '#b45309',
+          iconBorder: '#92400e',
           iconColor: '#ffffff',
-          titleColor: '#713f12',
-          valueColor: '#422006',
-          unitBg: '#ca8a04',
-          unitBorder: '#a16207',
-          unitColor: '#ffffff',
-          subtextBorder: '#fde047',
-          subtextColor: '#854d0e',
-          accent: '#fde047',
-          faltanteBg: '#fefce8',
-          faltanteBorder: '#fef08a',
-          faltanteColor: '#854d0e',
+          titleColor: '#475569',
+          valueColor: '#08283e',
+          unitBg: '#f1f5f9',
+          unitBorder: '#e2e8f0',
+          unitColor: '#334155',
+          subtextBorder: '#f1f5f9',
+          subtextColor: '#475569',
+          accent: '#d97706',
+          faltanteBg: '#f8fafc',
+          faltanteBorder: '#e2e8f0',
+          faltanteColor: '#475569',
         };
       default: // neutral
         return {
-          bg: 'linear-gradient(135deg, #cbd5e1 0%, #e2e8f0 60%, #f1f5f9 100%)',
-          border: '#64748b',
-          iconBg: '#94a3b8',
-          iconBorder: '#475569',
+          bg: '#ffffff',
+          border: '#e2e8f0',
+          iconBg: '#475569',
+          iconBorder: '#334155',
           iconColor: '#ffffff',
-          titleColor: '#0f172a',
-          valueColor: '#020617',
-          unitBg: '#64748b',
-          unitBorder: '#475569',
-          unitColor: '#ffffff',
-          subtextBorder: '#94a3b8',
-          subtextColor: '#334155',
+          titleColor: '#475569',
+          valueColor: '#08283e',
+          unitBg: '#f1f5f9',
+          unitBorder: '#e2e8f0',
+          unitColor: '#334155',
+          subtextBorder: '#f1f5f9',
+          subtextColor: '#475569',
           accent: '#94a3b8',
           faltanteBg: '#f8fafc',
-          faltanteBorder: '#cbd5e1',
+          faltanteBorder: '#e2e8f0',
           faltanteColor: '#475569',
         };
     }

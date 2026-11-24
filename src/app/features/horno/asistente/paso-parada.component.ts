@@ -34,7 +34,7 @@ export class PasoParadaHornoComponent {
 
   protected claseOpcion(activo: boolean): string {
     const base =
-      'flex flex-col items-center gap-1 rounded-3xl border-2 px-4 py-6 text-center font-bold transition active:scale-[0.98]';
+      'flex flex-col items-center gap-1 rounded-2xl border-2 px-4 py-6 text-center font-bold transition active:scale-[0.98]';
     return activo
       ? `${base} border-marca-500 bg-marca-50/70 text-marca-900 ring-4 ring-marca-500/10`
       : `${base} border-slate-200 bg-white text-slate-700 hover:border-marca-300`;

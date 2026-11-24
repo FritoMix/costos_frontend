@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import type { Notificacion } from '../core/modelos/notificacion.model';
 import { AuthService } from '../core/servicios/auth.service';
 import { NotificacionesPlantaService } from '../core/servicios/notificaciones-planta.service';
+import { IconoComponent, type NombreIcono } from './icono.component';
 
 /**
  * Campana de avisos futurista cálida de la barra superior.
@@ -15,13 +16,13 @@ import { NotificacionesPlantaService } from '../core/servicios/notificaciones-pl
 @Component({
   selector: 'app-campana-avisos',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink],
+  imports: [IconoComponent, RouterLink],
   template: `
     <div class="relative">
       <button
         type="button"
         (click)="alternar()"
-        class="relative flex h-10 w-10 items-center justify-center rounded-xl border border-sky-200/80 bg-white/80 text-slate-600 transition-all duration-200 hover:bg-sky-50 hover:text-sky-700 hover:border-sky-300 active:scale-95"
+        class="relative flex h-11 w-11 items-center justify-center rounded-xl text-slate-200 transition-colors duration-150 hover:bg-white hover:text-white focus-visible:outline-2 focus-visible:outline-marca-300"
         style="backdrop-filter: blur(4px);"
         [attr.aria-label]="'Avisos: ' + servicio.sinLeer() + ' sin leer'"
       >
@@ -35,7 +36,7 @@ import { NotificacionesPlantaService } from '../core/servicios/notificaciones-pl
 
         @if (servicio.sinLeer() > 0) {
           <span
-            class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-gradient-to-r from-rose-500 to-marca-500 px-1 text-[11px] font-extrabold text-white ring-2 ring-white anim-pulsar"
+            class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-xs font-extrabold text-white ring-2 ring-marca-950"
           >
             {{ servicio.sinLeer() }}
           </span>
@@ -47,11 +48,10 @@ import { NotificacionesPlantaService } from '../core/servicios/notificaciones-pl
         <div class="fixed inset-0 z-40" (click)="abierto.set(false)"></div>
 
         <div
-          class="absolute right-0 z-50 mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-96 overflow-hidden rounded-3xl border border-sky-200/80 bg-white/95 shadow-2xl anim-bajar"
+          class="absolute right-0 z-50 mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-96 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl anim-bajar"
           style="backdrop-filter: blur(16px) saturate(1.2);"
         >
-          <header class="flex items-center justify-between border-b border-sky-100/90 px-4 py-3"
-                  style="background: linear-gradient(135deg, rgba(240,249,255,0.85) 0%, rgba(224,242,254,0.5) 100%);">
+          <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
             <p class="text-sm font-extrabold text-slate-900">Avisos de planta</p>
             @if (servicio.sinLeer() > 0) {
               <button
@@ -66,9 +66,9 @@ import { NotificacionesPlantaService } from '../core/servicios/notificaciones-pl
 
           <div class="max-h-96 overflow-y-auto">
             @for (aviso of servicio.pendientes(); track aviso.id) {
-              <article class="flex gap-3 border-b border-sky-100/70 px-4 py-3.5 last:border-0 transition-colors duration-150 hover:bg-sky-50/50">
+              <article class="flex gap-3 border-b border-slate-200 px-4 py-3.5 last:border-0 transition-colors duration-150 hover:bg-marca-50">
                 <span [class]="claseIcono(aviso.tipo)">
-                  {{ icono(aviso.tipo) }}
+                  <app-icono [nombre]="icono(aviso.tipo)" [tamano]="18" />
                 </span>
                 <div class="min-w-0 flex-1">
                   <p class="text-sm font-extrabold text-slate-900">{{ aviso.titulo }}</p>
@@ -107,22 +107,22 @@ export class CampanaAvisosComponent {
   private readonly auth = inject(AuthService);
   protected readonly abierto = signal(false);
 
-  protected icono(tipo: string): string {
+  protected icono(tipo: string): NombreIcono {
     switch (tipo) {
       case 'formula_lista':
-        return '✅';
+        return 'checkCirculo';
       case 'produccion_por_terminar':
-        return '⏰';
+        return 'reloj';
       case 'produccion_terminada':
-        return '🛑';
+        return 'alto';
       case 'orden_cerrada_sola':
-        return '🔒';
+        return 'candado';
       case 'recordar_formula_noche':
-        return '🌙';
+        return 'luna';
       case 'recuperar_password':
-        return '🔑';
+        return 'llave';
       default:
-        return '🆕';
+        return 'info';
     }
   }
 

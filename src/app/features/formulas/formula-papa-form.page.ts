@@ -21,6 +21,7 @@ import {
 import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 import { ConfirmarComponent } from '../../ui/confirmar.component';
+import { IconoComponent } from '../../ui/icono.component';
 
 interface FilaPlantilla {
   referencia_papa_id: number | null;
@@ -38,7 +39,7 @@ interface FilaPlantilla {
   selector: 'app-formula-papa-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.inert]': 'guardando() || cambiandoEstado() || eliminando() || repartiendo() ? "" : null' },
-  imports: [
+  imports: [IconoComponent, 
     RouterLink,
     FormsModule,
     DecimalPipe,
@@ -69,7 +70,7 @@ interface FilaPlantilla {
             class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold ring-1 ring-inset shadow-2xs"
             [class]="actual.activa
               ? 'bg-emerald-50 text-emerald-800 ring-emerald-500/20'
-              : 'bg-sky-50/70 text-slate-600 ring-sky-200/60'"
+              : 'bg-slate-50 text-slate-600 ring-marca-200/60'"
           >
             <span class="h-2 w-2 rounded-full bg-current opacity-80"></span>
             {{ actual.activa ? 'Activa' : 'Inactiva' }}
@@ -80,7 +81,7 @@ interface FilaPlantilla {
       @if (cargando()) {
         <app-cargando texto="Cargando la fórmula…" />
       } @else if (errorCarga()) {
-        <div class="rounded-3xl border border-rose-200 bg-rose-50/60 p-6 text-center">
+        <div class="rounded-2xl border border-rose-200 bg-rose-50/60 p-6 text-center">
           <p class="text-sm font-bold text-rose-800">{{ errorCarga() }}</p>
           <div class="mt-3 flex justify-center">
             <a routerLink="/formula-produccion" [queryParams]="{ seccion: 'formulas' }">
@@ -95,7 +96,7 @@ interface FilaPlantilla {
           <!-- 1. Datos de la fórmula -->
           <section class="space-y-5">
             <div class="flex items-center gap-3">
-              <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sky-800 text-sm font-black shadow-2xs">
+              <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-marca-100 text-marca-800 text-sm font-black shadow-2xs">
                 1
               </span>
               <div>
@@ -143,7 +144,7 @@ interface FilaPlantilla {
           <!-- 2. Mezcla por tanda -->
           <section class="pt-8 space-y-5">
             <div class="flex items-center gap-3">
-              <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sky-800 text-sm font-black shadow-2xs">
+              <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-marca-100 text-marca-800 text-sm font-black shadow-2xs">
                 2
               </span>
               <div>
@@ -254,7 +255,7 @@ interface FilaPlantilla {
           <!-- 3. Resumen y capacidad de horno -->
           <section class="pt-8 space-y-5">
             <div class="flex items-center gap-3">
-              <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sky-800 text-sm font-black shadow-2xs">
+              <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-marca-100 text-marca-800 text-sm font-black shadow-2xs">
                 3
               </span>
               <div>
@@ -264,12 +265,12 @@ interface FilaPlantilla {
             </div>
             @if (capacidadHorno(); as capacidad) {
               <div
-                class="rounded-2xl border border-sky-200/80 bg-sky-50/50 p-5 sm:p-6 shadow-2xs"
+                class="rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-6 shadow-2xs"
                 data-testid="formula-papa-capacidad"
               >
                 <div class="flex items-center justify-between text-sm sm:text-base font-extrabold text-slate-900">
                   <span>Capacidad del Horno por Tanda</span>
-                  <span class="font-mono text-sky-950 font-black text-base sm:text-lg">
+                  <span class="font-mono text-marca-950 font-black text-base sm:text-lg">
                     {{ totalBultos() }} / {{ capacidad }} bultos
                   </span>
                 </div>
@@ -282,7 +283,7 @@ interface FilaPlantilla {
                 </div>
                 @if (excedeCapacidad()) {
                   <p class="mt-3 text-xs font-bold text-rose-700 flex items-center gap-1.5">
-                    ⚠️ La mezcla supera los {{ capacidad }} bultos que procesa el horno. Reparte la
+                    <app-icono nombre="alerta" [tamano]="16" /> La mezcla supera los {{ capacidad }} bultos que procesa el horno. Reparte la
                     capacidad o ajusta los bultos antes de guardar.
                   </p>
                 } @else if (totalBultos() === capacidad) {
@@ -291,7 +292,7 @@ interface FilaPlantilla {
                   </p>
                 } @else {
                   <p class="mt-3 text-xs font-semibold text-slate-500">
-                    ℹ️ El horno admite hasta {{ capacidad }} bultos por tanda.
+                    <app-icono nombre="info" [tamano]="16" /> El horno admite hasta {{ capacidad }} bultos por tanda.
                   </p>
                 }
               </div>
@@ -338,7 +339,7 @@ interface FilaPlantilla {
           <!-- 4. Notas para el operario -->
           <section class="pt-8 space-y-4">
             <div class="flex items-center gap-3">
-              <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sky-800 text-sm font-black shadow-2xs">
+              <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-marca-100 text-marca-800 text-sm font-black shadow-2xs">
                 4
               </span>
               <div>
@@ -368,7 +369,7 @@ interface FilaPlantilla {
             @if (advertencias().length > 0) {
               <ul class="space-y-2 rounded-2xl bg-amber-50/80 border border-amber-200/80 p-4">
                 @for (advertencia of advertencias(); track advertencia) {
-                  <li class="text-xs font-bold text-amber-900 flex items-center gap-2">⚠️ {{ advertencia }}</li>
+                  <li class="text-xs font-bold text-amber-900 flex items-center gap-2"><app-icono nombre="alerta" [tamano]="20" /> {{ advertencia }}</li>
                 }
               </ul>
             }

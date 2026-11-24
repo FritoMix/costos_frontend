@@ -43,11 +43,12 @@ import {
   type Revision,
 } from '../../core/poka-yoke';
 import { RevisionPasoComponent } from '../../ui/revision-paso.component';
+import { IconoComponent } from '../../ui/icono.component';
 @Component({
   selector: 'app-saborizado-recepcion',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.inert]': 'enviando() ? "" : null' },
-  imports: [
+  imports: [IconoComponent, 
     RevisionPasoComponent,
     RouterLink,
     DecimalPipe,
@@ -62,7 +63,7 @@ import { RevisionPasoComponent } from '../../ui/revision-paso.component';
       } @else if (detalle(); as datos) {
         @if (bloqueada()) {
           <div
-            class="rounded-3xl border border-emerald-200 bg-white p-8 text-center shadow-xl shadow-emerald-200/20"
+            class="rounded-2xl border border-emerald-200 bg-white p-8 text-center shadow-xl shadow-emerald-200/20"
             data-testid="saborizado-orden-completa"
           >
             <div
@@ -96,7 +97,7 @@ import { RevisionPasoComponent } from '../../ui/revision-paso.component';
           </div>
         } @else {
           <div
-            class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-300/30"
+            class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl shadow-slate-300/30"
           >
           <!-- Cabecera: progreso -->
           <header class="flex items-center gap-3 border-b border-slate-100 px-5 py-4 sm:px-7">
@@ -111,7 +112,7 @@ import { RevisionPasoComponent } from '../../ui/revision-paso.component';
             </a>
             <div class="relative h-3 flex-1 overflow-hidden rounded-full bg-slate-200/90">
               <div
-                class="h-full rounded-full bg-gradient-to-r from-marca-400 to-marca-600 transition-all duration-500 ease-out"
+                class="h-full rounded-full bg-marca-600 transition-all duration-500 ease-out"
                 [style.width.%]="progreso()"
               ></div>
             </div>
@@ -128,7 +129,7 @@ import { RevisionPasoComponent } from '../../ui/revision-paso.component';
               <span class="font-mono">#{{ datos.orden.numero_orden }}</span>
             </p>
             @if (minutosDisponibles() !== null) {
-              <p class="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <p class="mt-1 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Producción: {{ datos.orden.horas_produccion }} h · disponibles:
                 {{ textoMinutosDisponibles() }}
               </p>
@@ -138,7 +139,7 @@ import { RevisionPasoComponent } from '../../ui/revision-paso.component';
           <!-- Cuerpo -->
           <div class="px-5 py-8 sm:px-8" [attr.data-testid]="'paso-' + pasoActual()">
             <div class="mx-auto max-w-md text-center">
-              <span class="text-[11px] font-extrabold uppercase tracking-widest text-marca-500">
+              <span class="text-xs font-extrabold uppercase tracking-widest text-marca-500">
                 {{ etiquetaPaso() }} · Paso {{ indicePaso() + 1 }}
               </span>
               <h2 class="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 text-balance sm:text-[26px]">
@@ -154,7 +155,7 @@ import { RevisionPasoComponent } from '../../ui/revision-paso.component';
                 <!-- 1. Horario -->
                 @case ('horario') {
                   <div class="anim-entrada mx-auto max-w-sm">
-                    <div class="rounded-3xl border-2 border-marca-300 bg-marca-50/60 px-6 py-7">
+                    <div class="rounded-2xl border-2 border-marca-300 bg-marca-50/60 px-6 py-7">
                       @if (franjaAutomatica() && numeroRecepcion()) {
                         <p class="mb-4 text-center text-sm font-extrabold text-marca-800" data-testid="numero-recepcion">
                           Recepción {{ numeroRecepcion() }}@if (datos.orden.horas_produccion) { de {{ datos.orden.horas_produccion }}}
@@ -162,14 +163,14 @@ import { RevisionPasoComponent } from '../../ui/revision-paso.component';
                       }
                       <div class="flex items-center justify-center gap-5">
                         <div class="text-center">
-                          <p class="text-[11px] font-extrabold uppercase tracking-widest text-slate-500">Inicio</p>
+                          <p class="text-xs font-extrabold uppercase tracking-widest text-slate-500">Inicio</p>
                           <p class="mt-1 text-3xl font-extrabold text-slate-900 tabular-nums">{{ horaInicio() }}</p>
                         </div>
                         <svg class="h-6 w-6 shrink-0 text-marca-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                         </svg>
                         <div class="text-center">
-                          <p class="text-[11px] font-extrabold uppercase tracking-widest text-slate-500">Fin</p>
+                          <p class="text-xs font-extrabold uppercase tracking-widest text-slate-500">Fin</p>
                           <p class="mt-1 text-3xl font-extrabold text-slate-900 tabular-nums">{{ horaFin() }}</p>
                         </div>
                       </div>
@@ -225,7 +226,7 @@ import { RevisionPasoComponent } from '../../ui/revision-paso.component';
                         (click)="saborId.set(sabor.id)"
                         [class]="claseFila(saborId() === sabor.id)"
                       >
-                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-marca-50 text-lg">👅</span>
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-marca-50 text-lg"><app-icono nombre="salero" [tamano]="20" /></span>
                         <span class="min-w-0 flex-1 text-left font-bold text-slate-900">{{ sabor.nombre }}</span>
                         @if (saborId() === sabor.id) {
                           <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-marca-600 text-xs font-black text-white">✓</span>
@@ -253,8 +254,8 @@ import { RevisionPasoComponent } from '../../ui/revision-paso.component';
                   <div class="anim-entrada">
                     <div class="mx-auto max-w-sm space-y-3">
                       <!-- Visor del peso que se está agregando -->
-                      <div class="rounded-3xl border-2 border-slate-200 bg-slate-50/70 px-5 py-4">
-                        <p class="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 text-center">
+                      <div class="rounded-2xl border-2 border-slate-200 bg-slate-50/70 px-5 py-4">
+                        <p class="text-xs font-extrabold uppercase tracking-widest text-slate-400 text-center">
                           Peso de la canastilla
                         </p>
                         <p class="mt-1 text-center font-mono text-3xl font-extrabold text-slate-900 tabular-nums">
@@ -318,7 +319,7 @@ import { RevisionPasoComponent } from '../../ui/revision-paso.component';
                             }
                           </ul>
                           <div class="mt-3 flex items-center justify-between rounded-xl bg-emerald-50 px-3 py-2.5 border border-emerald-200/80">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Total recibido</span>
+                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">Total recibido</span>
                             <span class="font-mono text-lg font-black text-emerald-900">
                               {{ totalKg() | number: '1.0-2' }} <span class="text-xs font-semibold text-emerald-700">kg</span>
                             </span>

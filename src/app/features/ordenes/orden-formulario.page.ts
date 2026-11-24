@@ -31,6 +31,7 @@ import { BotonComponent } from '../../ui/boton.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 import { TarjetaComponent } from '../../ui/tarjeta.component';
 import { FormulaResumenComponent } from '../formulas/formula-resumen.component';
+import { IconoComponent } from '../../ui/icono.component';
 
 /**
  * Crear o corregir una orden.
@@ -44,7 +45,7 @@ import { FormulaResumenComponent } from '../formulas/formula-resumen.component';
   selector: 'app-orden-formulario',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.inert]': 'enviando() ? "" : null' },
-  imports: [
+  imports: [IconoComponent, 
     ReactiveFormsModule,
     RouterLink,
     TarjetaComponent,
@@ -98,7 +99,7 @@ import { FormulaResumenComponent } from '../formulas/formula-resumen.component';
                 La fórmula quedó congelada porque la producción ya inició. No se edita desde aquí.
               </p>
             } @else {
-              <p class="mt-3 rounded-2xl bg-sky-50 px-4 py-3 text-xs font-semibold text-sky-900">
+              <p class="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs font-semibold text-marca-900">
                 Al guardar, el backend revalida que la fórmula siga cabiendo con las horas, el horno
                 y la cantidad nuevos.
               </p>
@@ -116,8 +117,8 @@ import { FormulaResumenComponent } from '../formulas/formula-resumen.component';
                   <option value="exportacion">Exportación</option>
                 </select>
                 @if (formulario.value.destino === 'exportacion') {
-                  <p class="ayuda text-sky-700 font-semibold">
-                    ℹ️ Solo se listan los hornos calificados para exportación.
+                  <p class="ayuda text-marca-700 font-semibold">
+                    <app-icono nombre="info" [tamano]="16" /> Solo se listan los hornos calificados para exportación.
                   </p>
                 }
               </div>
@@ -169,7 +170,7 @@ import { FormulaResumenComponent } from '../formulas/formula-resumen.component';
                 </select>
                 @if (formulario.value.categoria_id && productosDeCategoria().length === 0) {
                   <p class="ayuda text-amber-700 font-semibold">
-                    ⚠️ Esa categoría no tiene productos activos.
+                    <app-icono nombre="alerta" [tamano]="16" /> Esa categoría no tiene productos activos.
                   </p>
                 }
               </div>
@@ -184,7 +185,7 @@ import { FormulaResumenComponent } from '../formulas/formula-resumen.component';
                 </select>
                 @if (hornosPosibles().length === 0) {
                   <p class="ayuda text-amber-700 font-semibold">
-                    ⚠️ Ningún horno activo coincide con la categoría seleccionada.
+                    <app-icono nombre="alerta" [tamano]="16" /> Ningún horno activo coincide con la categoría seleccionada.
                   </p>
                 }
                 @if (lineaActual(); as linea) {
