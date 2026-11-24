@@ -7,7 +7,7 @@
     class="absolute inset-0 h-full w-full object-cover"
   />
   <div
-    class="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,24,38,0.94)_0%,rgba(6,24,38,0.84)_48%,rgba(6,24,38,0.6)_100%)]"
+    class="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,24,38,0.9)_0%,rgba(6,24,38,0.68)_48%,rgba(6,24,38,0.32)_100%)]"
     aria-hidden="true"
   ></div>
 
@@ -50,9 +50,9 @@
 
     <!-- Acceso -->
     <section class="flex items-center justify-center lg:w-[440px]" aria-labelledby="titulo-login">
-      <div class="w-full max-w-md rounded-2xl bg-white px-7 py-9 text-slate-900 shadow-2xl shadow-black/40 sm:px-10 sm:py-11">
-        <h1 id="titulo-login" class="text-3xl font-extrabold tracking-tight text-marca-950">Iniciar sesión</h1>
-        <p class="mt-1.5 text-slate-600">Ingresa con tu usuario de planta.</p>
+      <div class="w-full max-w-md rounded-[2rem] border border-white/25 bg-slate-950/40 px-5 py-8 text-white shadow-xl shadow-black/25 backdrop-blur-md sm:px-10 sm:py-11">
+        <h1 id="titulo-login" class="text-3xl font-extrabold tracking-tight text-white">Iniciar sesión</h1>
+        <p class="mt-1.5 text-slate-100">Ingresa con tu usuario de planta.</p>
 
       @if (errorEntrada()) {
         <p role="alert" class="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
@@ -62,12 +62,12 @@
 
       <form [formGroup]="formulario" (ngSubmit)="entrar()" class="mt-7 space-y-5">
         <div>
-          <label class="etiqueta" for="usuario">Usuario</label>
+          <label class="etiqueta text-slate-100!" for="usuario">Usuario</label>
           <input
             id="usuario"
             data-testid="login-usuario"
             type="text"
-            class="campo mt-2 min-h-13 rounded-xl! border-slate-300! bg-slate-50! text-base!"
+            class="campo mt-2 min-h-13 rounded-2xl! bg-white/80! placeholder:text-slate-600! text-base!"
             placeholder="Escribe tu usuario"
             formControlName="nombre_usuario"
             autocomplete="username"
@@ -79,18 +79,18 @@
             [attr.aria-describedby]="invalido('nombre_usuario') ? 'error-usuario' : null"
           />
           @if (invalido('nombre_usuario')) {
-            <p id="error-usuario" class="error-campo">Escribe tu nombre de usuario.</p>
+            <p id="error-usuario" class="error-campo text-rose-100!">Escribe tu nombre de usuario.</p>
           }
         </div>
 
         <div>
-          <label class="etiqueta" for="password">Contraseña</label>
+          <label class="etiqueta text-slate-100!" for="password">Contraseña</label>
           <div class="relative mt-2">
             <input
               id="password"
               data-testid="login-password"
               [type]="mostrarPassword() ? 'text' : 'password'"
-              class="campo min-h-13 rounded-xl! border-slate-300! bg-slate-50! pr-14! text-base!"
+              class="campo min-h-13 rounded-2xl! bg-white/80! placeholder:text-slate-600! pr-14! text-base!"
               placeholder="Escribe tu contraseña"
               formControlName="password"
               autocomplete="current-password"
@@ -116,7 +116,7 @@
             </button>
           </div>
           @if (invalido('password')) {
-            <p id="error-password" class="error-campo">Escribe tu contraseña.</p>
+            <p id="error-password" class="error-campo text-rose-100!">Escribe tu contraseña.</p>
           }
         </div>
 
@@ -131,17 +131,17 @@
         </app-boton>
       </form>
 
-        <div class="mt-5 flex items-center justify-between text-sm">
+        <div class="mt-5 flex flex-wrap items-center justify-between gap-2 text-sm">
           <a
             routerLink="/olvide-clave"
-            class="font-bold text-marca-700 hover:underline"
+            class="font-bold text-white underline-offset-4 hover:underline"
             data-testid="olvide-clave"
             >¿Olvidaste tu contraseña?</a
           >
-          <span class="text-slate-500">v2.0</span>
+          <span class="text-slate-100">v2.0</span>
         </div>
 
-        <p class="mt-6 border-t border-slate-200 pt-5 text-sm text-slate-500">
+        <p class="mt-6 border-t border-white/25 pt-5 text-sm text-slate-100">
           ¿Sin acceso? Pídelo al administrador de la planta.
         </p>
       </div>
