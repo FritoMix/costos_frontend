@@ -188,7 +188,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
         }
       </app-tarjeta>
       @if (total() > 0) {
-        <nav aria-label="Paginación de órdenes" class="flex items-center justify-between gap-3 text-sm">
+        <nav aria-label="Paginación de órdenes" class="flex flex-wrap items-center justify-between gap-3 text-sm">
           <button type="button" aria-label="Página anterior" (click)="cambiarPagina(-1)"
             [disabled]="cargando() || pagina() <= 1" class="rounded-lg border px-4 py-2 disabled:opacity-40">Anterior</button>
           <span aria-live="polite">Página {{ pagina() }} de {{ paginas() }} · {{ total() }} órdenes</span>

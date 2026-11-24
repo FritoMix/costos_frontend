@@ -16,11 +16,11 @@ import { ChangeDetectionStrategy, Component, input, model } from '@angular/core'
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block min-w-0' },
   template: `
-    <div class="mx-auto max-w-sm">
+    <div class="mx-auto max-w-md">
       <!-- Visor -->
-      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-6 text-center shadow-inner relative overflow-hidden">
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-6 text-center shadow-inner relative overflow-hidden">
         <p
-          class="text-5xl sm:text-6xl font-extrabold text-slate-900 tabular-nums font-mono tracking-tight"
+          class="text-[clamp(1.75rem,8vw,3.75rem)] font-extrabold text-slate-900 tabular-nums font-mono tracking-tight"
           data-testid="teclado-valor"
         >
           {{ valor() || '0' }}

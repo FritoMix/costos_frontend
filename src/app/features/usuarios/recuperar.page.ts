@@ -28,7 +28,7 @@ import { ClaveTemporalComponent } from './clave-temporal.component';
         </p>
       </header>
       <input
-        class="campo mt-5"
+        class="campo"
         placeholder="Buscar por nombre o usuario…"
         aria-label="Buscar usuario"
         [ngModel]="filtro()"
@@ -37,10 +37,10 @@ import { ClaveTemporalComponent } from './clave-temporal.component';
       @if (cargando()) {
         <app-cargando texto="Cargando usuarios…" />
       } @else {
-        <ul class="mt-4 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
+        <ul class="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
           @for (usuario of visibles(); track usuario.id) {
             <li class="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
-              <div>
+              <div class="min-w-0 wrap-anywhere">
                 <p class="font-bold text-slate-900">{{ usuario.nombre_completo }}</p>
                 <p class="text-xs text-slate-500">
                   {{ usuario.nombre_usuario }} · {{ usuario.rol.nombre }}

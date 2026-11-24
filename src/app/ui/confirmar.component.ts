@@ -13,11 +13,11 @@ import { BotonComponent } from './boton.component';
     @if (abierto()) {
       <dialog
         #dialogo
-        class="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl backdrop:bg-slate-900/50 sm:p-6"
+        class="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto whitespace-normal text-left rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl backdrop:bg-slate-900/50 sm:p-6"
         [attr.aria-label]="titulo()"
         (cancel)="$event.preventDefault(); cancelado.emit()"
       >
-        <div class="flex items-start gap-3.5">
+        <div class="flex flex-col items-start gap-4 sm:flex-row">
           @if (peligroso()) {
             <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-600 border border-rose-200/40">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -33,11 +33,11 @@ import { BotonComponent } from './boton.component';
           }
           <div class="min-w-0 flex-1 wrap-anywhere">
             <h2 class="text-lg font-bold text-slate-900 tracking-tight">{{ titulo() }}</h2>
-            <p class="mt-1.5 text-sm text-slate-600 leading-relaxed font-medium">{{ mensaje() }}</p>
+            <p class="mt-3 text-sm text-slate-600 leading-relaxed font-medium">{{ mensaje() }}</p>
           </div>
         </div>
 
-        <div class="mt-6 flex flex-wrap justify-end gap-2.5 border-t border-slate-200 pt-4">
+        <div class="acciones-formulario mt-6 justify-end">
           <app-boton variante="secundario" (click)="cancelado.emit()">
             {{ textoCancelar() }}
           </app-boton>

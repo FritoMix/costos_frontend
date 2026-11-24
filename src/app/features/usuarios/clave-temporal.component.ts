@@ -35,21 +35,23 @@ import { ConfirmarComponent } from '../../ui/confirmar.component';
     @if (clave(); as valor) {
       <dialog
         #dialogoClave
-        class="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-sm overflow-y-auto rounded-2xl bg-white p-6 text-center shadow-2xl backdrop:bg-slate-900/50"
+        class="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto whitespace-normal rounded-2xl bg-white p-5 text-left sm:p-7 shadow-2xl backdrop:bg-slate-900/50"
         aria-label="Contraseña temporal generada"
         (cancel)="$event.preventDefault(); clave.set(null)"
       >
-        <p class="text-sm font-semibold text-slate-600 wrap-anywhere">
-          Contraseña temporal de {{ usuario().nombre_completo }}
-        </p>
+        <h2 class="text-xl font-bold text-slate-900">Contraseña temporal</h2>
+        <div class="mt-4 wrap-anywhere">
+          <p class="font-semibold text-slate-800">{{ usuario().nombre_completo }}</p>
+          <p class="mt-1 text-sm text-slate-600">Usuario: {{ usuario().nombre_usuario }}</p>
+        </div>
         <p
-          class="mt-3 font-mono text-2xl font-black tracking-widest min-[360px]:text-4xl text-slate-900"
+          class="my-5 rounded-xl border border-marca-200 bg-marca-50 px-2 py-4 text-center font-mono text-2xl font-bold tracking-widest text-marca-950 min-[360px]:text-3xl"
           data-testid="clave-temporal-valor"
         >
           {{ valor }}
         </p>
-        <p class="mt-3 text-xs font-medium text-slate-500 wrap-anywhere">
-          Díctasela ahora: no se vuelve a mostrar. Usuario: <b>{{ usuario().nombre_usuario }}</b>
+        <p class="text-sm leading-relaxed text-slate-600">
+          Díctale estos ocho números antes de cerrar esta ventana. La contraseña se muestra una sola vez.
         </p>
         <button
           type="button"

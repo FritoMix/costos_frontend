@@ -112,6 +112,33 @@
     @apply flex min-w-0 flex-col gap-6 sm:gap-8;
   }
 
+  /* Mantiene centrada la última fila, también cuando solo hay una orden. */
+  .ordenes-estacion {
+    @apply flex flex-wrap justify-center gap-5;
+  }
+
+  .ordenes-estacion > * {
+    flex: 0 1 calc(50% - 0.625rem);
+    max-width: 34rem;
+  }
+
+  @media (width < 48rem) {
+    .ordenes-estacion > * {
+      flex-basis: 100%;
+    }
+  }
+
+  .acciones-asistente {
+    @apply flex flex-col gap-3 px-3 py-4 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between sm:px-7;
+  }
+
+  @media (width < 400px) {
+    .acciones-asistente app-boton,
+    .acciones-asistente button {
+      width: 100%;
+    }
+  }
+
   /* Separa las acciones de los campos y deja que se distribuyan en móvil. */
   .acciones-formulario {
     @apply flex flex-wrap items-center gap-3 border-t border-slate-200 pt-5;
@@ -164,14 +191,14 @@
 
   /* Contenedor responsivo para tablas industriales */
   .tabla-contenedor {
-    @apply w-full overflow-x-auto rounded-2xl;
+    @apply w-full min-w-0 max-w-full overflow-x-auto rounded-2xl;
     -webkit-overflow-scrolling: touch;
   }
 
   /* Campos de formulario amplios, ergonómicos y limpios con azul cálido glassmorphism */
   /* Campo de formulario: borde visible, fondo blanco y texto de buen tamaño. */
   .campo {
-    @apply block w-full rounded-xl border-[1.5px] border-slate-300 bg-white px-4 py-3 text-base font-medium
+    @apply block w-full min-w-0 max-w-full rounded-xl border-[1.5px] border-slate-300 bg-white px-4 py-3 text-base font-medium
            text-slate-900 transition-colors duration-150 placeholder:text-slate-400
            hover:border-slate-400 focus:border-marca-500 focus:ring-4
            focus:ring-marca-500/15 focus:outline-none

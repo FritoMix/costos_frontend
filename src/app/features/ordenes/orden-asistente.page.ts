@@ -239,7 +239,7 @@ type ClavePaso =
                 @case ('horas') {
                   <div class="anim-entrada mx-auto max-w-sm">
                     <!-- Atajos de jornada -->
-                    <div class="grid grid-cols-4 gap-2.5">
+                    <div class="grid grid-cols-2 gap-2.5 min-[400px]:grid-cols-4">
                       @for (opcion of horasSugeridas; track opcion) {
                         <button
                           type="button"

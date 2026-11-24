@@ -48,7 +48,7 @@ import { IconoComponent, type NombreIcono } from './icono.component';
         <div class="fixed inset-0 z-40" (click)="abierto.set(false)"></div>
 
         <div
-          class="absolute right-0 z-50 mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-96 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl anim-bajar"
+          class="fixed inset-x-3 top-17 z-50 mt-2 sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:w-96 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl anim-bajar"
           style="backdrop-filter: blur(16px) saturate(1.2);"
         >
           <header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
@@ -64,13 +64,13 @@ import { IconoComponent, type NombreIcono } from './icono.component';
             }
           </header>
 
-          <div class="max-h-96 overflow-y-auto">
+          <div class="max-h-[min(24rem,55dvh)] overflow-y-auto">
             @for (aviso of servicio.pendientes(); track aviso.id) {
               <article class="flex gap-3 border-b border-slate-200 px-4 py-3.5 last:border-0 transition-colors duration-150 hover:bg-marca-50">
                 <span [class]="claseIcono(aviso.tipo)">
                   <app-icono [nombre]="icono(aviso.tipo)" [tamano]="18" />
                 </span>
-                <div class="min-w-0 flex-1">
+                <div class="min-w-0 flex-1 wrap-anywhere">
                   <p class="text-sm font-extrabold text-slate-900">{{ aviso.titulo }}</p>
                   <p class="mt-0.5 text-xs font-medium text-slate-600">{{ aviso.mensaje }}</p>
                   <div class="mt-2 flex items-center gap-3">
