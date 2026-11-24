@@ -1,28 +1,58 @@
-<main class="grid min-h-dvh bg-white text-marca-950 lg:grid-cols-[47fr_53fr]">
-  <aside class="flex flex-col justify-center gap-6 bg-marca-100 px-6 py-5 sm:px-10 lg:gap-10 lg:p-12">
-    <div class="flex items-center gap-4">
-      <img src="/logo.png" alt="FritoMix" class="h-12 w-16 object-contain lg:h-16 lg:w-20" />
-      <p class="border-l border-marca-300 pl-4 text-xl font-extrabold tracking-tight lg:text-3xl">
-        {{ appNombre }}
+<main class="relative min-h-dvh overflow-hidden bg-marca-950 text-white">
+  <!-- Foto de la planta a pantalla completa, oscurecida para leer encima -->
+  <img
+    src="/login-planta.webp"
+    alt=""
+    aria-hidden="true"
+    class="absolute inset-0 h-full w-full object-cover"
+  />
+  <div
+    class="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,24,38,0.94)_0%,rgba(6,24,38,0.84)_48%,rgba(6,24,38,0.6)_100%)]"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="relative mx-auto flex min-h-dvh max-w-7xl flex-col gap-10 px-6 py-8 sm:px-10 lg:flex-row lg:items-stretch lg:gap-16 lg:px-16 lg:py-14"
+  >
+    <!-- Marca y mensaje -->
+    <div class="flex flex-col justify-between gap-8 lg:flex-1">
+      <div class="flex items-center gap-4">
+        <div class="grid size-14 place-items-center rounded-2xl bg-white shadow-lg lg:size-16">
+          <img src="/logo.png" alt="Pasabocas Frito Mix" class="size-11 object-contain lg:size-13" />
+        </div>
+        <div class="flex flex-col">
+          <span class="text-xl font-extrabold tracking-wide lg:text-2xl">{{ appNombre }}</span>
+          <span class="text-xs font-semibold tracking-[0.18em] text-marca-300 uppercase">Pasabocas Frito Mix</span>
+        </div>
+      </div>
+
+      <div class="hidden max-w-xl flex-col gap-5 sm:flex">
+        <span class="text-sm font-bold tracking-[0.2em] text-amber-300 uppercase">Control de producción</span>
+        <p class="text-4xl leading-[1.05] font-extrabold tracking-tight lg:text-5xl">
+          Cada tanda, registrada con precisión.
+        </p>
+        <p class="text-lg leading-relaxed text-slate-300">
+          Órdenes, horno, saborizado y análisis de la planta en un solo sistema.
+        </p>
+        <ul class="mt-2 flex flex-wrap gap-x-7 gap-y-3 text-sm font-semibold text-slate-200">
+          @for (modulo of modulos; track modulo) {
+            <li class="flex items-center gap-2.5">
+              <span class="size-2 rounded-full bg-marca-400" aria-hidden="true"></span>{{ modulo }}
+            </li>
+          }
+        </ul>
+      </div>
+
+      <p class="hidden text-sm text-slate-400 lg:block">
+        Productos Alimenticios Fritomix S.A.S. · Uso interno de planta
       </p>
     </div>
-    <div class="hidden lg:block">
-      <img
-        src="/login-planta.webp"
-        alt="Imagen ilustrativa de una línea de producción de pasabocas"
-        width="730"
-        height="455"
-        class="h-auto w-full rounded-2xl object-cover"
-      />
-      <h2 class="mt-6 text-3xl font-extrabold tracking-tight">Control de producción</h2>
-      <p class="mt-2 text-slate-700">Órdenes, horno y saborizado en un solo lugar.</p>
-    </div>
-  </aside>
 
-  <section class="flex items-center justify-center px-6 py-10 sm:px-10 lg:py-16" aria-labelledby="titulo-login">
-    <div class="w-full max-w-md">
-      <h1 id="titulo-login" class="text-3xl font-extrabold tracking-tight sm:text-4xl">Iniciar sesión</h1>
-      <p class="mt-2 text-slate-600">Ingresa con tu cuenta de {{ appNombre }}.</p>
+    <!-- Acceso -->
+    <section class="flex items-center justify-center lg:w-[440px]" aria-labelledby="titulo-login">
+      <div class="w-full max-w-md rounded-3xl bg-white px-7 py-9 text-slate-900 shadow-2xl shadow-black/40 sm:px-10 sm:py-11">
+        <h1 id="titulo-login" class="text-3xl font-extrabold tracking-tight text-marca-950">Iniciar sesión</h1>
+        <p class="mt-1.5 text-slate-600">Ingresa con tu usuario de planta.</p>
 
       @if (errorEntrada()) {
         <p role="alert" class="mt-6 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
@@ -30,14 +60,14 @@
         </p>
       }
 
-      <form [formGroup]="formulario" (ngSubmit)="entrar()" class="mt-8 space-y-6">
+      <form [formGroup]="formulario" (ngSubmit)="entrar()" class="mt-7 space-y-5">
         <div>
           <label class="etiqueta" for="usuario">Usuario</label>
           <input
             id="usuario"
             data-testid="login-usuario"
             type="text"
-            class="mt-2 min-h-12 w-full"
+            class="campo mt-2 min-h-13 rounded-xl! border-slate-300! bg-slate-50! text-base!"
             placeholder="Escribe tu usuario"
             formControlName="nombre_usuario"
             autocomplete="username"
@@ -60,7 +90,7 @@
               id="password"
               data-testid="login-password"
               [type]="mostrarPassword() ? 'text' : 'password'"
-              class="min-h-12 w-full pr-14!"
+              class="campo min-h-13 rounded-xl! border-slate-300! bg-slate-50! pr-14! text-base!"
               placeholder="Escribe tu contraseña"
               formControlName="password"
               autocomplete="current-password"
@@ -101,14 +131,24 @@
         </app-boton>
       </form>
 
-      <a
-        routerLink="/olvide-clave"
-        class="mt-4 inline-block text-sm font-semibold text-marca-700 hover:underline"
-        data-testid="olvide-clave"
-        >¿Olvidaste tu contraseña?</a
-      >
+        <div class="mt-5 flex items-center justify-between text-sm">
+          <a
+            routerLink="/olvide-clave"
+            class="font-bold text-marca-700 hover:underline"
+            data-testid="olvide-clave"
+            >¿Olvidaste tu contraseña?</a
+          >
+          <span class="text-slate-500">v2.0</span>
+        </div>
 
-      <p class="mt-6 text-sm text-slate-600">Si necesitas acceso, contacta al administrador.</p>
-    </div>
-  </section>
+        <p class="mt-6 border-t border-slate-200 pt-5 text-sm text-slate-500">
+          ¿Sin acceso? Pídelo al administrador de la planta.
+        </p>
+      </div>
+    </section>
+
+    <p class="text-center text-xs text-slate-400 lg:hidden">
+      Productos Alimenticios Fritomix S.A.S. · Uso interno de planta
+    </p>
+  </div>
 </main>
