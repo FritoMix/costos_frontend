@@ -22,6 +22,7 @@ export class LoginPage {
   private readonly alarma = inject(AlarmaService);
 
   protected readonly appNombre = environment.appNombre;
+  protected readonly modulos = ['Órdenes', 'Horno', 'Saborizado', 'Análisis'];
   protected readonly enviando = signal(false);
   protected readonly errorEntrada = signal<string | null>(null);
   protected readonly mostrarPassword = signal(false);
