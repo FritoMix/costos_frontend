@@ -32,10 +32,10 @@ import { IconoComponent } from '../../ui/icono.component';
     EstadoVacioComponent,
   ],
   template: `
-    <div class="pagina-contenido">
+    <div class="pagina-contenido mx-auto w-full max-w-6xl wrap-anywhere">
       <header class="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Estación de Saborizado</h1>
             <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
               <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
@@ -86,7 +86,7 @@ import { IconoComponent } from '../../ui/icono.component';
                     }
                   </p>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                   <a [routerLink]="['/ordenes', orden.id]" class="text-xs font-bold text-slate-500 hover:text-slate-800">
                     Ver detalle
                   </a>
@@ -122,15 +122,15 @@ import { IconoComponent } from '../../ui/icono.component';
           />
         </app-tarjeta>
       } @else {
-        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="ordenes-estacion">
           @for (orden of ordenes(); track orden.id) {
             <div
-              class="group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs transition-all duration-200 hover:border-slate-300 hover:shadow-md"
+              class="min-w-0 flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-7 shadow-xs transition-all duration-200 hover:border-slate-300 hover:shadow-md"
               [attr.data-testid]="'saborizado-orden-' + orden.id"
             >
               <div>
                 <!-- Top metadata -->
-                <div class="flex items-center justify-between gap-2 mb-3">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
                   <span class="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 px-3 py-1 text-xs font-extrabold text-amber-900 border border-amber-200/60">
                     <span>◍</span> {{ orden.horno.nombre }}
                   </span>
@@ -148,7 +148,7 @@ import { IconoComponent } from '../../ui/icono.component';
                 </p>
 
                 <!-- Metric box -->
-                <div class="mt-4 rounded-2xl bg-slate-50 p-3.5 border border-slate-200/60 flex items-center justify-between">
+                <div class="mt-4 rounded-2xl bg-slate-50 p-4 border border-slate-200/60 grid grid-cols-2 gap-3">
                   <div>
                     <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Programado</span>
                     <span class="font-mono font-extrabold text-slate-900 text-base">

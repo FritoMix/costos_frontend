@@ -38,7 +38,7 @@ import { NotificacionesService } from '../core/servicios/notificaciones.service'
               </svg>
             </span>
           }
-          <p class="flex-1 text-sm font-semibold tracking-tight">{{ aviso.mensaje }}</p>
+          <p class="min-w-0 flex-1 wrap-anywhere text-sm font-semibold tracking-tight">{{ aviso.mensaje }}</p>
           <button
             type="button"
             class="shrink-0 rounded-lg p-1 text-slate-400 hover:bg-black/5 hover:text-slate-700 transition-all duration-200"

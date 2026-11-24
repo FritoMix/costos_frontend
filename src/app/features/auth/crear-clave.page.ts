@@ -15,8 +15,8 @@ import { BotonComponent } from '../../ui/boton.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule, BotonComponent],
   template: `
-    <main class="flex min-h-dvh items-center justify-center bg-marca-50 px-6 py-10">
-      <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
+    <main class="flex min-h-dvh items-center justify-center bg-marca-50 px-3 py-5 sm:px-6 sm:py-10">
+      <div class="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl sm:p-8">
         <img src="/logo.png" alt="FritoMix" class="h-12 w-16 object-contain" />
         <h1 class="mt-4 text-2xl font-extrabold tracking-tight text-marca-950">
           Crea tu contraseña
@@ -24,7 +24,7 @@ import { BotonComponent } from '../../ui/boton.component';
         <p class="mt-2 text-sm text-slate-600">
           Entraste con una contraseña temporal. Crea la tuya para seguir; mínimo 8 caracteres.
         </p>
-        <form class="mt-6 space-y-4" (ngSubmit)="guardar()">
+        <form class="mt-7 grid gap-5" (ngSubmit)="guardar()">
           <div>
             <label class="etiqueta" for="temporal">Contraseña temporal</label>
             <input

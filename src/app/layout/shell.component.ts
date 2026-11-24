@@ -39,12 +39,12 @@ interface OpcionMenu {
         class="sticky top-0 z-30 flex min-h-17 items-center justify-between gap-3 bg-marca-950 px-3 text-white shadow-md shadow-marca-950/20 sm:px-5"
         (keydown.escape)="cerrarMenu(botonMenu)"
       >
-        <a routerLink="/inicio" (click)="menuAbierto.set(false)"
+        <a routerLink="/inicio" [attr.aria-label]="appNombre" (click)="menuAbierto.set(false)"
           class="flex min-w-0 shrink items-center gap-2.5 rounded-lg text-sm font-extrabold tracking-wide text-white focus-visible:outline-2 focus-visible:outline-marca-300 sm:text-base">
           <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-white shadow-sm">
             <img src="/logo.png" alt="Frito Mix" class="size-8 object-contain" />
           </span>
-          <span>{{ appNombre }}</span>
+          <span class="hidden min-[380px]:inline">{{ appNombre }}</span>
         </a>
 
         <nav #menuModulos id="menu-modulos" aria-label="Módulos"
@@ -72,7 +72,7 @@ interface OpcionMenu {
             class="grid size-10 place-items-center rounded-full bg-marca-500 text-sm font-bold text-white ring-2 ring-white/20 hover:bg-marca-400 focus-visible:outline-2 focus-visible:outline-marca-300">
             {{ inicialesUsuario() }}
           </a>
-          <button type="button" (click)="auth.cerrarSesion()"
+          <button type="button" aria-label="Salir" (click)="auth.cerrarSesion()"
             class="flex min-h-11 items-center gap-1.5 rounded-lg px-2.5 text-sm font-semibold text-slate-200 hover:bg-white hover:text-white focus-visible:outline-2 focus-visible:outline-marca-300">
             <svg aria-hidden="true" class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l5-5-5-5"/><path d="M15 12H4"/></svg>
             <span class="hidden sm:inline">Salir</span>

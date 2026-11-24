@@ -57,7 +57,7 @@ import { IconoComponent } from '../../ui/icono.component';
     TecladoNumericoComponent,
   ],
   template: `
-    <div class="mx-auto w-full max-w-xl">
+    <div class="mx-auto w-full min-w-0 max-w-3xl wrap-anywhere">
       @if (cargando()) {
         <app-cargando texto="Preparando estación de saborizado…" />
       } @else if (detalle(); as datos) {
@@ -123,7 +123,7 @@ import { IconoComponent } from '../../ui/icono.component';
 
           <!-- Contexto de la orden -->
           <div class="border-b border-slate-100 bg-slate-50/60 px-5 py-2.5 text-center sm:px-7">
-            <p class="truncate text-xs font-bold text-slate-500">
+            <p class="text-xs font-bold text-slate-500">
               {{ datos.orden.producto.nombre_comercial }} ·
               <span class="text-marca-700">{{ datos.orden.horno.nombre }}</span> ·
               <span class="font-mono">#{{ datos.orden.numero_orden }}</span>
@@ -137,7 +137,7 @@ import { IconoComponent } from '../../ui/icono.component';
           </div>
 
           <!-- Cuerpo -->
-          <div class="px-5 py-8 sm:px-8" [attr.data-testid]="'paso-' + pasoActual()">
+          <div class="px-3 py-6 min-[400px]:px-5 sm:px-9 sm:py-9" [attr.data-testid]="'paso-' + pasoActual()">
             <div class="mx-auto max-w-md text-center">
               <span class="text-xs font-extrabold uppercase tracking-widest text-marca-500">
                 {{ etiquetaPaso() }} · Paso {{ indicePaso() + 1 }}
@@ -154,24 +154,24 @@ import { IconoComponent } from '../../ui/icono.component';
               @switch (pasoActual()) {
                 <!-- 1. Horario -->
                 @case ('horario') {
-                  <div class="anim-entrada mx-auto max-w-sm">
-                    <div class="rounded-2xl border-2 border-marca-300 bg-marca-50/60 px-6 py-7">
+                  <div class="anim-entrada mx-auto max-w-lg">
+                    <div class="rounded-2xl border-2 border-marca-300 bg-marca-50/60 px-3 py-6 sm:px-6 sm:py-8">
                       @if (franjaAutomatica() && numeroRecepcion()) {
                         <p class="mb-4 text-center text-sm font-extrabold text-marca-800" data-testid="numero-recepcion">
                           Recepción {{ numeroRecepcion() }}@if (datos.orden.horas_produccion) { de {{ datos.orden.horas_produccion }}}
                         </p>
                       }
-                      <div class="flex items-center justify-center gap-5">
+                      <div class="flex items-center justify-center gap-2 sm:gap-6">
                         <div class="text-center">
                           <p class="text-xs font-extrabold uppercase tracking-widest text-slate-500">Inicio</p>
-                          <p class="mt-1 text-3xl font-extrabold text-slate-900 tabular-nums">{{ horaInicio() }}</p>
+                          <p class="mt-1 text-2xl font-extrabold text-slate-900 tabular-nums sm:text-4xl">{{ horaInicio() }}</p>
                         </div>
                         <svg class="h-6 w-6 shrink-0 text-marca-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                         </svg>
                         <div class="text-center">
                           <p class="text-xs font-extrabold uppercase tracking-widest text-slate-500">Fin</p>
-                          <p class="mt-1 text-3xl font-extrabold text-slate-900 tabular-nums">{{ horaFin() }}</p>
+                          <p class="mt-1 text-2xl font-extrabold text-slate-900 tabular-nums sm:text-4xl">{{ horaFin() }}</p>
                         </div>
                       </div>
                       <p class="mt-4 text-center text-xs font-semibold text-marca-700">
@@ -414,7 +414,7 @@ import { IconoComponent } from '../../ui/icono.component';
           />
 
           <!-- Navegación -->
-          <footer class="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-5 py-4 sm:px-7">
+          <footer class="acciones-asistente border-t border-slate-100 bg-slate-50/60">
             <app-boton
               variante="secundario"
               (click)="atras()"
