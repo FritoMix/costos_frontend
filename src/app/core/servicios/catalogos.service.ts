@@ -87,17 +87,20 @@ export class CatalogosService {
 
   // --- Sabores ---
 
-  listarSabores(soloActivos = false, forzarFresca = false): Observable<ItemCatalogo[]> {
-    if (!soloActivos && !forzarFresca && this.cacheSabores$) {
+  /** Con `categoriaId`, solo los sabores de esa categoría (si tiene asignados). */
+  listarSabores(soloActivos = false, forzarFresca = false, categoriaId?: number): Observable<ItemCatalogo[]> {
+    if (!soloActivos && !forzarFresca && categoriaId === undefined && this.cacheSabores$) {
       return this.cacheSabores$;
     }
+    const params: Record<string, string | boolean> = { solo_activos: soloActivos };
+    if (categoriaId !== undefined) {
+      params['categoria_id'] = String(categoriaId);
+    }
     const peticion = this.http
-      .get<ItemCatalogo[]>(`${this.base}/sabores`, {
-        params: { solo_activos: soloActivos },
-      })
+      .get<ItemCatalogo[]>(`${this.base}/sabores`, { params })
       .pipe(shareReplay(1));
 
-    if (!soloActivos) {
+    if (!soloActivos && categoriaId === undefined) {
       this.cacheSabores$ = peticion;
     }
     return peticion;

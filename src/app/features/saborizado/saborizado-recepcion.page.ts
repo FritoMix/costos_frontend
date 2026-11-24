@@ -1,7 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of, switchMap } from 'rxjs';
 
 import { seguirCambios } from '../../core/guards/cambios.guard';
 
@@ -768,10 +768,18 @@ export class SaborizadoRecepcionPage {
 
   private cargar(): void {
     this.cargando.set(true);
-    forkJoin({
-      detalle: this.ordenes.detalle(Number(this.id())),
-      sabores: this.catalogos.listarSabores(true),
-    }).subscribe({
+    // Solo los sabores de la categoría de la orden (V23).
+    this.ordenes
+      .detalle(Number(this.id()))
+      .pipe(
+        switchMap((detalle) =>
+          forkJoin({
+            detalle: of(detalle),
+            sabores: this.catalogos.listarSabores(true, false, detalle.orden.categoria.id),
+          }),
+        ),
+      )
+      .subscribe({
       next: ({ detalle, sabores }) => {
         this.detalle.set(detalle);
         this.sabores.set(sabores);
