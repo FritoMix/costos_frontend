@@ -91,7 +91,7 @@ interface OpcionMenu {
       </header>
 
       <main class="min-w-0 flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-        <div class="contenido-ruta min-w-0" [@animacionRuta]="prepararRuta(salida)">
+        <div class="contenido-ruta relative min-w-0" [@animacionRuta]="prepararRuta(salida)">
           <router-outlet #salida="outlet" />
         </div>
       </main>
