@@ -51,12 +51,13 @@ export class CatalogosService {
 
   // --- Categorias ---
 
-  listarCategorias(soloActivas = false, forzarFresca = false): Observable<ItemCatalogo[]> {
+  listarCategorias(soloActivas = false, forzarFresca = false, headers?: Record<string, string>): Observable<ItemCatalogo[]> {
     if (!soloActivas && !forzarFresca && this.cacheCategorias$) {
       return this.cacheCategorias$;
     }
     const peticion = this.http
       .get<ItemCatalogo[]>(`${this.base}/categorias`, {
+        headers,
         params: { solo_activas: soloActivas },
       })
       .pipe(shareReplay(1));
@@ -162,12 +163,13 @@ export class CatalogosService {
 
   // --- Turnos ---
 
-  listarTurnos(soloActivos = false, forzarFresca = false): Observable<Turno[]> {
+  listarTurnos(soloActivos = false, forzarFresca = false, headers?: Record<string, string>): Observable<Turno[]> {
     if (!soloActivos && !forzarFresca && this.cacheTurnos$) {
       return this.cacheTurnos$;
     }
     const peticion = this.http
       .get<Turno[]>(`${this.base}/turnos`, {
+        headers,
         params: { solo_activos: soloActivos },
       })
       .pipe(shareReplay(1));
@@ -198,12 +200,13 @@ export class CatalogosService {
 
   // --- Hornos ---
 
-  listarHornos(soloActivos = false, forzarFresca = false): Observable<Horno[]> {
+  listarHornos(soloActivos = false, forzarFresca = false, headers?: Record<string, string>): Observable<Horno[]> {
     if (!soloActivos && !forzarFresca && this.cacheHornos$) {
       return this.cacheHornos$;
     }
     const peticion = this.http
       .get<Horno[]>(`${this.base}/hornos`, {
+        headers,
         params: { solo_activos: soloActivos },
       })
       .pipe(shareReplay(1));
@@ -240,12 +243,13 @@ export class CatalogosService {
 
   // --- Productos ---
 
-  listarProductos(soloActivos = false, forzarFresca = false): Observable<Producto[]> {
+  listarProductos(soloActivos = false, forzarFresca = false, headers?: Record<string, string>): Observable<Producto[]> {
     if (!soloActivos && !forzarFresca && this.cacheProductos$) {
       return this.cacheProductos$;
     }
     const peticion = this.http
       .get<Producto[]>(`${this.base}/productos`, {
+        headers,
         params: { solo_activos: soloActivos },
       })
       .pipe(shareReplay(1));
@@ -340,17 +344,17 @@ export class CatalogosService {
 
   private cacheLineas$: Observable<Linea[]> | null = null;
 
-  listarLineas(): Observable<Linea[]> {
-    this.cacheLineas$ ??= this.http.get<Linea[]>(`${this.base}/lineas`).pipe(shareReplay(1));
+  listarLineas(headers?: Record<string, string>): Observable<Linea[]> {
+    this.cacheLineas$ ??= this.http.get<Linea[]>(`${this.base}/lineas`, { headers }).pipe(shareReplay(1));
     return this.cacheLineas$;
   }
 
-  listarVariedades(lineaId?: number, soloActivas = false): Observable<Variedad[]> {
+  listarVariedades(lineaId?: number, soloActivas = false, headers?: Record<string, string>): Observable<Variedad[]> {
     const params: Record<string, string | number | boolean> = { solo_activas: soloActivas };
     if (lineaId !== undefined) {
       params['linea_id'] = lineaId;
     }
-    return this.http.get<Variedad[]>(`${this.base}/variedades`, { params });
+    return this.http.get<Variedad[]>(`${this.base}/variedades`, { params, headers });
   }
 
   crearVariedad(datos: VariedadGuardar): Observable<Variedad> {

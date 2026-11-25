@@ -17,8 +17,9 @@ export class AnaliticaService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/analitica`;
 
-  indicadores(filtros: FiltrosAnalisis): Observable<Indicadores> {
+  indicadores(filtros: FiltrosAnalisis, headers?: Record<string, string>): Observable<Indicadores> {
     return this.http.get<Indicadores>(`${this.base}/indicadores`, {
+      headers,
       params: this.aParams(filtros),
     });
   }

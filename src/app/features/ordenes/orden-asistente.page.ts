@@ -1,3 +1,4 @@
+import { MedicionTurnoService } from '../../core/servicios/medicion-turno.service';
 import { protegerRecarga } from '../../core/guards/cambios.guard';
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
@@ -628,6 +629,7 @@ export class OrdenAsistentePage {
     return this.enviando() || this.estadoFormulario() !== this.estadoGuardado;
   }
 
+  private readonly mediciones = inject(MedicionTurnoService);
   private readonly catalogos = inject(CatalogosService);
   private readonly ordenes = inject(OrdenesService);
   private readonly avisos = inject(NotificacionesService);
@@ -953,15 +955,16 @@ export class OrdenAsistentePage {
       });
     });
 
+    const medicion = this.mediciones.iniciar('abrir_nueva_orden');
     forkJoin({
-      turnos: this.catalogos.listarTurnos(true),
-      categorias: this.catalogos.listarCategorias(true),
-      hornos: this.catalogos.listarHornos(true),
-      productos: this.catalogos.listarProductos(true),
+      turnos: this.catalogos.listarTurnos(true, false, medicion.headers),
+      categorias: this.catalogos.listarCategorias(true, false, medicion.headers),
+      hornos: this.catalogos.listarHornos(true, false, medicion.headers),
+      productos: this.catalogos.listarProductos(true, false, medicion.headers),
       // Líneas y variedades son opcionales: sin ellas el asistente es el de papa.
-      lineas: this.catalogos.listarLineas().pipe(catchError(() => of([] as Linea[]))),
+      lineas: this.catalogos.listarLineas(medicion.headers).pipe(catchError(() => of([] as Linea[]))),
       variedades: this.catalogos
-        .listarVariedades(undefined, true)
+        .listarVariedades(undefined, true, medicion.headers)
         .pipe(catchError(() => of([] as Variedad[]))),
     }).subscribe({
       next: ({ turnos, categorias, hornos, productos, lineas, variedades }) => {
@@ -978,8 +981,12 @@ export class OrdenAsistentePage {
         }
         this.estadoGuardado = this.estadoFormulario();
         this.cargando.set(false);
+        medicion.terminar('ok');
       },
-      error: () => this.cargando.set(false),
+      error: () => {
+        this.cargando.set(false);
+        medicion.terminar('error');
+      },
     });
   }
 

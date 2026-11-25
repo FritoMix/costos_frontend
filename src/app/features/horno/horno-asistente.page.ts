@@ -1,3 +1,4 @@
+import { MedicionTurnoService } from '../../core/servicios/medicion-turno.service';
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
@@ -85,6 +86,7 @@ import { IconoComponent } from '../../ui/icono.component';
 export class HornoAsistentePage {
   readonly id = input.required<string>();
 
+  private readonly mediciones = inject(MedicionTurnoService);
   private readonly ordenes = inject(OrdenesService);
   private readonly catalogos = inject(CatalogosService);
   private readonly bodega = inject(BodegaService);
@@ -531,6 +533,7 @@ export class HornoAsistentePage {
       return;
     }
 
+    const medicion = this.mediciones.iniciar('guardar_tanda');
     const datos = construirRegistroHorno(
       this.datosTanda(),
       { inicio: this.horaInicio(), fin: this.horaFin() },
@@ -538,14 +541,18 @@ export class HornoAsistentePage {
     );
 
     this.enviando.set(true);
-    this.ordenes.crearRegistroHorno(Number(this.id()), datos).subscribe({
+    this.ordenes.crearRegistroHorno(Number(this.id()), datos, medicion.headers).subscribe({
       next: (registro) => {
+        medicion.terminar('ok');
         this.proteccion.aceptar();
         this.enviando.set(false);
         this.avisos.exito(`Tanda registrada: ${registro.kg_crudos_calculados} kg de papa cruda.`);
         void this.router.navigate(['/horno']);
       },
-      error: () => this.enviando.set(false),
+      error: () => {
+        this.enviando.set(false);
+        medicion.terminar('error');
+      },
     });
   }
 }
