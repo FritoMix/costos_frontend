@@ -143,6 +143,15 @@ test.describe('Flujo crítico de planta', () => {
   });
 
   test('login, orden, horno, saborizado, análisis y exportación', async ({ page }, info) => {
+    const solicitudes = new Set<string>();
+    const mediciones: { accion: string; resultado: string; operacion_id: string; duracion_ms: number }[] = [];
+    page.on('request', solicitud => {
+      const id = solicitud.headers()['x-operacion-id'];
+      if (id) solicitudes.add(id);
+      if (new URL(solicitud.url()).pathname === '/api/v1/mediciones/turno' && solicitud.method() === 'POST') {
+        mediciones.push(solicitud.postDataJSON());
+      }
+    });
     await test.step('login con credenciales de entorno', async () => {
       await page.goto('/entrar');
       await expect(page.getByTestId('login-usuario')).toBeVisible();
@@ -526,6 +535,11 @@ test.describe('Flujo crítico de planta', () => {
       expect(csv).toContain('numero_orden');
       expect(csv).toContain(numeroOrden);
       expect(csv).toContain(PRODUCTO);
+      for (const accion of ['abrir_nueva_orden', 'guardar_tanda', 'guardar_recepcion', 'abrir_kpi']) {
+        await expect.poll(() => mediciones.some(m => m.accion === accion && m.resultado === 'ok'
+          && m.duracion_ms >= 0 && solicitudes.has(m.operacion_id))).toBe(true);
+      }
+      expect(mediciones.some(m => m.accion === 'guardar_recepcion' && m.resultado === 'error')).toBe(true);
     });
   });
 });

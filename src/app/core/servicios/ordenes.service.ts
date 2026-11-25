@@ -23,7 +23,7 @@ export class OrdenesService {
   private readonly http = inject(HttpClient);
   private readonly pendientes = new Map<string, { clave: string; creada: number }>();
 
-  private crearUnaVez<T>(url: string, datos: unknown): Observable<T> {
+  private crearUnaVez<T>(url: string, datos: unknown, headers?: Record<string, string>): Observable<T> {
     const ahora = Date.now();
     for (const [huella, operacion] of this.pendientes) {
       if (ahora - operacion.creada >= 24 * 60 * 60_000) this.pendientes.delete(huella);
@@ -38,7 +38,7 @@ export class OrdenesService {
       };
       this.pendientes.set(huella, operacion);
     }
-    return this.http.post<T>(url, datos, { headers: { 'Idempotency-Key': operacion.clave } }).pipe(
+    return this.http.post<T>(url, datos, { headers: { ...headers, 'Idempotency-Key': operacion.clave } }).pipe(
       tap({
         next: () => this.pendientes.delete(huella),
         error: (error) => {
@@ -108,8 +108,8 @@ export class OrdenesService {
 
   // --- Registros de horno -------------------------------------------------
 
-  crearRegistroHorno(ordenId: number, datos: RegistroHornoGuardar): Observable<RegistroHorno> {
-    return this.crearUnaVez<RegistroHorno>(`${this.base}/${ordenId}/registros-horno`, datos);
+  crearRegistroHorno(ordenId: number, datos: RegistroHornoGuardar, headers?: Record<string, string>): Observable<RegistroHorno> {
+    return this.crearUnaVez<RegistroHorno>(`${this.base}/${ordenId}/registros-horno`, datos, headers);
   }
 
   actualizarRegistroHorno(
@@ -129,8 +129,8 @@ export class OrdenesService {
 
   // --- Recepciones de saborizado -----------------------------------------
 
-  crearRecepcion(ordenId: number, datos: RecepcionGuardar): Observable<Recepcion> {
-    return this.crearUnaVez<Recepcion>(`${this.base}/${ordenId}/recepciones`, datos);
+  crearRecepcion(ordenId: number, datos: RecepcionGuardar, headers?: Record<string, string>): Observable<Recepcion> {
+    return this.crearUnaVez<Recepcion>(`${this.base}/${ordenId}/recepciones`, datos, headers);
   }
 
   actualizarRecepcion(

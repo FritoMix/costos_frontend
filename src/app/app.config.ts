@@ -4,6 +4,8 @@ import {
   ErrorHandler,
   LOCALE_ID,
   isDevMode,
+  inject,
+  provideAppInitializer,
   provideBrowserGlobalErrorListeners,
   provideZoneChangeDetection,
 } from '@angular/core';
@@ -13,6 +15,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 
+import { MedicionTurnoService } from './core/servicios/medicion-turno.service';
 import { rutas } from './app.routes';
 import { authInterceptor } from './core/interceptores/auth.interceptor';
 import { cacheInterceptor } from './core/interceptores/cache.interceptor';
@@ -48,6 +51,7 @@ export const appConfig: ApplicationConfig = {
     // Los errores no capturados (incluidos los de un deploy que dejó chunks
     // viejos) pasan por el manejador: recarga una vez y deja registro.
     provideBrowserGlobalErrorListeners(),
+    provideAppInitializer(() => { inject(MedicionTurnoService); }),
     { provide: ErrorHandler, useClass: ManejadorErrores },
   ],
 };

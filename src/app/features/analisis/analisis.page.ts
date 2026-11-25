@@ -1,3 +1,4 @@
+import { type MedicionTurno, MedicionTurnoService } from '../../core/servicios/medicion-turno.service';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -433,6 +434,7 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
   `,
 })
 export class AnalisisPage {
+  private readonly mediciones = inject(MedicionTurnoService);
   private readonly destroyRef = inject(DestroyRef);
   private cargaCategorias?: Subscription;
   private cargaBaches?: Subscription;
@@ -492,14 +494,14 @@ export class AnalisisPage {
       },
     });
 
-    this.consultar();
+    this.consultar(this.mediciones.iniciar('abrir_kpi'));
   }
 
   private filtros(): FiltrosAnalisis {
     return this.formulario.getRawValue() as FiltrosAnalisis;
   }
 
-  protected consultar(): void {
+  protected consultar(medicion?: MedicionTurno): void {
     if (this.consultando()) return;
     this.filtrosAplicados = this.filtros();
     this.consultando.set(true);
@@ -509,16 +511,18 @@ export class AnalisisPage {
     this.porCategoria.set([]);
     this.cargaCategorias?.unsubscribe();
 
-    this.analitica.indicadores(this.filtrosAplicados).pipe(
+    this.analitica.indicadores(this.filtrosAplicados, medicion?.headers).pipe(
       takeUntilDestroyed(this.destroyRef),
     ).subscribe({
       next: (datos) => {
         this.indicadores.set(datos);
+        medicion?.terminar('ok');
         this.cargando.set(false);
         this.consultando.set(false);
       },
       error: () => {
         this.errorIndicadores.set(true);
+        medicion?.terminar('error');
         this.cargando.set(false);
         this.consultando.set(false);
       },

@@ -1,3 +1,4 @@
+import { MedicionTurnoService } from '../../core/servicios/medicion-turno.service';
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -503,6 +504,7 @@ import { IconoComponent } from '../../ui/icono.component';
 export class SaborizadoRecepcionPage {
   readonly id = input.required<string>();
 
+  private readonly mediciones = inject(MedicionTurnoService);
   private readonly ordenes = inject(OrdenesService);
   private readonly catalogos = inject(CatalogosService);
   private readonly avisos = inject(NotificacionesService);
@@ -899,6 +901,7 @@ export class SaborizadoRecepcionPage {
       return;
     }
 
+    const medicion = this.editandoId() ? undefined : this.mediciones.iniciar('guardar_recepcion');
     const datos: RecepcionGuardar = {
       // La API pone la hora de la recepción n; el horario solo cuenta sin hora de inicio.
       numero_tanda: this.editandoId() ? null : this.numeroRecepcion(),
@@ -914,10 +917,11 @@ export class SaborizadoRecepcionPage {
     const editando = this.editandoId();
     const peticion = editando
       ? this.ordenes.actualizarRecepcion(ordenId, editando, datos)
-      : this.ordenes.crearRecepcion(ordenId, datos);
+      : this.ordenes.crearRecepcion(ordenId, datos, medicion?.headers);
 
     peticion.subscribe({
       next: (recepcion) => {
+        medicion?.terminar('ok');
         this.enviando.set(false);
         this.avisos.exito(
           `${editando ? 'Recepción corregida' : 'Recepción registrada'}: ${recepcion.kg_recibidos} kg.`,
@@ -929,7 +933,10 @@ export class SaborizadoRecepcionPage {
         this.restablecerFormulario();
         this.cargar();
       },
-      error: () => this.enviando.set(false),
+      error: () => {
+        this.enviando.set(false);
+        medicion?.terminar('error');
+      },
     });
   }
 
