@@ -11,17 +11,17 @@ import { animate, group, query, style, transition, trigger } from '@angular/anim
  */
 export const animacionRuta = trigger('animacionRuta', [
   transition('* => *', [
-    // Las dos pantallas conviven un instante; se superponen sin empujar.
-    query(':enter, :leave', [style({ position: 'absolute', width: '100%' })], { optional: true }),
-    query(':enter', [style({ opacity: 0, transform: 'translateY(12px)' })], { optional: true }),
+    // La vista entrante mantiene la altura del contenido. La saliente se superpone dentro de la ruta.
+    query(':scope > :leave', [style({ position: 'absolute', top: 0, left: 0, width: '100%', pointerEvents: 'none' })], { optional: true }),
+    query(':scope > :enter', [style({ opacity: 0, transform: 'translateY(12px)' })], { optional: true }),
     group([
       query(
-        ':leave',
+        ':scope > :leave',
         [animate('180ms ease', style({ opacity: 0, transform: 'translateY(-6px)' }))],
         { optional: true },
       ),
       query(
-        ':enter',
+        ':scope > :enter',
         [
           animate(
             '350ms 90ms cubic-bezier(0.16, 0.84, 0.44, 1)',

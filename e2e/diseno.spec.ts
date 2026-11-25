@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import type { Indicadores } from '../src/app/core/modelos/analitica.model';
 
 // Datos ficticios: esta revisión de geometría no escribe en la API.
 const categoria={id:1,nombre:'Papa Hojuela',activo:true};
@@ -26,6 +27,14 @@ else if(u.pathname.endsWith('/ordenes/1'))data={orden,totales:{},formula:null,re
 else if(u.pathname.endsWith('/ordenes/resumen-inicio'))data={activas:[],pendientes_sin_formula:0};
 else if(u.pathname.endsWith('/usuarios') || u.pathname.endsWith('/usuarios/para-recuperar'))data=[usuarioPlanta];
 else if(u.pathname.endsWith('/password-temporal'))data={password_temporal:'01234567'};
+else if(u.pathname.endsWith('/analitica/indicadores')) {
+  data = {
+    numero_ordenes: 0, kg_crudos: 0, cantidad_bultos: 0, kg_papa_frita: 0,
+    kg_sabor: 0, kg_desperdicio: 0, kg_aceite: 0, aceite_por_bulto: null,
+    rendimiento_porcentaje: null, porcentaje_absorcion_aceite: null,
+    por_horno: [], por_producto: [], por_turno: [], por_tipo_desperdicio: [],
+  } satisfies Indicadores;
+}
 else if(u.pathname.endsWith('/baches/pagina'))data={items:[],hay_siguiente:false};
 else if(u.pathname.endsWith('/ordenes/pagina'))data={items:[],total:0,pagina:1,tamano:50};
 else if(u.pathname.endsWith('/auth/actividad'))data={};
