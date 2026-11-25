@@ -41,7 +41,7 @@ interface OpcionMenu {
       >
         <a routerLink="/inicio" [attr.aria-label]="appNombre" (click)="menuAbierto.set(false)"
           class="flex min-w-0 shrink items-center gap-2.5 rounded-lg text-sm font-extrabold tracking-wide text-white focus-visible:outline-2 focus-visible:outline-marca-300 sm:text-base">
-          <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-white shadow-sm">
+          <span class="grid size-10 shrink-0 place-items-center">
             <img src="/logo.png" alt="Frito Mix" class="size-8 object-contain" />
           </span>
           <span class="hidden min-[380px]:inline">{{ appNombre }}</span>
