@@ -1,22 +1,24 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import type { OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { ETIQUETAS_ROL } from '../../core/modelos/identidad.model';
 import { AuthService } from '../../core/servicios/auth.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
 import { BotonComponent } from '../../ui/boton.component';
+import { IconoComponent } from '../../ui/icono.component';
 import { TarjetaComponent } from '../../ui/tarjeta.component';
 
 /** Datos del usuario conectado y cambio de su propia contrasena. */
 @Component({
   selector: 'app-mi-cuenta',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TarjetaComponent, BotonComponent],
+  imports: [ReactiveFormsModule, TarjetaComponent, BotonComponent, IconoComponent],
   template: `
     <div class="pagina-contenido mx-auto max-w-2xl">
       <header>
-        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Mi Cuenta & Credenciales</h1>
-        <p class="mt-1 text-sm text-slate-500 font-medium">
+        <h1 class="titulo-pagina">Mi cuenta</h1>
+        <p class="subtitulo-pagina">
           Perfil de operario o supervisor conectado en la terminal de planta.
         </p>
       </header>
@@ -90,15 +92,120 @@ import { TarjetaComponent } from '../../ui/tarjeta.component';
           </div>
         </form>
       </app-tarjeta>
+
+      @if (esAdmin()) {
+        <app-tarjeta
+          titulo="Códigos de recuperación"
+          subtitulo="Si olvidas tu contraseña, entras con uno de estos códigos sin depender de nadie."
+        >
+          <div class="space-y-5" data-testid="seccion-codigos">
+            @if (codigos(); as lista) {
+              <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
+                <p class="flex items-center gap-2 font-bold">
+                  <app-icono nombre="alerta" [tamano]="20" class="text-amber-700" />
+                  Guárdalos ahora: no se vuelven a mostrar.
+                </p>
+                <p class="mt-1 text-sm">
+                  Imprímelos o anótalos y guárdalos en un lugar seguro. Cada uno sirve una sola vez.
+                </p>
+              </div>
+              <ol class="grid grid-cols-2 gap-2" data-testid="lista-codigos">
+                @for (codigo of lista; track codigo) {
+                  <li
+                    class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-center font-mono text-base font-bold tracking-wider text-marca-950"
+                  >
+                    {{ codigo }}
+                  </li>
+                }
+              </ol>
+              <div class="flex flex-wrap gap-3">
+                <app-boton variante="secundario" (click)="copiar()">Copiar</app-boton>
+                <app-boton variante="secundario" (click)="imprimir()">Imprimir</app-boton>
+                <app-boton variante="texto" (click)="codigos.set(null)" testId="codigos-listo">Ya los guardé</app-boton>
+              </div>
+            } @else {
+              <p class="text-slate-700" data-testid="estado-codigos">
+                @if (estado(); as e) {
+                  @if (e.generados_en) {
+                    Te quedan <strong>{{ e.disponibles }}</strong> de 8 códigos sin usar.
+                  } @else {
+                    Todavía no tienes códigos. Genéralos y guárdalos impresos.
+                  }
+                }
+              </p>
+              <form [formGroup]="formCodigos" (ngSubmit)="generar()" class="space-y-4">
+                <div>
+                  <label class="etiqueta" for="clave-codigos">Tu contraseña actual</label>
+                  <input
+                    id="clave-codigos"
+                    type="password"
+                    class="campo"
+                    autocomplete="current-password"
+                    formControlName="password_actual"
+                    data-testid="codigos-clave"
+                  />
+                  <p class="ayuda">Generar códigos nuevos anula los anteriores.</p>
+                </div>
+                <app-boton tipo="submit" [cargando]="generando()" testId="codigos-generar">
+                  Generar códigos
+                </app-boton>
+              </form>
+            }
+          </div>
+        </app-tarjeta>
+      }
     </div>
   `,
 })
-export class MiCuentaPage {
+export class MiCuentaPage implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly avisos = inject(NotificacionesService);
   protected readonly auth = inject(AuthService);
 
   protected readonly enviando = signal(false);
+
+  // --- Códigos de recuperación (solo administrador, V25) ---
+  protected readonly esAdmin = computed(() => this.auth.rol() === 'admin');
+  protected readonly estado = signal<{ disponibles: number; generados_en: string | null } | null>(null);
+  protected readonly codigos = signal<string[] | null>(null);
+  protected readonly generando = signal(false);
+  protected readonly formCodigos = this.fb.nonNullable.group({
+    password_actual: ['', Validators.required],
+  });
+
+  ngOnInit(): void {
+    if (this.esAdmin()) this.cargarEstado();
+  }
+
+  private cargarEstado(): void {
+    this.auth.estadoCodigos().subscribe((estado) => this.estado.set(estado));
+  }
+
+  protected generar(): void {
+    if (this.formCodigos.invalid || this.generando()) {
+      this.formCodigos.markAllAsTouched();
+      return;
+    }
+    this.generando.set(true);
+    this.auth.generarCodigos(this.formCodigos.getRawValue().password_actual).subscribe({
+      next: ({ codigos }) => {
+        this.generando.set(false);
+        this.formCodigos.reset();
+        this.codigos.set(codigos);
+        this.cargarEstado();
+      },
+      error: () => this.generando.set(false),
+    });
+  }
+
+  protected copiar(): void {
+    const texto = (this.codigos() ?? []).join('\n');
+    void navigator.clipboard?.writeText(texto).then(() => this.avisos.exito('Códigos copiados.'));
+  }
+
+  protected imprimir(): void {
+    window.print();
+  }
 
   protected readonly formulario = this.fb.nonNullable.group({
     password_actual: ['', Validators.required],

@@ -75,8 +75,11 @@ for (const width of [320, 390, 768, 1024, 1366]) {
         expect(tarjeta.alto).toBeGreaterThan(0);
       }
       if (nombre === 'cuenta') {
-        expect(medidas.tarjetas.length).toBe(2);
-        expect(medidas.tarjetas[1].top - medidas.tarjetas[0].bottom).toBeGreaterThanOrEqual(23);
+        // Identidad y contraseña; el administrador ve además sus códigos de recuperación.
+        expect(medidas.tarjetas.length).toBe(3);
+        for (let i = 1; i < medidas.tarjetas.length; i++) {
+          expect(medidas.tarjetas[i].top - medidas.tarjetas[i - 1].bottom).toBeGreaterThanOrEqual(23);
+        }
       }
     }
   });

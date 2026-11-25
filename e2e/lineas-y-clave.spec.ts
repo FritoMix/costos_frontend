@@ -179,3 +179,63 @@ test('olvidé mi contraseña: aviso, temporal y contraseña nueva', async ({ pag
     await page.request.delete(`/api/v1/usuarios/${operario.id}`);
   }
 });
+
+test('el administrador recupera su acceso con un código de recuperación', async ({ page }) => {
+  // Un administrador aparte, para no tocar la contraseña del admin de las pruebas.
+  await entrar(page);
+  await expect(page).toHaveURL(/\/inicio/);
+  const roles = await api<(ConId & { codigo: string })[]>(page, 'get', '/usuarios/roles');
+  const nombreUsuario = `admin_e2e_${SUFIJO}`;
+  const inicial = 'Clave-Admin-2026!';
+  const nueva = 'Clave-Recuperada-2026!';
+  const admin = await api<ConId>(page, 'post', '/usuarios', {
+    nombre_completo: `Admin E2E ${SUFIJO}`,
+    nombre_usuario: nombreUsuario,
+    password: inicial,
+    rol_id: roles.find((r) => r.codigo === 'admin')!.id,
+    activo: true,
+  });
+
+  try {
+    // 1. Genera sus códigos desde Mi cuenta (pide la contraseña actual).
+    await page.request.post('/api/v1/auth/logout');
+    await entrar(page, nombreUsuario, inicial);
+    await expect(page).toHaveURL(/\/inicio/);
+    await page.goto('/mi-cuenta');
+    await expect(page.getByTestId('estado-codigos')).toContainText('Todavía no tienes códigos');
+    await page.getByTestId('codigos-clave').fill(inicial);
+    await page.getByTestId('codigos-generar').click();
+    const codigos = page.getByTestId('lista-codigos').getByRole('listitem');
+    await expect(codigos).toHaveCount(8);
+    const codigo = (await codigos.first().innerText()).trim();
+    expect(codigo).toMatch(/^[2-9A-Z]{4}-[2-9A-Z]{4}-[2-9A-Z]{4}$/);
+    await page.getByTestId('codigos-listo').click();
+    await expect(page.getByTestId('estado-codigos')).toContainText('8 de 8');
+
+    // 2. Sin sesión: un código mal escrito no lo saca del formulario.
+    await page.request.post('/api/v1/auth/logout');
+    await page.goto('/olvide-clave');
+    await page.getByTestId('modo-codigo').click();
+    await page.getByTestId('codigo-usuario').fill(nombreUsuario);
+    await page.getByTestId('codigo-valor').fill('2222-2222-2222');
+    await page.getByTestId('codigo-clave').fill(nueva);
+    await page.getByTestId('codigo-clave-repetir').fill(nueva);
+    await page.getByTestId('codigo-enviar').click();
+    await expect(page.getByTestId('codigo-error')).toContainText('Usuario o código de recuperación incorrectos.');
+    await expect(page).toHaveURL(/\/olvide-clave$/);
+
+    // 3. Con el código correcto crea su contraseña nueva y entra con ella.
+    await page.getByTestId('codigo-valor').fill(codigo.toLowerCase());
+    await page.getByTestId('codigo-clave').fill(nueva);
+    await page.getByTestId('codigo-clave-repetir').fill(nueva);
+    await page.getByTestId('codigo-enviar').click();
+    await expect(page.getByTestId('codigos-restantes')).toContainText('7');
+    await page.getByTestId('ir-a-entrar').click();
+    await entrar(page, nombreUsuario, nueva);
+    await expect(page).toHaveURL(/\/inicio/);
+  } finally {
+    await page.request.post('/api/v1/auth/logout');
+    await entrar(page);
+    await page.request.delete(`/api/v1/usuarios/${admin.id}`);
+  }
+});

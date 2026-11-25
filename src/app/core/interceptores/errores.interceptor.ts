@@ -28,8 +28,8 @@ export const erroresInterceptor: HttpInterceptorFn = (peticion, siguiente) => {
         // cookie ya no sirve, no hace falta molestar al usuario con un
         // aviso rojo. En ese caso NO navegamos aquí: el guard de sesión ya
         // redirige al login con `volverA` y una navegación extra la pisaría.
-        if (peticion.url.endsWith('/auth/login')) {
-          // Credenciales rechazadas: conservar la ruta volverA del formulario.
+        if (peticion.url.endsWith('/auth/login') || peticion.url.endsWith('/auth/recuperar-con-codigo')) {
+          // Credenciales o código rechazados: se queda en el formulario.
           avisos.error(mensaje);
         } else if (peticion.url.endsWith('/auth/yo')) {
           auth.limpiarLocal(false);
