@@ -117,6 +117,30 @@ export class AuthService {
   }
 
   /** «¿Olvidaste tu contraseña?»: avisa al administrador y al supervisor. */
+  /** Sin sesión: usuario + código de recuperación + contraseña nueva (V25). */
+  recuperarConCodigo(
+    nombreUsuario: string,
+    codigo: string,
+    passwordNueva: string,
+  ): Observable<{ mensaje: string; codigos_restantes: number }> {
+    return this.http.post<{ mensaje: string; codigos_restantes: number }>(
+      `${environment.apiUrl}/auth/recuperar-con-codigo`,
+      { nombre_usuario: nombreUsuario, codigo, password_nueva: passwordNueva },
+    );
+  }
+
+  estadoCodigos(): Observable<{ disponibles: number; generados_en: string | null }> {
+    return this.http.get<{ disponibles: number; generados_en: string | null }>(
+      `${environment.apiUrl}/auth/codigos-recuperacion`,
+    );
+  }
+
+  generarCodigos(passwordActual: string): Observable<{ codigos: string[] }> {
+    return this.http.post<{ codigos: string[] }>(`${environment.apiUrl}/auth/codigos-recuperacion`, {
+      password_actual: passwordActual,
+    });
+  }
+
   olvidePassword(nombreUsuario: string): Observable<{ mensaje: string }> {
     return this.http.post<{ mensaje: string }>(`${environment.apiUrl}/auth/olvide-password`, {
       nombre_usuario: nombreUsuario,
