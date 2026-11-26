@@ -1,5 +1,5 @@
 import type { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
@@ -137,9 +137,10 @@ type Modo = 'correo' | 'aviso' | 'codigo';
                 tipo="submit"
                 [anchoCompleto]="true"
                 [cargando]="enviando()"
+                [deshabilitado]="esperandoReenvio()"
                 testId="correo-pedir"
               >
-                Enviar código a mi correo
+                {{ esperandoReenvio() ? 'Espera un minuto para reenviar' : 'Enviar código a mi correo' }}
               </app-boton>
             </form>
           } @else {
@@ -209,10 +210,15 @@ type Modo = 'correo' | 'aviso' | 'codigo';
               <button
                 type="button"
                 class="w-full text-center text-sm font-semibold text-marca-700 hover:underline"
-                [disabled]="enviando()"
-                (click)="otroCodigo()"
+                [disabled]="enviando() || esperandoReenvio()"
+                data-testid="correo-reenviar"
+                (click)="pedirPorCorreo()"
               >
-                ¿No llegó? Pedir otro código
+                {{ esperandoReenvio() ? 'Podrás pedir otro código en un minuto' : 'Pedir otro código' }}
+              </button>
+              <button type="button" class="w-full text-sm font-semibold text-marca-700 hover:underline"
+                [disabled]="enviando()" (click)="cambiarUsuarioCorreo()">
+                Cambiar de usuario
               </button>
             </form>
           }
@@ -342,6 +348,11 @@ export class OlvideClavePage {
   protected readonly correoDisponible = signal(false);
   protected readonly codigoEnviado = signal(false);
   protected readonly avisoCorreo = signal('');
+  private readonly ultimoSolicitante = signal<string | null>(null);
+  private temporizadorReenvio?: ReturnType<typeof setTimeout>;
+  protected readonly esperandoReenvio = computed(() =>
+    this.ultimoSolicitante() === this.usuario().trim().toLowerCase()
+  );
   protected readonly usuario = signal('');
   protected readonly codigo = signal('');
   protected readonly clave = signal('');
@@ -369,6 +380,7 @@ export class OlvideClavePage {
   );
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => clearTimeout(this.temporizadorReenvio));
     // Con un backend anterior o sin envío configurado, la pestaña no aparece.
     this.auth
       .opcionesRecuperacion()
@@ -395,7 +407,7 @@ export class OlvideClavePage {
 
   protected pedirPorCorreo(): void {
     const nombre = this.usuario().trim();
-    if (this.enviando()) return;
+    if (this.enviando() || this.esperandoReenvio()) return;
     if (!nombre) {
       this.error.set('Escribe tu usuario para recibir el código.');
       return;
@@ -407,6 +419,9 @@ export class OlvideClavePage {
         this.enviando.set(false);
         this.avisoCorreo.set(mensaje);
         this.codigoEnviado.set(true);
+        clearTimeout(this.temporizadorReenvio);
+        this.ultimoSolicitante.set(nombre.toLowerCase());
+        this.temporizadorReenvio = setTimeout(() => this.ultimoSolicitante.set(null), 60_000);
       },
       error: (respuesta: HttpErrorResponse) => {
         this.enviando.set(false);
@@ -415,7 +430,10 @@ export class OlvideClavePage {
     });
   }
 
-  protected otroCodigo(): void {
+  protected cambiarUsuarioCorreo(): void {
+    this.usuario.set('');
+    this.clave.set('');
+    this.repetir.set('');
     this.codigoEnviado.set(false);
     this.codigo.set('');
     this.error.set(null);
