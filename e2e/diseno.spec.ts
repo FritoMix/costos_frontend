@@ -14,6 +14,8 @@ const orden = {
 };
 async function mock(route: import('@playwright/test').Route){const u=new URL(route.request().url());let data: unknown = [];
 if(u.pathname.endsWith('/auth/yo'))data=user;
+else if(u.pathname.endsWith('/auth/correo'))data={correo:'admin@example.com',verificado:true,pendiente:null,envio_configurado:true};
+else if(u.pathname.endsWith('/auth/envio-correo'))data={url_envio:'https://script.google.com/macros/s/AKfycbPrueba123456/exec',configurado:true,script:"const SECRETO = 'x';"};
 else if(u.pathname.endsWith('/notificaciones/pendientes'))data={sin_leer:0,pendientes:[]};
 else if(u.pathname.endsWith('/catalogos/hornos'))data=[horno];
 else if(u.pathname.endsWith('/catalogos/productos'))data=[producto];
@@ -75,8 +77,8 @@ for (const width of [320, 390, 768, 1024, 1366]) {
         expect(tarjeta.alto).toBeGreaterThan(0);
       }
       if (nombre === 'cuenta') {
-        // Identidad y contraseña; el administrador ve además sus códigos de recuperación.
-        expect(medidas.tarjetas.length).toBe(3);
+        // Identidad, contraseña, correo de recuperación, envío de correos y códigos.
+        expect(medidas.tarjetas.length).toBe(5);
         for (let i = 1; i < medidas.tarjetas.length; i++) {
           expect(medidas.tarjetas[i].top - medidas.tarjetas[i - 1].bottom).toBeGreaterThanOrEqual(23);
         }

@@ -31,6 +31,26 @@ export interface Usuario {
   linea?: LineaRef | null;
   /** Entró con una contraseña temporal: debe crear la suya antes de seguir. */
   debe_cambiar_password?: boolean;
+  /** Correo de recuperación (V29); solo sirve si está verificado. */
+  correo?: string | null;
+  correo_verificado?: boolean;
+}
+
+/** Correo de recuperación del usuario conectado (V29). */
+export interface EstadoCorreo {
+  correo: string | null;
+  verificado: boolean;
+  /** Correo al que se envió un código que aún no se ha escrito. */
+  pendiente: string | null;
+  envio_configurado: boolean;
+}
+
+/** Envío de correos desde el Gmail del administrador (V29). */
+export interface EnvioCorreo {
+  url_envio: string | null;
+  configurado: boolean;
+  /** Código de Google Apps Script con el secreto, para pegarlo en Google. */
+  script: string;
 }
 
 export interface Credenciales {

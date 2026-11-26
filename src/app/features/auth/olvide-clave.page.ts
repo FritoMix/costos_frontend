@@ -2,16 +2,20 @@ import type { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { catchError, of } from 'rxjs';
 
 import { extraerMensaje } from '../../core/interceptores/errores.interceptor';
 import { AuthService } from '../../core/servicios/auth.service';
 import { BotonComponent } from '../../ui/boton.component';
 import { IconoComponent } from '../../ui/icono.component';
 
-type Modo = 'aviso' | 'codigo';
+type Modo = 'correo' | 'aviso' | 'codigo';
 
 /**
- * «¿Olvidaste tu contraseña?» sin correo, de dos formas:
+ * «¿Olvidaste tu contraseña?», de tres formas:
+ * - Por correo (V29): si la app puede enviar correos, quien verificó su
+ *   correo en Mi cuenta recibe un código de 6 dígitos y crea una contraseña
+ *   nueva. La respuesta al pedirlo es la misma exista o no el usuario.
  * - Personal de planta: escribe su usuario y se avisa al administrador y al
  *   supervisor para que le den una temporal (V21). La respuesta es la misma
  *   exista o no el usuario.
@@ -35,7 +39,26 @@ type Modo = 'aviso' | 'codigo';
           ¿Olvidaste tu contraseña?
         </h1>
 
-        <div class="mt-5 grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1" role="tablist">
+        <div
+          class="mt-5 grid gap-1 rounded-xl bg-slate-100 p-1"
+          [class.grid-cols-2]="!correoDisponible()"
+          [class.grid-cols-3]="correoDisponible()"
+          role="tablist"
+        >
+          @if (correoDisponible()) {
+            <button
+              type="button"
+              role="tab"
+              [disabled]="enviando()"
+              data-testid="modo-correo"
+              [attr.aria-selected]="modo() === 'correo'"
+              (click)="cambiarModo('correo')"
+              class="min-h-11 rounded-lg px-2 text-sm font-bold leading-tight transition-colors"
+              [class]="modo() === 'correo' ? 'bg-white text-marca-950 shadow-sm' : 'text-slate-600 hover:text-marca-950'"
+            >
+              Por correo
+            </button>
+          }
           <button
             type="button"
             role="tab"
@@ -43,7 +66,7 @@ type Modo = 'aviso' | 'codigo';
             data-testid="modo-aviso"
             [attr.aria-selected]="modo() === 'aviso'"
             (click)="cambiarModo('aviso')"
-            class="min-h-11 rounded-lg px-3 text-sm font-bold transition-colors"
+            class="min-h-11 rounded-lg px-2 text-sm font-bold leading-tight transition-colors"
             [class]="modo() === 'aviso' ? 'bg-white text-marca-950 shadow-sm' : 'text-slate-600 hover:text-marca-950'"
           >
             Personal de planta
@@ -55,10 +78,10 @@ type Modo = 'aviso' | 'codigo';
             data-testid="modo-codigo"
             [attr.aria-selected]="modo() === 'codigo'"
             (click)="cambiarModo('codigo')"
-            class="min-h-11 rounded-lg px-3 text-sm font-bold transition-colors"
+            class="min-h-11 rounded-lg px-2 text-sm font-bold leading-tight transition-colors"
             [class]="modo() === 'codigo' ? 'bg-white text-marca-950 shadow-sm' : 'text-slate-600 hover:text-marca-950'"
           >
-            Tengo un código
+            Código impreso
           </button>
         </div>
 
@@ -82,13 +105,116 @@ type Modo = 'aviso' | 'codigo';
               }
             </div>
           </div>
-          @if (modo() === 'codigo') {
+          @if (modo() !== 'aviso') {
             <a
               routerLink="/entrar"
               data-testid="ir-a-entrar"
               class="mt-5 flex min-h-12 items-center justify-center rounded-xl bg-marca-600 font-bold text-white hover:bg-marca-700"
               >Iniciar sesión</a
             >
+          }
+        } @else if (modo() === 'correo') {
+          @if (!codigoEnviado()) {
+            <p class="mt-4 text-slate-600">
+              Escribe tu usuario. Te enviamos un código de 6 dígitos al correo que verificaste en
+              <strong>Mi cuenta</strong>.
+            </p>
+            <form class="mt-5 space-y-4" (ngSubmit)="pedirPorCorreo()">
+              <div>
+                <label class="etiqueta" for="usuario-correo">Usuario</label>
+                <input
+                  id="usuario-correo"
+                  name="usuario-correo"
+                  class="campo"
+                  maxlength="50"
+                  autocomplete="username"
+                  data-testid="correo-usuario"
+                  [ngModel]="usuario()"
+                  (ngModelChange)="usuario.set($event)"
+                />
+              </div>
+              <app-boton
+                tipo="submit"
+                [anchoCompleto]="true"
+                [cargando]="enviando()"
+                testId="correo-pedir"
+              >
+                Enviar código a mi correo
+              </app-boton>
+            </form>
+          } @else {
+            <div
+              role="status"
+              data-testid="correo-enviado"
+              class="mt-5 flex items-start gap-3 rounded-xl border border-marca-200 bg-marca-50 p-4 text-marca-950"
+            >
+              <app-icono nombre="info" [tamano]="22" class="mt-0.5 text-marca-700" />
+              <p class="text-sm font-semibold">{{ avisoCorreo() }}</p>
+            </div>
+            <form class="mt-5 space-y-4" (ngSubmit)="recuperarPorCorreo()">
+              <div>
+                <label class="etiqueta" for="codigo-correo">Código del correo</label>
+                <input
+                  id="codigo-correo"
+                  name="codigo-correo"
+                  class="campo text-center font-mono text-2xl tracking-[0.5em]"
+                  inputmode="numeric"
+                  autocomplete="one-time-code"
+                  placeholder="000000"
+                  maxlength="6"
+                  data-testid="correo-codigo"
+                  [ngModel]="codigo()"
+                  (ngModelChange)="codigo.set($event)"
+                />
+              </div>
+              <div>
+                <label class="etiqueta" for="clave-correo">Contraseña nueva</label>
+                <input
+                  id="clave-correo"
+                  name="clave-correo"
+                  type="password"
+                  class="campo"
+                  autocomplete="new-password"
+                  data-testid="correo-clave"
+                  [ngModel]="clave()"
+                  (ngModelChange)="clave.set($event)"
+                />
+                <p class="ayuda">Mínimo 8 caracteres.</p>
+              </div>
+              <div>
+                <label class="etiqueta" for="clave-correo-repetir">Repite la contraseña nueva</label>
+                <input
+                  id="clave-correo-repetir"
+                  name="clave-correo-repetir"
+                  type="password"
+                  class="campo"
+                  autocomplete="new-password"
+                  data-testid="correo-clave-repetir"
+                  [ngModel]="repetir()"
+                  (ngModelChange)="repetir.set($event)"
+                />
+                @if (repetir() && repetir() !== clave()) {
+                  <p class="error-campo" role="alert">Las dos contraseñas no coinciden.</p>
+                }
+              </div>
+              <app-boton
+                tipo="submit"
+                [anchoCompleto]="true"
+                [cargando]="enviando()"
+                [deshabilitado]="!puedeRecuperarPorCorreo()"
+                testId="correo-enviar"
+              >
+                Cambiar contraseña
+              </app-boton>
+              <button
+                type="button"
+                class="w-full text-center text-sm font-semibold text-marca-700 hover:underline"
+                [disabled]="enviando()"
+                (click)="otroCodigo()"
+              >
+                ¿No llegó? Pedir otro código
+              </button>
+            </form>
           }
         } @else if (modo() === 'aviso') {
           <p class="mt-4 text-slate-600">
@@ -192,7 +318,7 @@ type Modo = 'aviso' | 'codigo';
         @if (error(); as texto) {
           <p
             role="alert"
-            [attr.data-testid]="modo() === 'codigo' ? 'codigo-error' : 'aviso-error'"
+            [attr.data-testid]="modo() + '-error'"
             class="mt-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-900"
           >
             <app-icono nombre="alerta" [tamano]="18" class="mt-0.5 text-rose-700" />
@@ -212,6 +338,10 @@ type Modo = 'aviso' | 'codigo';
 export class OlvideClavePage {
   private readonly auth = inject(AuthService);
   protected readonly modo = signal<Modo>('aviso');
+  /** La app puede enviar códigos por correo (lo configura el administrador). */
+  protected readonly correoDisponible = signal(false);
+  protected readonly codigoEnviado = signal(false);
+  protected readonly avisoCorreo = signal('');
   protected readonly usuario = signal('');
   protected readonly codigo = signal('');
   protected readonly clave = signal('');
@@ -230,6 +360,27 @@ export class OlvideClavePage {
       this.clave() === this.repetir(),
   );
 
+  protected readonly puedeRecuperarPorCorreo = computed(
+    () =>
+      this.usuario().trim().length > 0 &&
+      /^\d{6}$/.test(this.codigo().trim()) &&
+      this.clave().length >= 8 &&
+      this.clave() === this.repetir(),
+  );
+
+  constructor() {
+    // Con un backend anterior o sin envío configurado, la pestaña no aparece.
+    this.auth
+      .opcionesRecuperacion()
+      .pipe(catchError(() => of({ correo: false })))
+      .subscribe(({ correo }) => {
+        this.correoDisponible.set(correo);
+        if (correo && !this.enviando() && this.mensaje() === null && this.usuario() === '') {
+          this.modo.set('correo');
+        }
+      });
+  }
+
   protected cambiarModo(modo: Modo): void {
     if (this.enviando() || this.modo() === modo) return;
     this.modo.set(modo);
@@ -239,6 +390,54 @@ export class OlvideClavePage {
     this.restantes.set(null);
     this.mensaje.set(null);
     this.error.set(null);
+    this.codigoEnviado.set(false);
+  }
+
+  protected pedirPorCorreo(): void {
+    const nombre = this.usuario().trim();
+    if (this.enviando()) return;
+    if (!nombre) {
+      this.error.set('Escribe tu usuario para recibir el código.');
+      return;
+    }
+    this.enviando.set(true);
+    this.error.set(null);
+    this.auth.pedirCodigoPorCorreo(nombre).subscribe({
+      next: ({ mensaje }) => {
+        this.enviando.set(false);
+        this.avisoCorreo.set(mensaje);
+        this.codigoEnviado.set(true);
+      },
+      error: (respuesta: HttpErrorResponse) => {
+        this.enviando.set(false);
+        this.error.set(extraerMensaje(respuesta));
+      },
+    });
+  }
+
+  protected otroCodigo(): void {
+    this.codigoEnviado.set(false);
+    this.codigo.set('');
+    this.error.set(null);
+  }
+
+  protected recuperarPorCorreo(): void {
+    if (!this.puedeRecuperarPorCorreo() || this.enviando()) return;
+    this.enviando.set(true);
+    this.error.set(null);
+    this.auth.recuperarPorCorreo(this.usuario().trim(), this.codigo().trim(), this.clave()).subscribe({
+      next: ({ mensaje }) => {
+        this.enviando.set(false);
+        this.clave.set('');
+        this.repetir.set('');
+        this.codigo.set('');
+        this.mensaje.set(mensaje);
+      },
+      error: (respuesta: HttpErrorResponse) => {
+        this.enviando.set(false);
+        this.error.set(extraerMensaje(respuesta));
+      },
+    });
   }
 
   protected pedir(): void {

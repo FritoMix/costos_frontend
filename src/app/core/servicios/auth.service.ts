@@ -8,7 +8,14 @@ import { map, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { limpiarCache } from '../interceptores/cache.interceptor';
-import type { CodigoRol, Credenciales, RespuestaLogin, Usuario } from '../modelos/identidad.model';
+import type {
+  CodigoRol,
+  Credenciales,
+  EnvioCorreo,
+  EstadoCorreo,
+  RespuestaLogin,
+  Usuario,
+} from '../modelos/identidad.model';
 
 /**
  * Sesion del usuario: quien esta conectado y que puede hacer.
@@ -138,6 +145,75 @@ export class AuthService {
   generarCodigos(passwordActual: string): Observable<{ codigos: string[] }> {
     return this.http.post<{ codigos: string[] }>(`${environment.apiUrl}/auth/codigos-recuperacion`, {
       password_actual: passwordActual,
+    });
+  }
+
+  // --- Correo de recuperación (V29) ---
+
+  /** Sin sesión: si la app puede enviar códigos por correo. */
+  opcionesRecuperacion(): Observable<{ correo: boolean }> {
+    return this.http.get<{ correo: boolean }>(`${environment.apiUrl}/auth/recuperacion/opciones`);
+  }
+
+  /** Sin sesión: envía un código al correo verificado del usuario (respuesta siempre igual). */
+  pedirCodigoPorCorreo(nombreUsuario: string): Observable<{ mensaje: string }> {
+    return this.http.post<{ mensaje: string }>(
+      `${environment.apiUrl}/auth/recuperar-por-correo/solicitar`,
+      { nombre_usuario: nombreUsuario },
+    );
+  }
+
+  /** Sin sesión: usuario + código del correo + contraseña nueva. */
+  recuperarPorCorreo(
+    nombreUsuario: string,
+    codigo: string,
+    passwordNueva: string,
+  ): Observable<{ mensaje: string }> {
+    return this.http.post<{ mensaje: string }>(`${environment.apiUrl}/auth/recuperar-por-correo`, {
+      nombre_usuario: nombreUsuario,
+      codigo,
+      password_nueva: passwordNueva,
+    });
+  }
+
+  estadoCorreo(): Observable<EstadoCorreo> {
+    return this.http.get<EstadoCorreo>(`${environment.apiUrl}/auth/correo`);
+  }
+
+  registrarCorreo(correo: string, passwordActual: string): Observable<EstadoCorreo> {
+    return this.http.post<EstadoCorreo>(`${environment.apiUrl}/auth/correo`, {
+      correo,
+      password_actual: passwordActual,
+    });
+  }
+
+  verificarCorreo(codigo: string): Observable<EstadoCorreo> {
+    return this.http.post<EstadoCorreo>(`${environment.apiUrl}/auth/correo/verificar`, { codigo });
+  }
+
+  quitarCorreo(passwordActual: string): Observable<EstadoCorreo> {
+    return this.http.post<EstadoCorreo>(`${environment.apiUrl}/auth/correo/quitar`, {
+      password_actual: passwordActual,
+    });
+  }
+
+  envioCorreo(): Observable<EnvioCorreo> {
+    return this.http.get<EnvioCorreo>(`${environment.apiUrl}/auth/envio-correo`);
+  }
+
+  guardarEnvioCorreo(urlEnvio: string | null): Observable<EnvioCorreo> {
+    return this.http.put<EnvioCorreo>(`${environment.apiUrl}/auth/envio-correo`, {
+      url_envio: urlEnvio,
+    });
+  }
+
+  regenerarSecretoCorreo(): Observable<EnvioCorreo> {
+    return this.http.post<EnvioCorreo>(`${environment.apiUrl}/auth/envio-correo/regenerar-secreto`, {});
+  }
+
+  probarEnvioCorreo(para: string): Observable<{ mensaje: string }> {
+    return this.http.post<{ mensaje: string }>(`${environment.apiUrl}/auth/envio-correo/prueba`, {
+      para,
     });
   }
 

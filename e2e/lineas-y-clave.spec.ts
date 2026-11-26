@@ -271,3 +271,45 @@ test.describe('reintento desde el login móvil', () => {
     await expect(page.getByTestId('aviso-error')).toHaveCount(0);
   });
 });
+
+test('correo de recuperación: el administrador activa el envío y aparece «Por correo»', async ({ page }) => {
+  await entrar(page);
+  await expect(page).toHaveURL(/\/inicio/);
+  await page.goto('/mi-cuenta');
+
+  const envio = page.getByTestId('seccion-envio');
+  await expect(envio.getByTestId('envio-estado')).toContainText('sin activar');
+  await expect(envio.getByTestId('envio-script')).toHaveValue(/const SECRETO = '/);
+  // Sin envío activo, el correo propio no se puede registrar todavía.
+  await expect(page.getByTestId('correo-sin-envio')).toBeVisible();
+
+  // Solo acepta una URL de Google Apps Script.
+  await envio.getByTestId('envio-url').fill('https://otro-sitio.com/exec');
+  await envio.getByTestId('envio-guardar').click();
+  await expect(envio.getByTestId('envio-estado')).toContainText('sin activar');
+  await envio.getByTestId('envio-url').fill('https://script.google.com/macros/s/AKfycbE2Eprueba1234567890/exec');
+  await envio.getByTestId('envio-guardar').click();
+  await expect(envio.getByTestId('envio-estado')).toContainText('Envío activo');
+  await expect(page.getByTestId('correo-direccion')).toBeVisible();
+
+  try {
+    // «¿Olvidaste tu contraseña?» abre en «Por correo» y responde igual exista o no el usuario.
+    const anonimo = await page.context().browser()!.newContext({ baseURL: new URL(page.url()).origin });
+    const pagina = await anonimo.newPage();
+    await pagina.goto('/olvide-clave');
+    await expect(pagina.getByTestId('modo-correo')).toHaveAttribute('aria-selected', 'true');
+    await pagina.getByTestId('correo-usuario').fill(`nadie_${SUFIJO}`);
+    await pagina.getByTestId('correo-pedir').click();
+    await expect(pagina.getByTestId('correo-enviado')).toContainText('Si tu usuario tiene un correo verificado');
+    await expect(pagina.getByTestId('correo-enviar')).toBeDisabled();
+    await pagina.getByTestId('correo-codigo').fill('123456');
+    await pagina.getByTestId('correo-clave').fill('ClaveNueva-2026');
+    await pagina.getByTestId('correo-clave-repetir').fill('ClaveNueva-2026');
+    await pagina.getByTestId('correo-enviar').click();
+    await expect(pagina.getByTestId('correo-error')).toContainText('incorrectos');
+    await anonimo.close();
+  } finally {
+    // Deja el envío apagado para las demás pruebas.
+    await api(page, 'put', '/auth/envio-correo', { url_envio: null });
+  }
+});
