@@ -120,6 +120,40 @@ test('orden de plátano: línea, tipo y kilos, sin fórmula de Bodega', async ({
   }
 });
 
+test('capacidad del horno: plátano en kilos por hora, papa en bultos', async ({ page }) => {
+  await entrar(page);
+  await expect(page).toHaveURL(/\/inicio/);
+  await page.goto('/catalogos/hornos');
+
+  // Horno nuevo: por defecto es de papa y pide bultos por hora.
+  await expect(page.getByTestId('horno-capacidad')).toBeVisible();
+  await expect(page.getByTestId('horno-capacidad-kg')).toHaveCount(0);
+
+  // Al elegir plátano la capacidad pasa a kilos por hora.
+  const nombre = `Hojuelas kg ${SUFIJO}`;
+  await page.locator('#nombre').fill(nombre);
+  await page.locator('#linea_id').selectOption({ label: 'Plátano' });
+  await expect(page.getByTestId('horno-capacidad')).toHaveCount(0);
+  await page.getByTestId('horno-capacidad-kg').fill('450');
+  // Inactivo para no cambiar el asistente de órdenes de las demás pruebas.
+  await page.getByText('Horno Activo para Producción').click();
+  await page.getByRole('button', { name: 'Registrar Horno' }).click();
+
+  const fila = page.getByRole('row', { name: new RegExp(nombre) });
+  await expect(fila).toContainText('450');
+  await expect(fila).toContainText('kg/h');
+
+  const hornos = await api<(ConId & { nombre: string; capacidad_kg_hora: string | null; capacidad_bultos_hora: string | null })[]>(
+    page,
+    'get',
+    '/catalogos/hornos',
+  );
+  const creado = hornos.find((h) => h.nombre === nombre)!;
+  expect(Number(creado.capacidad_kg_hora)).toBe(450);
+  expect(creado.capacidad_bultos_hora).toBeNull();
+  await api(page, 'delete', `/catalogos/hornos/${creado.id}`);
+});
+
 test('olvidé mi contraseña: aviso, temporal y contraseña nueva', async ({ page }) => {
   await entrar(page);
   await expect(page).toHaveURL(/\/inicio/);

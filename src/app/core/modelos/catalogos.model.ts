@@ -90,7 +90,10 @@ export interface Horno {
   litros_por_cm_manual: number | null;
   /** Calculado por la API: lo que realmente se usa para pasar de cm a litros. */
   litros_por_cm: number | null;
+  /** Papa (línea con Bodega): bultos de papa cruda por hora. */
   capacidad_bultos_hora: number | null;
+  /** Demás líneas (plátano, pellet, maíz…): kilos por hora. Ausente en APIs viejas. */
+  capacidad_kg_hora?: number | null;
   categorias: ItemCatalogo[];
   /** Línea del horno; de aquí sale la línea de la orden. */
   linea?: Linea | null;
@@ -105,6 +108,7 @@ export interface HornoGuardar {
   tanque_diametro_cm: number | null;
   litros_por_cm_manual: number | null;
   capacidad_bultos_hora: number | null;
+  capacidad_kg_hora?: number | null;
   categoria_ids: number[];
   linea_id?: number | null;
 }

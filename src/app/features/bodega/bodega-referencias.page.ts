@@ -680,7 +680,10 @@ export class BodegaReferenciasPage {
 
   private cargarHornos(): void {
     this.catalogos.listarHornos(true, true).subscribe({
-      next: (hornos) => {
+      next: (todos) => {
+        // Bodega solo proyecta hornos de líneas que la usan (papa); los demás
+        // registran su capacidad en kilos, no en bultos.
+        const hornos = todos.filter((h) => h.linea?.usa_bodega ?? true);
         this.hornos.set(hornos);
         const actual = this.hornos().find((h) => h.id === this.hornoSeleccionadoId());
         const conCapacidad = hornos.find((h) => h.capacidad_bultos_hora !== null);
