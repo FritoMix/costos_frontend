@@ -146,6 +146,8 @@ test('olvidé mi contraseña: aviso, temporal y contraseña nueva', async ({ pag
     // 2. El administrador le da una temporal desde Usuarios.
     await entrar(page);
     await expect(page).toHaveURL(/\/inicio/);
+    const avisos = await api<{ tipo: string; mensaje: string }[]>(page, 'get', '/notificaciones');
+    expect(avisos.some((a) => a.tipo === 'recuperar_password' && a.mensaje.includes(`(${nombreUsuario})`))).toBe(true);
     await page.goto('/usuarios');
     const escritorio = page.viewportSize()!;
     await page.setViewportSize({ width: 320, height: 640 });
@@ -238,4 +240,23 @@ test('el administrador recupera su acceso con un código de recuperación', asyn
     await entrar(page);
     await page.request.delete(`/api/v1/usuarios/${admin.id}`);
   }
+});
+
+test('un fallo al pedir la temporal permite reintentar con el mismo usuario', async ({ page }) => {
+  await page.goto('/entrar');
+  await page.getByTestId('olvide-clave').click();
+  const enviar = page.getByTestId('olvide-enviar');
+  const usuario = page.getByTestId('olvide-usuario');
+  await expect(enviar).toBeDisabled();
+  await usuario.fill('persona_de_prueba');
+  const ruta = '**/api/v1/auth/olvide-password';
+  await page.route(ruta, (route) => route.fulfill({
+    status: 429, headers: { 'Retry-After': '30' }, body: '',
+  }), { times: 1 });
+  await enviar.click();
+  await expect(page.getByTestId('aviso-error')).toContainText('30 segundos');
+  await expect(usuario).toHaveValue('persona_de_prueba');
+  await enviar.click();
+  await expect(page.getByRole('status')).toContainText('contraseña temporal');
+  await expect(page.getByTestId('aviso-error')).toHaveCount(0);
 });

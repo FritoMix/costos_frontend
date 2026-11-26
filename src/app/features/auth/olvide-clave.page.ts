@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
+import { extraerMensaje } from '../../core/interceptores/errores.interceptor';
 import { AuthService } from '../../core/servicios/auth.service';
 import { BotonComponent } from '../../ui/boton.component';
 import { IconoComponent } from '../../ui/icono.component';
@@ -38,6 +39,7 @@ type Modo = 'aviso' | 'codigo';
           <button
             type="button"
             role="tab"
+            [disabled]="enviando()"
             data-testid="modo-aviso"
             [attr.aria-selected]="modo() === 'aviso'"
             (click)="cambiarModo('aviso')"
@@ -49,6 +51,7 @@ type Modo = 'aviso' | 'codigo';
           <button
             type="button"
             role="tab"
+            [disabled]="enviando()"
             data-testid="modo-codigo"
             [attr.aria-selected]="modo() === 'codigo'"
             (click)="cambiarModo('codigo')"
@@ -68,7 +71,7 @@ type Modo = 'aviso' | 'codigo';
             <div>
               <p class="font-semibold">{{ texto }}</p>
               @if (modo() === 'aviso') {
-                <p class="mt-1 text-sm">Cuando te la den, entra con ella y la app te pedirá crear una nueva.</p>
+                <p class="mt-1 text-sm">Pídele la temporal a tu responsable de planta. Al entrar con ella podrás elegir tu nueva contraseña.</p>
               } @else if (restantes() !== null) {
                 <p class="mt-1 text-sm" data-testid="codigos-restantes">
                   Te quedan {{ restantes() }} códigos sin usar.
@@ -89,8 +92,8 @@ type Modo = 'aviso' | 'codigo';
           }
         } @else if (modo() === 'aviso') {
           <p class="mt-4 text-slate-600">
-            Escribe tu usuario. Le avisaremos al administrador y al supervisor para que te den una
-            contraseña temporal.
+            Escribe tu usuario de planta. Tu responsable verá la solicitud en la campana de DATACONTROL
+            y te entregará la contraseña temporal personalmente.
           </p>
           <form class="mt-5 space-y-4" (ngSubmit)="pedir()">
             <div>
@@ -99,20 +102,22 @@ type Modo = 'aviso' | 'codigo';
                 id="usuario"
                 name="usuario"
                 class="campo"
+                maxlength="50"
                 autocomplete="username"
                 data-testid="olvide-usuario"
                 [ngModel]="usuario()"
                 (ngModelChange)="usuario.set($event)"
               />
             </div>
-            <app-boton tipo="submit" [anchoCompleto]="true" [cargando]="enviando()" testId="olvide-enviar">
+            <app-boton tipo="submit" [anchoCompleto]="true" [cargando]="enviando()"
+              [deshabilitado]="!usuario().trim()" testId="olvide-enviar">
               Pedir contraseña temporal
             </app-boton>
           </form>
         } @else {
           <p class="mt-4 text-slate-600">
             Para el administrador: escribe tu usuario, uno de tus códigos de recuperación y tu
-            contraseña nueva. Cada código sirve una sola vez.
+            contraseña nueva. Cada código sirve una sola vez. Si perdiste tus códigos, contacta a otro administrador o a quien gestiona el servicio en Render.
           </p>
           <form class="mt-5 space-y-4" (ngSubmit)="recuperar()">
             <div>
@@ -121,6 +126,7 @@ type Modo = 'aviso' | 'codigo';
                 id="usuario-codigo"
                 name="usuario-codigo"
                 class="campo"
+                maxlength="50"
                 autocomplete="username"
                 data-testid="codigo-usuario"
                 [ngModel]="usuario()"
@@ -171,16 +177,6 @@ type Modo = 'aviso' | 'codigo';
                 <p class="error-campo" role="alert">Las dos contraseñas no coinciden.</p>
               }
             </div>
-            @if (error(); as texto) {
-              <p
-                role="alert"
-                data-testid="codigo-error"
-                class="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-900"
-              >
-                <app-icono nombre="alerta" [tamano]="18" class="mt-0.5 text-rose-700" />
-                {{ texto }}
-              </p>
-            }
             <app-boton
               tipo="submit"
               [anchoCompleto]="true"
@@ -191,6 +187,17 @@ type Modo = 'aviso' | 'codigo';
               Cambiar contraseña
             </app-boton>
           </form>
+        }
+
+        @if (error(); as texto) {
+          <p
+            role="alert"
+            [attr.data-testid]="modo() === 'codigo' ? 'codigo-error' : 'aviso-error'"
+            class="mt-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-900"
+          >
+            <app-icono nombre="alerta" [tamano]="18" class="mt-0.5 text-rose-700" />
+            {{ texto }}
+          </p>
         }
 
         <a
@@ -224,7 +231,12 @@ export class OlvideClavePage {
   );
 
   protected cambiarModo(modo: Modo): void {
+    if (this.enviando() || this.modo() === modo) return;
     this.modo.set(modo);
+    this.clave.set('');
+    this.repetir.set('');
+    this.codigo.set('');
+    this.restantes.set(null);
     this.mensaje.set(null);
     this.error.set(null);
   }
@@ -233,12 +245,16 @@ export class OlvideClavePage {
     const nombre = this.usuario().trim();
     if (!nombre || this.enviando()) return;
     this.enviando.set(true);
+    this.error.set(null);
     this.auth.olvidePassword(nombre).subscribe({
       next: ({ mensaje }) => {
         this.enviando.set(false);
         this.mensaje.set(mensaje);
       },
-      error: () => this.enviando.set(false),
+      error: (respuesta: HttpErrorResponse) => {
+        this.enviando.set(false);
+        this.error.set(extraerMensaje(respuesta));
+      },
     });
   }
 
@@ -257,20 +273,8 @@ export class OlvideClavePage {
       },
       error: (respuesta: HttpErrorResponse) => {
         this.enviando.set(false);
-        this.error.set(mensajeDeError(respuesta));
+        this.error.set(extraerMensaje(respuesta));
       },
     });
   }
-}
-
-function mensajeDeError(respuesta: HttpErrorResponse): string {
-  if (respuesta.status === 0) return 'No se pudo contactar al servidor. Revisa la conexión.';
-  if (respuesta.status === 429) {
-    const segundos = Number(respuesta.headers.get('Retry-After'));
-    return segundos > 0
-      ? `Demasiados intentos. Espera ${Math.ceil(segundos)} segundos y vuelve a intentar.`
-      : 'Demasiados intentos. Espera un momento y vuelve a intentar.';
-  }
-  const detalle = (respuesta.error as { detail?: unknown } | null)?.detail;
-  return typeof detalle === 'string' && detalle.trim() ? detalle : 'No se pudo cambiar la contraseña.';
 }
