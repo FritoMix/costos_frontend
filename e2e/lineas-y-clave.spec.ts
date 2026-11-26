@@ -333,8 +333,17 @@ test('correo de recuperación: el administrador activa el envío y aparece «Por
     await pagina.goto('/olvide-clave');
     await expect(pagina.getByTestId('modo-correo')).toHaveAttribute('aria-selected', 'true');
     await pagina.getByTestId('correo-usuario').fill(`nadie_${SUFIJO}`);
+    await pagina.clock.install();
     await pagina.getByTestId('correo-pedir').click();
     await expect(pagina.getByTestId('correo-enviado')).toContainText('Si tu usuario tiene un correo verificado');
+    const reenviar = pagina.getByTestId('correo-reenviar');
+    await expect(reenviar).toBeDisabled();
+    await pagina.clock.fastForward(61_000);
+    await expect(reenviar).toBeEnabled();
+    const respuesta = pagina.waitForResponse((r) => r.url().endsWith('/recuperar-por-correo/solicitar'));
+    await reenviar.click();
+    expect((await respuesta).status()).toBe(202);
+    await expect(reenviar).toBeDisabled();
     await expect(pagina.getByTestId('correo-enviar')).toBeDisabled();
     await pagina.getByTestId('correo-codigo').fill('123456');
     await pagina.getByTestId('correo-clave').fill('ClaveNueva-2026');
