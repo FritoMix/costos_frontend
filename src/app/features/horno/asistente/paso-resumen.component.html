@@ -10,7 +10,7 @@
       <div class="flex items-center justify-between gap-4 px-5 py-3">
         <dt class="text-sm font-semibold text-slate-500">Materia prima</dt>
         <dd class="text-sm font-extrabold text-slate-900">
-          {{ numero(datos().kgMateria ?? '0') | number: '1.0-2' }} kg
+          {{ numero(datos().kgMateria ?? '0') | number: '1.0-2' }} kg de {{ materia() }}
         </dd>
       </div>
     } @else if (datos().conFormula) {
@@ -99,6 +99,18 @@
         {{ datos().operariosSeleccion === 1 ? 'persona' : 'personas' }}
       </dd>
     </div>
+    @if (datos().batch) {
+      <div class="flex items-center justify-between gap-4 px-5 py-3" data-testid="resumen-baches">
+        <dt class="text-sm font-semibold text-slate-500">Baches</dt>
+        <dd class="text-sm font-extrabold text-slate-900">{{ numero(datos().baches ?? '0') }}</dd>
+      </div>
+      <div class="flex items-center justify-between gap-4 px-5 py-3">
+        <dt class="text-sm font-semibold text-slate-500">Aceite agregado</dt>
+        <dd class="text-sm font-extrabold text-slate-900">
+          {{ numero(datos().aceiteAgregado ?? '0') | number: '1.0-2' }} L
+        </dd>
+      </div>
+    } @else {
     <div class="flex items-center justify-between gap-4 px-5 py-3">
       <dt class="text-sm font-semibold text-slate-500">Aceite</dt>
       <dd class="text-sm font-extrabold text-slate-900">
@@ -117,6 +129,7 @@
         {{ parada() ?? 'No hubo' }}
       </dd>
     </div>
+    }
     <div class="flex items-center justify-between gap-4 bg-slate-50/70 px-5 py-3">
       <dt class="text-sm font-semibold text-slate-500">Desperdicio</dt>
       <dd class="text-sm font-extrabold text-slate-900">

@@ -138,8 +138,11 @@ export class HornoAsistentePage {
       !this.hayFormula()
     );
   });
-  protected readonly capacidadMezcla = computed(() =>
-    Number(this.formula()?.capacidad_bultos_hora ?? Infinity),
+  protected readonly capacidadMezcla = computed(
+    () =>
+      Number(this.formula()?.capacidad_bultos_hora ?? Infinity) *
+      // Horno batch: el registro es de toda la orden.
+      (this.batch() ? (this.detalle()?.orden.horas_produccion ?? 1) : 1),
   );
   protected readonly mezclaCompleta = computed(
     () => this.hayFormula() && this.mezcla().every((fila) => fila.restante <= 0),
@@ -157,6 +160,8 @@ export class HornoAsistentePage {
     return minutos === null ? null : formatearMinutos(minutos);
   });
   protected readonly ordenCompleta = computed(() => {
+    // Horno batch (V31): la orden lleva un solo registro.
+    if (this.batch()) return (this.detalle()?.registros_horno.length ?? 0) > 0;
     const minutos = this.minutosDisponibles();
     return minutos !== null && minutos < 60;
   });
@@ -195,6 +200,7 @@ export class HornoAsistentePage {
   protected readonly numeroTanda = computed(() => {
     const datos = this.detalle();
     if (!datos) return null;
+    if (this.batch()) return datos.registros_horno.length ? null : 1;
     const ocupadas = new Set(datos.registros_horno.map((r) => r.numero_tanda).filter((n) => !!n));
     const horas = datos.orden.horas_produccion ?? ocupadas.size + 1;
     for (let n = 1; n <= horas; n++) if (!ocupadas.has(n)) return n;
@@ -206,6 +212,12 @@ export class HornoAsistentePage {
     const inicioOrden = this.detalle()?.orden.hora_inicio;
     const n = this.numeroTanda();
     if (!inicioOrden || !n) return null;
+    if (this.batch()) {
+      // Horno batch: el registro cubre todas las horas de la orden.
+      const inicio = new Date(inicioOrden);
+      const horas = this.detalle()?.orden.horas_produccion ?? 1;
+      return { inicio, fin: new Date(inicio.getTime() + horas * 60 * 60 * 1000) };
+    }
     const inicio = new Date(new Date(inicioOrden).getTime() + (n - 1) * 60 * 60 * 1000);
     return { inicio, fin: new Date(inicio.getTime() + 60 * 60 * 1000) };
   });
@@ -213,6 +225,7 @@ export class HornoAsistentePage {
   /** "08:00" si la hora de esta tanda todavía no empieza (5 min de margen). */
   protected readonly horaFutura = computed(() => {
     const franja = this.franjaAutomatica();
+    if (this.batch()) return null;
     if (!franja || franja.inicio.getTime() - 5 * 60 * 1000 <= Date.now()) return null;
     return this.aHHMM(franja.inicio);
   });
@@ -235,20 +248,35 @@ export class HornoAsistentePage {
   protected readonly enKg = computed(() => this.linea()?.unidad_materia_prima === 'kg');
   protected readonly materia = computed(() => this.linea()?.nombre_materia_prima ?? 'papa');
   protected readonly kgMateria = signal('0');
+  /** Horno batch (V31): un registro por orden con baches y litros agregados. */
+  protected readonly batch = computed(() => this.detalle()?.orden.horno_tipo === 'batch');
+  protected readonly baches = signal('0');
 
-  private readonly pasos = computed(() => pasosDeTanda(this.hayFormula(), this.enKg()));
+  private readonly pasos = computed(() =>
+    pasosDeTanda(this.hayFormula(), this.enKg(), this.batch()),
+  );
 
   protected readonly totalPasos = computed(() => this.pasos().length);
   protected readonly pasoActual = computed<PasoTanda>(() => this.pasos()[this.indicePaso()]);
   protected readonly progreso = computed(() => ((this.indicePaso() + 1) / this.totalPasos()) * 100);
 
   protected readonly etiquetaPaso = computed(() => TEXTOS_PASOS_HORNO[this.pasoActual()].etiqueta);
-  protected readonly tituloPaso = computed(() =>
-    this.pasoActual() === 'kg_materia'
-      ? `¿Cuántos kilos de ${this.materia()} entraron al horno?`
-      : TEXTOS_PASOS_HORNO[this.pasoActual()].titulo,
+  protected readonly tituloPaso = computed(() => {
+    const paso = this.pasoActual();
+    if (paso === 'kg_materia') {
+      return this.batch()
+        ? `¿Cuántos kilos de ${this.materia()} entraron en toda la orden?`
+        : `¿Cuántos kilos de ${this.materia()} entraron al horno?`;
+    }
+    if (paso === 'horario' && this.batch()) return 'Registro de toda la orden';
+    if (paso === 'temperatura' && this.batch()) return '¿A qué temperatura trabajó el horno?';
+    return TEXTOS_PASOS_HORNO[paso].titulo;
+  });
+  protected readonly subtituloPaso = computed(() =>
+    this.pasoActual() === 'horario' && this.batch()
+      ? 'Horno batch: se registra una sola vez, al terminar la orden.'
+      : TEXTOS_PASOS_HORNO[this.pasoActual()].sub,
   );
-  protected readonly subtituloPaso = computed(() => TEXTOS_PASOS_HORNO[this.pasoActual()].sub);
 
   /** Hora de inicio en formato de reloj (HH:MM). */
   protected readonly horaInicio = computed(() =>
@@ -289,6 +317,8 @@ export class HornoAsistentePage {
     notaParada: this.notaParada(),
     enKg: this.enKg(),
     kgMateria: this.kgMateria(),
+    batch: this.batch(),
+    baches: this.baches(),
   }));
   // --- A prueba de errores: datos imposibles (rojo) o raros (amarillo) ---
   /** Pasos en los que el operario confirmó «Sí, el dato está bien». */
@@ -361,6 +391,7 @@ export class HornoAsistentePage {
       this.causaParada(),
       this.notaParada(),
       this.kgMateria(),
+      this.baches(),
     ],
     () => this.enviando(),
   );
@@ -400,7 +431,13 @@ export class HornoAsistentePage {
               restante,
               peso_promedio_bulto_kg: Number(fila.peso_promedio_bulto_kg),
               rendimiento_fritura_pct: Number(fila.rendimiento_fritura_pct),
-              bultos: Math.max(0, Math.min(fila.bultos_por_tanda, restante)),
+              // Horno batch: un solo registro con lo que falta de la fórmula.
+              bultos: Math.max(
+                0,
+                detalle.orden.horno_tipo === 'batch'
+                  ? restante
+                  : Math.min(fila.bultos_por_tanda, restante),
+              ),
             };
           }),
         );
@@ -523,7 +560,11 @@ export class HornoAsistentePage {
       return;
     }
     if (this.ordenCompleta()) {
-      this.avisos.error('No queda tiempo suficiente para otra tanda de una hora.');
+      this.avisos.error(
+        this.batch()
+          ? 'Esta orden ya tiene su registro de horno.'
+          : 'No queda tiempo suficiente para otra tanda de una hora.',
+      );
       return;
     }
     if (this.hayFormula() && this.mezclaCompleta()) {
@@ -546,7 +587,11 @@ export class HornoAsistentePage {
         medicion.terminar('ok');
         this.proteccion.aceptar();
         this.enviando.set(false);
-        this.avisos.exito(`Tanda registrada: ${registro.kg_crudos_calculados} kg de papa cruda.`);
+        this.avisos.exito(
+          this.batch()
+            ? `Producción registrada: ${registro.kg_crudos_calculados} kg de ${this.materia()}.`
+            : `Tanda registrada: ${registro.kg_crudos_calculados} kg de papa cruda.`,
+        );
         void this.router.navigate(['/horno']);
       },
       error: () => {

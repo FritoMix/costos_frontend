@@ -94,6 +94,8 @@ export interface Horno {
   capacidad_bultos_hora: number | null;
   /** Demás líneas (plátano, pellet, maíz…): kilos por hora. Ausente en APIs viejas. */
   capacidad_kg_hora?: number | null;
+  /** «continuo» o «batch» (V31). Ausente en APIs viejas = continuo. */
+  tipo?: 'continuo' | 'batch';
   categorias: ItemCatalogo[];
   /** Línea del horno; de aquí sale la línea de la orden. */
   linea?: Linea | null;
@@ -109,6 +111,7 @@ export interface HornoGuardar {
   litros_por_cm_manual: number | null;
   capacidad_bultos_hora: number | null;
   capacidad_kg_hora?: number | null;
+  tipo?: 'continuo' | 'batch';
   categoria_ids: number[];
   linea_id?: number | null;
 }

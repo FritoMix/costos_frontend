@@ -14,6 +14,8 @@ export class PasoHorarioHornoComponent {
   readonly automatica = input(false);
   readonly numeroTanda = input<number | null>(null);
   readonly totalTandas = input<number | null>(null);
+  /** Horno batch (V31): el registro cubre toda la orden. */
+  readonly batch = input(false);
   readonly atrasar = output<number>();
   readonly reiniciar = output<void>();
 }

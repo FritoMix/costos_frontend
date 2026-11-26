@@ -173,8 +173,9 @@
                   [horaFin]="horaFin()"
                   [ajustes]="ajustes"
                   [automatica]="franjaAutomatica() !== null"
-                  [numeroTanda]="numeroTanda()"
+                  [numeroTanda]="batch() ? null : numeroTanda()"
                   [totalTandas]="datos.orden.horas_produccion"
+                  [batch]="batch()"
                   (atrasar)="atrasarInicio($event)"
                   (reiniciar)="reiniciarHora()"
                 />
@@ -266,6 +267,20 @@
               @case ('kg_materia') {
                 <div class="anim-entrada">
                   <app-teclado-numerico [(valor)]="kgMateria" [unidad]="'kilos de ' + materia()" />
+                </div>
+              }
+              <!-- Horno batch (V31): baches y litros de toda la orden -->
+              @case ('baches') {
+                <div class="anim-entrada">
+                  <app-teclado-numerico [(valor)]="baches" unidad="baches" />
+                </div>
+              }
+              @case ('aceite_litros') {
+                <div class="anim-entrada">
+                  <app-teclado-numerico [(valor)]="aceiteAgregado" unidad="litros de aceite" />
+                  <p class="mt-4 text-center text-sm font-semibold text-slate-500">
+                    Si se midió en canecas, escribe el total en litros. 0 si no se agregó.
+                  </p>
                 </div>
               }
               @case ('bultos') {
@@ -540,6 +555,7 @@
                   [horaInicio]="horaInicio()"
                   [horaFin]="horaFin()"
                   [nombreDesperdicio]="nombreDesperdicio()"
+                  [materia]="materia()"
                 />
               }
             }
@@ -574,7 +590,7 @@
               [cargando]="enviando()"
               testId="guardar-tanda"
             >
-              Guardar tanda
+              {{ batch() ? 'Guardar producción' : 'Guardar tanda' }}
             </app-boton>
           } @else {
             <app-boton

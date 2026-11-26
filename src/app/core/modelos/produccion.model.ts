@@ -87,9 +87,13 @@ export interface Orden {
   supervisor: UsuarioRef;
   turno: Referencia;
   horno: Referencia;
+  /** «continuo» (una tanda por hora) o «batch» (un registro por orden) (V31). */
+  horno_tipo?: TipoHorno;
   producto: ProductoRef;
   categoria: Referencia;
 }
+
+export type TipoHorno = 'continuo' | 'batch';
 
 export interface OrdenGuardar {
   turno_id: number;
@@ -149,11 +153,14 @@ export interface RegistroHorno {
   kg_fritos_estimados: number | null;
   operarios_seleccion: number;
   operarios_horno: number;
-  nivel_aceite_inicial_cm: number;
-  nivel_aceite_final_cm: number;
+  /** Hornos batch (V31): sin nivel de aceite. */
+  nivel_aceite_inicial_cm: number | null;
+  nivel_aceite_final_cm: number | null;
   aceite_agregado_litros?: number;
-  diferencia_aceite_cm: number;
+  diferencia_aceite_cm: number | null;
   temperatura_aceite_c: number | null;
+  /** Horno batch: baches de la orden. */
+  cantidad_baches?: number | null;
   litros_por_cm_usado: number | null;
   volumen_aceite_litros: number | null;
   densidad_aceite_usada: number | null;
@@ -185,11 +192,14 @@ export interface RegistroHornoGuardar {
   kg_materia_prima?: number;
   operarios_seleccion: number;
   operarios_horno: number;
-  nivel_aceite_inicial_cm: number;
-  nivel_aceite_final_cm: number;
+  /** Obligatorios en hornos continuos; un horno batch no los envía (V31). */
+  nivel_aceite_inicial_cm?: number;
+  nivel_aceite_final_cm?: number;
+  /** Horno batch: cuántos baches se hicieron en la orden. */
+  cantidad_baches?: number;
   /** Litros agregados al tanque en la tanda (V18). */
   aceite_agregado_litros?: number;
-  temperatura_aceite_c: number;
+  temperatura_aceite_c?: number;
   observaciones: string | null;
   tipo_desperdicio_id: number | null;
   cantidad_desperdicio_kg: number | null;

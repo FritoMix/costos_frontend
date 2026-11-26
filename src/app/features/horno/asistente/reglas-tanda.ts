@@ -36,6 +36,9 @@ export interface DatosTandaHorno {
   /** Líneas que no son papa: la tanda va en kilos de materia prima (V21). */
   enKg?: boolean;
   kgMateria?: string;
+  /** Horno batch (V31): un registro por orden, baches y litros agregados. */
+  batch?: boolean;
+  baches?: string;
 }
 
 export function numeroDeTexto(texto: string): number {
@@ -70,6 +73,12 @@ export function pasoTandaValido(
       return numeroDeTexto(datos.bultos) > 0;
     case 'kg_materia':
       return numeroDeTexto(datos.kgMateria ?? '0') > 0;
+    case 'baches': {
+      const baches = numeroDeTexto(datos.baches ?? '0');
+      return Number.isInteger(baches) && baches >= 1 && baches <= 999;
+    }
+    case 'aceite_litros':
+      return (datos.aceiteAgregado ?? '') !== '' && numeroDeTexto(datos.aceiteAgregado ?? '0') >= 0;
     case 'temperatura':
       return numeroDeTexto(datos.temperatura) > 0;
     case 'personal_zona_humeda':
