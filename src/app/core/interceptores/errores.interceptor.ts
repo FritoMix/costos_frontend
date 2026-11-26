@@ -21,6 +21,10 @@ export const erroresInterceptor: HttpInterceptorFn = (peticion, siguiente) => {
 
   return siguiente(peticion).pipe(
     catchError((error: HttpErrorResponse) => {
+      // Estos formularios públicos conservan los datos y muestran el error en la propia página.
+      if (peticion.url.endsWith('/auth/olvide-password') || peticion.url.endsWith('/auth/recuperar-con-codigo')) {
+        return throwError(() => error);
+      }
       const mensaje = extraerMensaje(error);
 
       if (error.status === 401) {
@@ -28,7 +32,7 @@ export const erroresInterceptor: HttpInterceptorFn = (peticion, siguiente) => {
         // cookie ya no sirve, no hace falta molestar al usuario con un
         // aviso rojo. En ese caso NO navegamos aquí: el guard de sesión ya
         // redirige al login con `volverA` y una navegación extra la pisaría.
-        if (peticion.url.endsWith('/auth/login') || peticion.url.endsWith('/auth/recuperar-con-codigo')) {
+        if (peticion.url.endsWith('/auth/login')) {
           // Credenciales o código rechazados: se queda en el formulario.
           avisos.error(mensaje);
         } else if (peticion.url.endsWith('/auth/yo')) {
@@ -54,7 +58,7 @@ export const erroresInterceptor: HttpInterceptorFn = (peticion, siguiente) => {
   );
 };
 
-function extraerMensaje(error: HttpErrorResponse): string {
+export function extraerMensaje(error: HttpErrorResponse): string {
   if (error.status === 0) {
     return 'No se pudo contactar al servidor. Revisa la conexión e intenta de nuevo.';
   }
