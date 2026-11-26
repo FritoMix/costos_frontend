@@ -241,6 +241,37 @@ const VALIDA_KG = [Validators.min(1), Validators.max(99999), Validators.pattern(
               }
             </div>
 
+            <!-- Tipo de horno (V31) -->
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <h3
+                class="text-xs font-extrabold uppercase tracking-wider text-marca-900 flex items-center gap-1.5"
+              >
+                <app-icono nombre="llama" [tamano]="16" /> Tipo de horno
+              </h3>
+              <div class="mt-3 grid gap-3 sm:grid-cols-2" role="radiogroup">
+                @for (opcion of tiposHorno; track opcion.valor) {
+                  <button
+                    type="button"
+                    role="radio"
+                    [attr.aria-checked]="tipoElegido() === opcion.valor"
+                    [attr.data-testid]="'horno-tipo-' + opcion.valor"
+                    (click)="formulario.controls.tipo.setValue(opcion.valor)"
+                    class="rounded-xl border-2 p-4 text-left transition-colors"
+                    [class]="
+                      tipoElegido() === opcion.valor
+                        ? 'border-marca-600 bg-white shadow-sm'
+                        : 'border-slate-200 bg-white/60 hover:border-marca-300'
+                    "
+                  >
+                    <span class="block font-extrabold text-slate-900">{{ opcion.nombre }}</span>
+                    <span class="mt-1 block text-xs font-medium text-slate-600">{{
+                      opcion.ayuda
+                    }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+
             <!-- Capacidad productiva del horno -->
             <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
               <h3
@@ -345,7 +376,8 @@ const VALIDA_KG = [Validators.min(1), Validators.max(99999), Validators.pattern(
               </div>
             </div>
 
-            <!-- Fila 3: Calibración del Tanque -->
+            <!-- Fila 3: Calibración del Tanque (solo hornos continuos) -->
+            @if (tipoElegido() === 'continuo') {
             <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5 space-y-4">
               <h3
                 class="text-xs font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5"
@@ -397,6 +429,7 @@ const VALIDA_KG = [Validators.min(1), Validators.max(99999), Validators.pattern(
                 </div>
               </div>
             </div>
+            }
 
             <!-- Fila 4: Flags de Estado -->
             <div class="flex flex-wrap items-center gap-6 pt-1">
@@ -497,6 +530,14 @@ const VALIDA_KG = [Validators.min(1), Validators.max(99999), Validators.pattern(
                             {{ horno.linea.nombre }}
                           </span>
                         }
+                        @if (horno.tipo === 'batch') {
+                          <span
+                            class="inline-flex items-center rounded-md bg-violet-50 px-2 py-0.5 text-xs font-bold text-violet-800 border border-violet-200/80"
+                            data-testid="badge-batch"
+                          >
+                            Batch
+                          </span>
+                        }
                         @if (horno.apto_exportacion) {
                           <span
                             class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700 border border-indigo-200/80"
@@ -523,7 +564,9 @@ const VALIDA_KG = [Validators.min(1), Validators.max(99999), Validators.pattern(
                       {{ horno.tipo_aceite || '—' }}
                     </td>
                     <td class="py-4 px-4 text-right font-mono font-bold text-xs text-slate-800">
-                      @if (horno.litros_por_cm !== null) {
+                      @if (horno.tipo === 'batch') {
+                        <span class="font-sans font-semibold text-slate-400">No aplica</span>
+                      } @else if (horno.litros_por_cm !== null) {
                         {{ horno.litros_por_cm | number: '1.0-4' }} L/cm
                       } @else {
                         <span
@@ -656,6 +699,23 @@ export class HornosPage {
     capacidad_kg_hora: this.fb.control<number | null>(null, VALIDA_KG),
     apto_exportacion: this.fb.nonNullable.control(false),
     activo: this.fb.nonNullable.control(true),
+    tipo: this.fb.nonNullable.control<'continuo' | 'batch'>('continuo'),
+  });
+
+  protected readonly tiposHorno = [
+    {
+      valor: 'continuo' as const,
+      nombre: 'Continuo',
+      ayuda: 'Una tanda por hora. El aceite se mide por nivel del tanque (cm).',
+    },
+    {
+      valor: 'batch' as const,
+      nombre: 'Batch u horneado',
+      ayuda: 'Un registro por orden con los baches. El aceite, por litros agregados (pistola o canecas).',
+    },
+  ];
+  protected readonly tipoElegido = toSignal(this.formulario.controls.tipo.valueChanges, {
+    initialValue: 'continuo' as 'continuo' | 'batch',
   });
 
   protected readonly formCapacidad = this.fb.group({
@@ -769,6 +829,7 @@ export class HornosPage {
       capacidad_kg_hora: horno.capacidad_kg_hora == null ? null : Number(horno.capacidad_kg_hora),
       apto_exportacion: horno.apto_exportacion,
       activo: horno.activo,
+      tipo: horno.tipo ?? 'continuo',
     });
   }
 
@@ -781,6 +842,7 @@ export class HornosPage {
       capacidad_kg_hora: null,
       apto_exportacion: false,
       activo: true,
+      tipo: 'continuo',
       linea_id: this.lineaPorDefecto(),
     });
   }
@@ -806,6 +868,7 @@ export class HornosPage {
       // Sin línea elegida no se envía: la API conserva la del horno (o papa).
       ...(valores.linea_id ? { linea_id: valores.linea_id } : {}),
       apto_exportacion: valores.apto_exportacion,
+      tipo: valores.tipo,
       tanque_diametro_cm: valores.tanque_diametro_cm ? Number(valores.tanque_diametro_cm) : null,
       litros_por_cm_manual: valores.litros_por_cm_manual
         ? Number(valores.litros_por_cm_manual)

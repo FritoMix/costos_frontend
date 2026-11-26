@@ -35,12 +35,20 @@ export function construirRegistroHorno(
     ...(datos.enKg ? { kg_materia_prima: numeroDeTexto(datos.kgMateria ?? '0') } : {}),
     operarios_seleccion: datos.operariosSeleccion,
     operarios_horno: datos.operariosZonaHumeda,
-    nivel_aceite_inicial_cm: numeroDeTexto(datos.aceiteInicial),
-    nivel_aceite_final_cm: numeroDeTexto(datos.aceiteFinal),
-    // Solo viaja si se repuso aceite: el cuerpo de siempre no cambia.
-    ...(numeroDeTexto(datos.aceiteAgregado ?? '0') > 0
-      ? { aceite_agregado_litros: numeroDeTexto(datos.aceiteAgregado ?? '0') }
-      : {}),
+    // Horno batch (V31): sin nivel; baches y litros agregados de toda la orden.
+    ...(datos.batch
+      ? {
+          cantidad_baches: numeroDeTexto(datos.baches ?? '0'),
+          aceite_agregado_litros: numeroDeTexto(datos.aceiteAgregado ?? '0'),
+        }
+      : {
+          nivel_aceite_inicial_cm: numeroDeTexto(datos.aceiteInicial),
+          nivel_aceite_final_cm: numeroDeTexto(datos.aceiteFinal),
+          // Solo viaja si se repuso aceite: el cuerpo de siempre no cambia.
+          ...(numeroDeTexto(datos.aceiteAgregado ?? '0') > 0
+            ? { aceite_agregado_litros: numeroDeTexto(datos.aceiteAgregado ?? '0') }
+            : {}),
+        }),
     temperatura_aceite_c: numeroDeTexto(datos.temperatura),
     observaciones: null,
     tipo_desperdicio_id: conDesperdicio ? datos.tipoDesperdicioId : null,

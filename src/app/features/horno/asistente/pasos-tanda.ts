@@ -4,6 +4,8 @@ export type PasoTanda =
   | 'referencia_papa'
   | 'bultos'
   | 'kg_materia'
+  | 'baches'
+  | 'aceite_litros'
   | 'temperatura'
   | 'personal_zona_humeda'
   | 'personal_seleccion'
@@ -41,6 +43,16 @@ export const TEXTOS_PASOS_HORNO: Record<
     etiqueta: 'Materia prima',
     titulo: '¿Cuántos kilos entraron al horno?',
     sub: 'Kilos de materia prima cruda que alimentaron el horno en esta hora.',
+  },
+  baches: {
+    etiqueta: 'Producción',
+    titulo: '¿Cuántos baches se hicieron?',
+    sub: 'Total de cargas que entraron al horno en toda la orden.',
+  },
+  aceite_litros: {
+    etiqueta: 'Aceite',
+    titulo: '¿Cuántos litros de aceite se agregaron?',
+    sub: 'Total de la orden: lo que marcó la pistola o lo que se echó en canecas. 0 si no se agregó.',
   },
   temperatura: { etiqueta: 'Proceso', titulo: '¿A qué temperatura está el aceite?', sub: '' },
   personal_zona_humeda: {
@@ -80,13 +92,28 @@ export const TEXTOS_PASOS_HORNO: Record<
  * Orden en que se toman los datos en planta: primero la temperatura y, al
  * final de la hora, la parada y los bultos que entraron (V17).
  */
-export function pasosDeTanda(conFormula: boolean, enKg = false): PasoTanda[] {
+export function pasosDeTanda(conFormula: boolean, enKg = false, batch = false): PasoTanda[] {
   // Plátano, pellet...: kilos de materia prima, sin papa ni bultos (V21).
   const materia: PasoTanda[] = enKg
     ? ['kg_materia']
     : conFormula
       ? ['mezcla']
       : ['referencia_papa', 'bultos'];
+  if (batch) {
+    // Horno batch (V31): un solo registro al terminar la orden, sin nivel
+    // de aceite ni parada por hora.
+    return [
+      'horario',
+      ...materia,
+      'baches',
+      'temperatura',
+      'personal_zona_humeda',
+      'personal_seleccion',
+      'aceite_litros',
+      'desperdicio',
+      'resumen',
+    ];
+  }
   return [
     'horario',
     'temperatura',

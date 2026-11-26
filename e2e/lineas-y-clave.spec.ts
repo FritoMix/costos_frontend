@@ -347,3 +347,114 @@ test('correo de recuperación: el administrador activa el envío y aparece «Por
     await api(page, 'put', '/auth/envio-correo', { url_envio: null });
   }
 });
+
+test('horno batch: un solo registro por orden con baches y litros de aceite', async ({ page }) => {
+  await entrar(page);
+  await expect(page).toHaveURL(/\/inicio/);
+
+  const lineas = await api<(ConId & { codigo: string })[]>(page, 'get', '/catalogos/lineas');
+  const nachos = lineas.find((l) => l.codigo === 'nachos')!;
+  const turnos = await api<ConId[]>(page, 'get', '/catalogos/turnos');
+  const categoria = await api<ConId>(page, 'post', '/catalogos/categorias', {
+    nombre: `Nachos E2E ${SUFIJO}`,
+    activo: true,
+  });
+  const horno = await api<ConId & { tipo: string }>(page, 'post', '/catalogos/hornos', {
+    nombre: `Batch Nachos ${SUFIJO}`,
+    activo: true,
+    apto_exportacion: false,
+    linea_id: nachos.id,
+    tipo: 'batch',
+    capacidad_kg_hora: 200,
+    categoria_ids: [categoria.id],
+  });
+  expect(horno.tipo).toBe('batch');
+  const producto = await api<ConId>(page, 'post', '/catalogos/productos', {
+    nombre_comercial: `Nacho E2E ${SUFIJO}`,
+    categoria_id: categoria.id,
+    activo: true,
+    destino: 'ambos',
+    sabor_minimo_pct: 1.5,
+    sabor_maximo_pct: 2.5,
+  });
+
+  let ordenId: number | null = null;
+  try {
+    const orden = await api<ConId>(page, 'post', '/ordenes', {
+      turno_id: turnos[0].id,
+      horno_id: horno.id,
+      categoria_id: categoria.id,
+      producto_id: producto.id,
+      destino: 'nacional',
+      unidad_solicitada: 'kg',
+      cantidad_kg: 300,
+      horas_produccion: 2,
+    });
+    ordenId = orden.id;
+    await api(page, 'post', `/ordenes/${ordenId}/iniciar`);
+
+    await page.goto('/horno');
+    await expect(page.getByTestId(`registrar-tanda-${ordenId}`)).toContainText('Registrar producción');
+
+    await page.goto(`/horno/${ordenId}`);
+    await expect(page.getByTestId('paso-horario')).toContainText('toda la orden');
+    await page.getByTestId('continuar-horno').click();
+
+    await expect(page.getByTestId('paso-kg_materia')).toBeVisible();
+    for (const tecla of ['3', '0', '0']) await page.getByTestId(`tecla-${tecla}`).click();
+    await page.getByTestId('continuar-horno').click();
+
+    await expect(page.getByTestId('paso-baches')).toBeVisible();
+    for (const tecla of ['1', '2']) await page.getByTestId(`tecla-${tecla}`).click();
+    await page.getByTestId('continuar-horno').click();
+
+    await expect(page.getByTestId('paso-temperatura')).toBeVisible();
+    await page.getByTestId('temperatura-180').click();
+    await page.getByTestId('continuar-horno').click();
+    await page.getByTestId('personal-zona-5').click();
+    await page.getByTestId('continuar-horno').click();
+    await page.getByTestId('personal-seleccion-5').click();
+    await page.getByTestId('continuar-horno').click();
+
+    // Sin nivel en cm: solo los litros que se agregaron.
+    await expect(page.getByTestId('paso-aceite_litros')).toBeVisible();
+    for (const tecla of ['4', '0']) await page.getByTestId(`tecla-${tecla}`).click();
+    await page.getByTestId('continuar-horno').click();
+
+    await expect(page.getByTestId('paso-desperdicio')).toBeVisible();
+    await page.getByTestId('sin-desperdicio').click();
+
+    await expect(page.getByTestId('paso-resumen')).toBeVisible();
+    await expect(page.getByTestId('resumen-baches')).toContainText('12');
+    await page.getByTestId('guardar-tanda').click();
+    await expect(page).toHaveURL(/\/horno$/);
+
+    const detalle = await api<{
+      registros_horno: {
+        cantidad_baches: number;
+        nivel_aceite_inicial_cm: string | null;
+        volumen_aceite_litros: string | null;
+      }[];
+    }>(page, 'get', `/ordenes/${ordenId}`);
+    expect(detalle.registros_horno).toHaveLength(1);
+    expect(detalle.registros_horno[0].cantidad_baches).toBe(12);
+    expect(detalle.registros_horno[0].nivel_aceite_inicial_cm).toBeNull();
+    expect(Number(detalle.registros_horno[0].volumen_aceite_litros)).toBe(40);
+
+    // Una sola vez por orden.
+    await page.goto(`/horno/${ordenId}`);
+    await expect(page.getByTestId('horno-orden-completa')).toBeVisible();
+  } finally {
+    if (ordenId) {
+      await page.request.post(`/api/v1/ordenes/${ordenId}/cancelar`);
+      await page.request.delete(`/api/v1/ordenes/${ordenId}`);
+    }
+    await api(page, 'put', `/catalogos/hornos/${horno.id}`, {
+      nombre: `Batch Nachos ${SUFIJO}`,
+      activo: false,
+      apto_exportacion: false,
+      linea_id: nachos.id,
+      categoria_ids: [categoria.id],
+    });
+  }
+});

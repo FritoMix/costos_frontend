@@ -24,6 +24,7 @@ export class PasoResumenHornoComponent {
   readonly horaInicio = input.required<string>();
   readonly horaFin = input.required<string>();
   readonly nombreDesperdicio = input('');
+  readonly materia = input('materia prima');
   protected readonly numero = numeroDeTexto;
   protected readonly totales = computed(() => resumirMezcla(this.datos().mezcla));
   protected readonly kgCrudos = computed(() =>

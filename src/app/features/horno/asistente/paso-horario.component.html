@@ -36,14 +36,25 @@
       </div>
     </div>
     <p class="mt-4 text-center text-xs font-semibold text-marca-700">
-      Duración de la tanda: 1 hora
+      @if (batch()) {
+        Horno batch: este registro es de toda la orden
+        @if (totalTandas()) {
+          ({{ totalTandas() }} {{ totalTandas() === 1 ? 'hora' : 'horas' }})
+        }
+      } @else {
+        Duración de la tanda: 1 hora
+      }
     </p>
   </div>
 
   <!-- Ajuste por si la tanda empezó antes (solo órdenes sin hora de inicio) -->
   @if (automatica()) {
     <p class="mt-4 text-center text-xs font-medium text-slate-500">
-      La hora la pone la app: cada hora de la orden es una tanda.
+      @if (batch()) {
+        La hora la pone la app: va del inicio al fin programado de la orden.
+      } @else {
+        La hora la pone la app: cada hora de la orden es una tanda.
+      }
     </p>
   } @else {
     <div class="mt-4 text-center">
