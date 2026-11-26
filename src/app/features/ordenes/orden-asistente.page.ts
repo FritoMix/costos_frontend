@@ -24,6 +24,7 @@ import { FormulasPapaService } from '../../core/servicios/formulas-papa.service'
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
 import { OrdenesService } from '../../core/servicios/ordenes.service';
 import { BotonComponent } from '../../ui/boton.component';
+import { IlustracionLineaComponent } from '../../ui/ilustracion-linea.component';
 import { CargandoComponent } from '../../ui/cargando.component';
 import { revisarCantidadOrden, revisarHoras, type Revision } from '../../core/poka-yoke';
 import { RevisionPasoComponent } from '../../ui/revision-paso.component';
@@ -64,9 +65,18 @@ type ClavePaso =
   selector: 'app-orden-asistente',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.inert]': 'enviando() ? "" : null' },
-  imports: [IconoComponent, RouterLink, DecimalPipe, BotonComponent, CargandoComponent, RevisionPasoComponent],
+  imports: [
+    IconoComponent,
+    RouterLink,
+    DecimalPipe,
+    BotonComponent,
+    CargandoComponent,
+    RevisionPasoComponent,
+    IlustracionLineaComponent,
+  ],
   template: `
-    <div class="mx-auto w-full max-w-xl">
+    <!-- La línea se elige en tarjetas con imagen: ese paso usa más ancho -->
+    <div class="mx-auto w-full" [class]="pasoActual() === 'linea' ? 'max-w-2xl' : 'max-w-xl'">
       @if (cargando()) {
         <app-cargando texto="Preparando el asistente…" />
       } @else {
@@ -113,27 +123,71 @@ type ClavePaso =
               @switch (pasoActual()) {
                 <!-- 0. Línea de producción (solo si hay hornos de más de una línea) -->
                 @case ('linea') {
-                  <div class="space-y-2.5 anim-entrada">
+                  <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 anim-entrada">
                     @for (linea of lineas(); track linea.id) {
+                      @let elegida = lineaId() === linea.id;
+                      @let disponible = tieneHorno(linea.id);
                       <button
                         type="button"
                         [attr.data-testid]="'opcion-linea-' + linea.codigo"
+                        [attr.aria-pressed]="elegida"
                         (click)="elegirLinea(linea)"
-                        [disabled]="!tieneHorno(linea.id)"
-                        [class]="claseFila(lineaId() === linea.id) + (tieneHorno(linea.id) ? '' : ' opacity-50')"
+                        [disabled]="!disponible"
+                        class="relative flex flex-col rounded-xl border p-4 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-marca-200"
+                        [class]="
+                          elegida
+                            ? 'border-marca-600 bg-marca-50/60 ring-1 ring-marca-600'
+                            : disponible
+                              ? 'border-slate-200 bg-white hover:border-slate-400'
+                              : 'cursor-not-allowed border-dashed border-slate-200 bg-slate-50/60'
+                        "
                       >
-                        <span [class]="claseAvatar(lineaId() === linea.id)">{{ inicial(linea.nombre) }}</span>
-                        <span class="min-w-0 flex-1 text-left">
-                          <span class="block truncate font-bold text-slate-900">{{ linea.nombre }}</span>
-                          <span class="block truncate text-xs font-medium text-slate-500">
-                            @if (tieneHorno(linea.id)) {
-                              Se pide en {{ textoUnidades(linea) }}
-                            } @else {
-                              Sin horno asignado todavía
-                            }
+                        <span class="flex items-start justify-between">
+                          <span
+                            class="grid h-14 w-14 place-items-center rounded-lg border"
+                            [class]="
+                              elegida
+                                ? 'border-marca-600 bg-marca-600 text-white'
+                                : disponible
+                                  ? 'border-slate-200 bg-slate-50 text-slate-700'
+                                  : 'border-slate-200 bg-white text-slate-300'
+                            "
+                          >
+                            <app-ilustracion-linea [codigo]="linea.codigo" [nombre]="linea.nombre" [tamano]="34" />
                           </span>
+                          @if (elegida) {
+                            <span class="grid h-5 w-5 place-items-center rounded-full bg-marca-600 text-white" [innerHTML]="iconoCheck"></span>
+                          } @else if (!disponible) {
+                            <app-icono nombre="candado" [tamano]="16" class="text-slate-300" />
+                          } @else {
+                            <span class="h-5 w-5 rounded-full border-2 border-slate-300"></span>
+                          }
                         </span>
-                        <span [innerHTML]="radio(lineaId() === linea.id)"></span>
+                        <span class="mt-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                          Línea · {{ linea.codigo }}
+                        </span>
+                        <span
+                          class="mt-0.5 text-[15px] font-bold leading-snug"
+                          [class]="disponible ? 'text-slate-900' : 'text-slate-400'"
+                        >
+                          {{ linea.nombre }}
+                        </span>
+                        @if (disponible) {
+                          <span class="mt-3 grid gap-1 border-t border-slate-200/80 pt-2.5 text-xs">
+                            <span class="flex items-baseline justify-between gap-2">
+                              <span class="text-slate-500">Unidad</span>
+                              <span class="text-right font-semibold text-slate-800">{{ textoUnidades(linea) }}</span>
+                            </span>
+                            <span class="flex items-baseline justify-between gap-2">
+                              <span class="text-slate-500">Hornos activos</span>
+                              <span class="font-mono font-semibold text-slate-800">{{ cuantosHornos(linea.id) }}</span>
+                            </span>
+                          </span>
+                        } @else {
+                          <span class="mt-3 border-t border-dashed border-slate-200 pt-2.5 text-xs font-medium text-slate-400">
+                            Sin horno asignado
+                          </span>
+                        }
                       </button>
                     }
                   </div>
@@ -177,7 +231,13 @@ type ClavePaso =
                         (click)="elegirCategoria(categoria.id)"
                         [class]="claseFila(categoriaId() === categoria.id)"
                       >
-                        <span [class]="claseAvatar(categoriaId() === categoria.id)">{{ inicial(categoria.nombre) }}</span>
+                        <span [class]="claseMiniatura(categoriaId() === categoria.id)">
+                          @if (codigoLinea(); as codigo) {
+                            <app-ilustracion-linea [codigo]="codigo" [tamano]="28" />
+                          } @else {
+                            {{ inicial(categoria.nombre) }}
+                          }
+                        </span>
                         <span class="min-w-0 flex-1 text-left">
                           <span class="block truncate font-bold text-slate-900">{{ categoria.nombre }}</span>
                         </span>
@@ -199,7 +259,13 @@ type ClavePaso =
                         (click)="elegirProducto(producto.id)"
                         [class]="claseFila(productoId() === producto.id)"
                       >
-                        <span [class]="claseAvatar(productoId() === producto.id)">{{ inicial(producto.nombre_comercial) }}</span>
+                        <span [class]="claseMiniatura(productoId() === producto.id)">
+                          @if (codigoLinea(); as codigo) {
+                            <app-ilustracion-linea [codigo]="codigo" [tamano]="28" />
+                          } @else {
+                            {{ inicial(producto.nombre_comercial) }}
+                          }
+                        </span>
                         <span class="min-w-0 flex-1 text-left">
                           <span class="block truncate font-bold text-slate-900">{{ producto.nombre_comercial }}</span>
                           <span class="block truncate text-xs font-medium text-slate-500">{{ nombreCategoria() }}</span>
@@ -1003,6 +1069,23 @@ export class OrdenAsistentePage {
   }
 
   /** Avatar circular (inicial o emoji) al inicio de cada fila. */
+  /** Línea de la orden (o la única con horno) para las miniaturas. */
+  protected readonly codigoLinea = computed(() => {
+    const elegida = this.lineaSeleccionada();
+    if (elegida) return elegida.codigo;
+    const conHorno = this.lineasConHorno();
+    return conHorno.length === 1 ? conHorno[0].codigo : null;
+  });
+
+  /** Miniatura con el ícono de la línea (categorías y productos). */
+  protected claseMiniatura(seleccionada: boolean): string {
+    const base =
+      'grid h-11 w-11 shrink-0 place-items-center rounded-lg border text-base font-extrabold transition-colors duration-150';
+    return seleccionada
+      ? `${base} border-marca-600 bg-marca-600 text-white`
+      : `${base} border-slate-200 bg-slate-50 text-slate-700`;
+  }
+
   protected claseAvatar(seleccionada: boolean): string {
     const base =
       'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-base font-extrabold transition-colors duration-150';
@@ -1082,6 +1165,12 @@ export class OrdenAsistentePage {
   protected tieneHorno(lineaId: number): boolean {
     return this.lineasConHorno().some((l) => l.id === lineaId);
   }
+
+  /** Hornos activos de la línea, para mostrarlos en su tarjeta. */
+  protected cuantosHornos(lineaId: number): number {
+    return this.hornos().filter((h) => h.linea?.id === lineaId).length;
+  }
+
 
   protected textoUnidades(linea: Linea): string {
     return linea.unidades_orden.map((u) => this.nombreUnidad(u).toLowerCase()).join(' o ');
