@@ -1,5 +1,13 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
@@ -22,6 +30,10 @@ import { IconoComponent } from '../../ui/icono.component';
 /**
  * Hornos: categorías que produce, exportación y calibración de tanque de aceite.
  */
+/** Capacidad en bultos/h (papa) y en kg/h (demás líneas): enteros positivos. */
+const VALIDA_BULTOS = [Validators.min(1), Validators.max(9999), Validators.pattern(/^\d+$/)];
+const VALIDA_KG = [Validators.min(1), Validators.max(99999), Validators.pattern(/^\d+$/)];
+
 @Component({
   selector: 'app-hornos',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -92,7 +104,9 @@ import { IconoComponent } from '../../ui/icono.component';
               Capacidad de producción
             </h2>
             <p class="mt-1 text-xs font-medium text-slate-500">
-              Se usa para repartir los bultos entre las referencias de papa en la proyección.
+              Bultos de papa por hora. Se usa para repartir los bultos entre las referencias de papa
+              en la proyección. La capacidad en kilos de las demás líneas la configura el
+              Administrador.
             </p>
           </div>
           <form
@@ -111,7 +125,7 @@ import { IconoComponent } from '../../ui/icono.component';
                 (change)="cambiarHornoCapacidad()"
               >
                 <option [ngValue]="null" disabled>Selecciona un horno…</option>
-                @for (horno of hornos(); track horno.id) {
+                @for (horno of hornosConBodega(); track horno.id) {
                   <option [ngValue]="horno.id">{{ horno.nombre }}</option>
                 }
               </select>
@@ -235,30 +249,69 @@ import { IconoComponent } from '../../ui/icono.component';
                 <app-icono nombre="engranaje" [tamano]="16" /> Capacidad de producción
               </h3>
               <div class="mt-3 grid gap-6 md:grid-cols-2">
-                <div>
-                  <label
-                    class="etiqueta text-xs font-bold text-slate-700 mb-1 block"
-                    for="capacidad_bultos_hora"
-                  >
-                    Bultos por hora
-                  </label>
-                  <input
-                    id="capacidad_bultos_hora"
-                    type="number"
-                    inputmode="numeric"
-                    step="1"
-                    min="1"
-                    max="9999"
-                    placeholder="Ej. 50"
-                    class="campo font-mono"
-                    data-testid="horno-capacidad"
-                    formControlName="capacidad_bultos_hora"
-                  />
-                </div>
-                <p class="self-end text-xs font-medium text-marca-900">
-                  Con esta capacidad y la participación de cada referencia, Bodega proyecta la
-                  distribución de bultos, kg crudos y kg fritos estimados.
-                </p>
+                @if (capacidadEnKg()) {
+                  <div>
+                    <label
+                      class="etiqueta text-xs font-bold text-slate-700 mb-1 block"
+                      for="capacidad_kg_hora"
+                    >
+                      Kilos por hora
+                    </label>
+                    <div class="relative">
+                      <input
+                        id="capacidad_kg_hora"
+                        type="number"
+                        inputmode="numeric"
+                        step="1"
+                        min="1"
+                        max="99999"
+                        placeholder="Ej. 450"
+                        class="campo font-mono pr-14"
+                        data-testid="horno-capacidad-kg"
+                        formControlName="capacidad_kg_hora"
+                      />
+                      <span
+                        class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-bold text-slate-500"
+                        >kg/h</span
+                      >
+                    </div>
+                  </div>
+                  <p class="self-end text-xs font-medium text-marca-900">
+                    Kilos de {{ materiaPrimaElegida() }} que el horno procesa en una hora. Número
+                    entero mayor a cero.
+                  </p>
+                } @else {
+                  <div>
+                    <label
+                      class="etiqueta text-xs font-bold text-slate-700 mb-1 block"
+                      for="capacidad_bultos_hora"
+                    >
+                      Bultos por hora
+                    </label>
+                    <div class="relative">
+                      <input
+                        id="capacidad_bultos_hora"
+                        type="number"
+                        inputmode="numeric"
+                        step="1"
+                        min="1"
+                        max="9999"
+                        placeholder="Ej. 50"
+                        class="campo font-mono pr-20"
+                        data-testid="horno-capacidad"
+                        formControlName="capacidad_bultos_hora"
+                      />
+                      <span
+                        class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-bold text-slate-500"
+                        >bultos/h</span
+                      >
+                    </div>
+                  </div>
+                  <p class="self-end text-xs font-medium text-marca-900">
+                    La papa va en bultos: con esta capacidad y la participación de cada referencia,
+                    Bodega proyecta la distribución de bultos, kg crudos y kg fritos estimados.
+                  </p>
+                }
               </div>
             </div>
 
@@ -419,7 +472,7 @@ import { IconoComponent } from '../../ui/icono.component';
                   <th
                     class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500 font-mono text-right"
                   >
-                    Bultos / hora
+                    Capacidad
                   </th>
                   <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500">
                     Estado
@@ -481,8 +534,9 @@ import { IconoComponent } from '../../ui/icono.component';
                       }
                     </td>
                     <td class="py-4 px-4 text-right font-mono font-bold text-xs text-slate-800">
-                      @if (horno.capacidad_bultos_hora !== null) {
-                        {{ horno.capacidad_bultos_hora | number: '1.0-0' }}
+                      @if (capacidadDe(horno); as capacidad) {
+                        {{ capacidad.valor | number: '1.0-0' }}
+                        <span class="font-sans text-slate-500">{{ capacidad.unidad }}</span>
                       } @else {
                         <span
                           class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-800 border border-amber-200"
@@ -511,13 +565,15 @@ import { IconoComponent } from '../../ui/icono.component';
                     <td class="py-4 px-6 text-right whitespace-nowrap">
                       <div class="inline-flex items-center gap-2 justify-end">
                         @if (esSupervisor()) {
-                          <button
-                            type="button"
-                            class="inline-flex items-center gap-1 rounded-xl bg-slate-50 px-3 py-1.5 text-xs font-bold text-marca-700 hover:bg-marca-100 hover:text-marca-900 border border-slate-200 transition-all cursor-pointer"
-                            (click)="prepararCapacidad(horno)"
-                          >
-                            <app-icono nombre="engranaje" [tamano]="16" /> Capacidad
-                          </button>
+                          @if (usaBodega(horno)) {
+                            <button
+                              type="button"
+                              class="inline-flex items-center gap-1 rounded-xl bg-slate-50 px-3 py-1.5 text-xs font-bold text-marca-700 hover:bg-marca-100 hover:text-marca-900 border border-slate-200 transition-all cursor-pointer"
+                              (click)="prepararCapacidad(horno)"
+                            >
+                              <app-icono nombre="engranaje" [tamano]="16" /> Capacidad
+                            </button>
+                          }
                         } @else {
                           <button
                             type="button"
@@ -584,6 +640,11 @@ export class HornosPage {
   protected readonly editando = signal<Horno | null>(null);
   protected readonly aEliminar = signal<Horno | null>(null);
 
+  /** Solo los hornos de papa (línea con Bodega) llevan capacidad en bultos. */
+  protected readonly hornosConBodega = computed(() =>
+    this.hornos().filter((horno) => this.usaBodega(horno)),
+  );
+
   protected readonly formulario = this.fb.group({
     nombre: this.fb.nonNullable.control('', Validators.required),
     tipo_aceite: this.fb.control<string | null>(null),
@@ -591,12 +652,8 @@ export class HornosPage {
     linea_id: this.fb.control<number | null>(null),
     tanque_diametro_cm: this.fb.control<number | null>(null),
     litros_por_cm_manual: this.fb.control<number | null>(null),
-    capacidad_bultos_hora: this.fb.control<number | null>(null, [
-      Validators.required,
-      Validators.min(1),
-      Validators.max(9999),
-      Validators.pattern(/^\d+$/),
-    ]),
+    capacidad_bultos_hora: this.fb.control<number | null>(null, VALIDA_BULTOS),
+    capacidad_kg_hora: this.fb.control<number | null>(null, VALIDA_KG),
     apto_exportacion: this.fb.nonNullable.control(false),
     activo: this.fb.nonNullable.control(true),
   });
@@ -611,8 +668,52 @@ export class HornosPage {
     ]),
   });
 
+  private readonly lineaIdElegida = toSignal(this.formulario.controls.linea_id.valueChanges, {
+    initialValue: null,
+  });
+
+  private readonly lineaElegida = computed(() =>
+    this.lineas().find((linea) => linea.id === this.lineaIdElegida()),
+  );
+
+  /** La papa (línea con Bodega) va en bultos/h; las demás líneas en kg/h. */
+  protected readonly capacidadEnKg = computed(() => {
+    const linea = this.lineaElegida();
+    return linea !== undefined && !linea.usa_bodega;
+  });
+
+  protected readonly materiaPrimaElegida = computed(
+    () => this.lineaElegida()?.nombre_materia_prima ?? 'materia prima',
+  );
+
   constructor() {
+    // Poka-yoke: solo se exige la capacidad en la unidad de la línea elegida.
+    effect(() => {
+      const enKg = this.capacidadEnKg();
+      const { capacidad_bultos_hora: bultos, capacidad_kg_hora: kg } = this.formulario.controls;
+      const requerido = [Validators.required];
+      bultos.setValidators([...(enKg ? [] : requerido), ...VALIDA_BULTOS]);
+      kg.setValidators([...(enKg ? requerido : []), ...VALIDA_KG]);
+      bultos.updateValueAndValidity({ emitEvent: false });
+      kg.updateValueAndValidity({ emitEvent: false });
+    });
     this.cargar();
+  }
+
+  /** Horno sin línea conocida (API vieja) se trata como papa. */
+  protected usaBodega(horno: Horno): boolean {
+    return horno.linea?.usa_bodega ?? true;
+  }
+
+  protected capacidadDe(horno: Horno): { valor: number; unidad: string } | null {
+    if (this.usaBodega(horno)) {
+      return horno.capacidad_bultos_hora === null
+        ? null
+        : { valor: Number(horno.capacidad_bultos_hora), unidad: 'bultos/h' };
+    }
+    return horno.capacidad_kg_hora == null
+      ? null
+      : { valor: Number(horno.capacidad_kg_hora), unidad: 'kg/h' };
   }
 
   private cargar(): void {
@@ -632,8 +733,9 @@ export class HornosPage {
         if (!this.editando() && this.formulario.controls.linea_id.value === null) {
           this.formulario.controls.linea_id.setValue(this.lineaPorDefecto());
         }
-        if (this.esSupervisor() && hornos.length > 0) {
-          const primero = hornos[0];
+        const deBodega = hornos.filter((horno) => this.usaBodega(horno));
+        if (this.esSupervisor() && deBodega.length > 0) {
+          const primero = deBodega[0];
           this.formCapacidad.setValue({
             horno_id: primero.id,
             capacidad_bultos_hora:
@@ -664,6 +766,7 @@ export class HornosPage {
       litros_por_cm_manual: horno.litros_por_cm_manual ? Number(horno.litros_por_cm_manual) : null,
       capacidad_bultos_hora:
         horno.capacidad_bultos_hora === null ? null : Number(horno.capacidad_bultos_hora),
+      capacidad_kg_hora: horno.capacidad_kg_hora == null ? null : Number(horno.capacidad_kg_hora),
       apto_exportacion: horno.apto_exportacion,
       activo: horno.activo,
     });
@@ -675,6 +778,7 @@ export class HornosPage {
     this.formulario.reset({
       nombre: '',
       capacidad_bultos_hora: null,
+      capacidad_kg_hora: null,
       apto_exportacion: false,
       activo: true,
       linea_id: this.lineaPorDefecto(),
@@ -693,6 +797,7 @@ export class HornosPage {
     }
 
     const valores = this.formulario.getRawValue();
+    const enKg = this.capacidadEnKg();
     const datos: HornoGuardar = {
       nombre: valores.nombre,
       activo: valores.activo,
@@ -705,8 +810,13 @@ export class HornosPage {
       litros_por_cm_manual: valores.litros_por_cm_manual
         ? Number(valores.litros_por_cm_manual)
         : null,
+      // Solo viaja la capacidad en la unidad de la línea; la otra va vacía.
       capacidad_bultos_hora:
-        valores.capacidad_bultos_hora === null ? null : Number(valores.capacidad_bultos_hora),
+        enKg || valores.capacidad_bultos_hora === null
+          ? null
+          : Number(valores.capacidad_bultos_hora),
+      capacidad_kg_hora:
+        enKg && valores.capacidad_kg_hora !== null ? Number(valores.capacidad_kg_hora) : null,
       categoria_ids: this.categoriasElegidas(),
     };
 

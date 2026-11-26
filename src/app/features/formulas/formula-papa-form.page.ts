@@ -491,6 +491,7 @@ export class FormulaPapaFormPage {
   /** Bultos por hora que procesan los hornos activos (hoy 50). */
   protected readonly capacidadHorno = computed(() => {
     const capacidades = this.hornos()
+      .filter((horno) => horno.linea?.usa_bodega ?? true)
       .map((horno) => Number(horno.capacidad_bultos_hora ?? 0))
       .filter((capacidad) => capacidad > 0);
     return capacidades.length > 0 ? Math.max(...capacidades) : null;
