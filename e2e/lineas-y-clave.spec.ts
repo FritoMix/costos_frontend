@@ -242,21 +242,32 @@ test('el administrador recupera su acceso con un código de recuperación', asyn
   }
 });
 
-test('un fallo al pedir la temporal permite reintentar con el mismo usuario', async ({ page }) => {
-  await page.goto('/entrar');
-  await page.getByTestId('olvide-clave').click();
-  const enviar = page.getByTestId('olvide-enviar');
-  const usuario = page.getByTestId('olvide-usuario');
-  await expect(enviar).toBeDisabled();
-  await usuario.fill('persona_de_prueba');
-  const ruta = '**/api/v1/auth/olvide-password';
-  await page.route(ruta, (route) => route.fulfill({
-    status: 429, headers: { 'Retry-After': '30' }, body: '',
-  }), { times: 1 });
-  await enviar.click();
-  await expect(page.getByTestId('aviso-error')).toContainText('30 segundos');
-  await expect(usuario).toHaveValue('persona_de_prueba');
-  await enviar.click();
-  await expect(page.getByRole('status')).toContainText('contraseña temporal');
-  await expect(page.getByTestId('aviso-error')).toHaveCount(0);
+test.describe('reintento desde el login móvil', () => {
+  // Este caso simula una respuesta de red antes de reintentar contra la API real.
+  test.use({ serviceWorkers: 'block' });
+
+  test('un fallo al pedir la temporal permite reintentar con el mismo usuario', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto('/entrar');
+    const enlace = page.getByRole('link', { name: '¿Olvidaste tu contraseña?' });
+    await expect(enlace).toHaveAttribute('href', '/olvide-clave');
+    expect((await enlace.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+    await enlace.click();
+    await expect(page.getByRole('heading', { name: '¿Olvidaste tu contraseña?' })).toBeVisible();
+    const enviar = page.getByTestId('olvide-enviar');
+    const usuario = page.getByTestId('olvide-usuario');
+    await enviar.click();
+    await expect(page.getByTestId('aviso-error')).toContainText('Escribe tu usuario');
+    await usuario.fill('persona_de_prueba');
+    const ruta = '**/api/v1/auth/olvide-password';
+    await page.route(ruta, (route) => route.fulfill({
+      status: 429, headers: { 'Retry-After': '30' }, body: '',
+    }), { times: 1 });
+    await enviar.click();
+    await expect(page.getByTestId('aviso-error')).toContainText('30 segundos');
+    await expect(usuario).toHaveValue('persona_de_prueba');
+    await enviar.click();
+    await expect(page.getByRole('status')).toContainText('contraseña temporal');
+    await expect(page.getByTestId('aviso-error')).toHaveCount(0);
+  });
 });

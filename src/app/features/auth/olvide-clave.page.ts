@@ -110,7 +110,7 @@ type Modo = 'aviso' | 'codigo';
               />
             </div>
             <app-boton tipo="submit" [anchoCompleto]="true" [cargando]="enviando()"
-              [deshabilitado]="!usuario().trim()" testId="olvide-enviar">
+              testId="olvide-enviar">
               Pedir contraseña temporal
             </app-boton>
           </form>
@@ -243,7 +243,11 @@ export class OlvideClavePage {
 
   protected pedir(): void {
     const nombre = this.usuario().trim();
-    if (!nombre || this.enviando()) return;
+    if (this.enviando()) return;
+    if (!nombre) {
+      this.error.set('Escribe tu usuario de planta para pedir una contraseña temporal.');
+      return;
+    }
     this.enviando.set(true);
     this.error.set(null);
     this.auth.olvidePassword(nombre).subscribe({
