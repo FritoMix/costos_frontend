@@ -22,7 +22,11 @@ export const erroresInterceptor: HttpInterceptorFn = (peticion, siguiente) => {
   return siguiente(peticion).pipe(
     catchError((error: HttpErrorResponse) => {
       // Estos formularios públicos conservan los datos y muestran el error en la propia página.
-      if (peticion.url.endsWith('/auth/olvide-password') || peticion.url.endsWith('/auth/recuperar-con-codigo')) {
+      if (
+        peticion.url.endsWith('/auth/olvide-password') ||
+        peticion.url.endsWith('/auth/recuperar-con-codigo') ||
+        peticion.url.includes('/auth/recuperar-por-correo')
+      ) {
         return throwError(() => error);
       }
       const mensaje = extraerMensaje(error);
