@@ -14,6 +14,7 @@ import type {
   RecepcionGuardar,
   RegistroHorno,
   RegistroHornoGuardar,
+  ValoresBatch,
   ResumenInicioProduccion,
 } from '../modelos/produccion.model';
 
@@ -120,6 +121,13 @@ export class OrdenesService {
     return this.http.put<RegistroHorno>(
       `${this.base}/${ordenId}/registros-horno/${registroId}`,
       datos,
+    );
+  }
+
+  corregirBatch(ordenId: number, registroId: number, anterior: ValoresBatch, nuevo: ValoresBatch) {
+    return this.http.patch<RegistroHorno>(
+      `${this.base}/${ordenId}/registros-horno/${registroId}/batch`,
+      { anterior, nuevo },
     );
   }
 

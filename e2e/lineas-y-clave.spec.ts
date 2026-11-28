@@ -357,7 +357,9 @@ test('correo de recuperación: el administrador activa el envío y aparece «Por
   }
 });
 
-test('horno batch: un solo registro por orden con baches y litros de aceite', async ({ page }) => {
+const pruebaBatch = test.extend({ serviceWorkers: 'block' });
+
+pruebaBatch('horno batch: un solo registro por orden con baches y litros de aceite', async ({ page }) => {
   await entrar(page);
   await expect(page).toHaveURL(/\/inicio/);
 
@@ -403,7 +405,7 @@ test('horno batch: un solo registro por orden con baches y litros de aceite', as
     await api(page, 'post', `/ordenes/${ordenId}/iniciar`);
 
     await page.goto('/horno');
-    await expect(page.getByTestId(`registrar-tanda-${ordenId}`)).toContainText('Registrar producción');
+    await expect(page.getByTestId(`registrar-tanda-${ordenId}`)).toContainText('Abrir registro de producción');
 
     await page.goto(`/horno/${ordenId}`);
     await expect(page.getByTestId('paso-horario')).toContainText('toda la orden');
@@ -453,6 +455,40 @@ test('horno batch: un solo registro por orden con baches y litros de aceite', as
     // Una sola vez por orden.
     await page.goto(`/horno/${ordenId}`);
     await expect(page.getByTestId('horno-orden-completa')).toBeVisible();
+    await page.getByRole('button', { name: 'Corregir registro' }).click();
+    const baches = page.getByLabel('Cantidad de baches');
+    const litros = page.getByLabel('Aceite agregado (L)');
+    const guardar = page.getByRole('button', { name: 'Guardar corrección' });
+    await expect(baches).toHaveValue('12');
+    await expect(litros).toHaveValue('40');
+    await expect(guardar).toBeDisabled();
+    await baches.fill('0');
+    await guardar.click();
+    await expect(baches).toBeFocused();
+
+    // El contrato HTTP real se verifica con PostgreSQL en el CI del backend.
+    // Aquí se controla el conflicto para verificar la recuperación desde la pantalla.
+    await page.route('**/registros-horno/*/batch', (ruta) => ruta.fulfill({ status: 409, json: {} }));
+    await baches.fill('14');
+    await guardar.click();
+    await expect(page.getByText('Otra persona corrigió el registro.', { exact: false })).toBeVisible();
+    await page.getByRole('button', { name: 'Cargar registro actual' }).click();
+    await page.getByRole('button', { name: 'Corregir registro' }).click();
+    await expect(baches).toHaveValue('12');
+    await page.unroute('**/registros-horno/*/batch');
+    await page.route('**/registros-horno/*/batch', async (ruta) => {
+      expect(ruta.request().method()).toBe('PATCH');
+      expect(ruta.request().postDataJSON()).toEqual({
+        anterior: { cantidad_baches: 12, aceite_agregado_litros: 40 },
+        nuevo: { cantidad_baches: 14, aceite_agregado_litros: 42.5 },
+      });
+      await ruta.fulfill({ json: { ...detalle.registros_horno[0], cantidad_baches: 14, aceite_agregado_litros: '42.50' } });
+    });
+    await baches.fill('14');
+    await litros.fill('42.5');
+    await guardar.click();
+    await expect(page.getByText('Corrección guardada.')).toBeVisible();
+    await expect(page.getByText('14 baches · 42.50 L de aceite')).toBeVisible();
   } finally {
     if (ordenId) {
       await page.request.post(`/api/v1/ordenes/${ordenId}/cancelar`);
