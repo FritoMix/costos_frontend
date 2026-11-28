@@ -21,9 +21,21 @@ interface ConId {
 
 async function entrar(page: Page, usuario = USUARIO, clave = PASSWORD): Promise<void> {
   await page.goto('/entrar');
-  await page.getByTestId('login-usuario').fill(usuario);
-  await page.getByTestId('login-password').fill(clave);
-  await page.getByTestId('login-submit').click();
+  // Varias cuentas de prueba comparten la IP y el límite de acceso del proxy.
+  for (let intento = 1; intento <= 4; intento++) {
+    await page.getByTestId('login-usuario').fill(usuario);
+    await page.getByTestId('login-password').fill(clave);
+    const [respuesta] = await Promise.all([
+      page.waitForResponse((r) => r.request().method() === 'POST' && new URL(r.url()).pathname === '/api/v1/auth/login'),
+      page.getByTestId('login-submit').click(),
+    ]);
+    if (respuesta.status() !== 429 || intento === 4) {
+      expect(respuesta.status(), 'Respuesta del inicio de sesión').toBe(200);
+      return;
+    }
+    const segundos = Number(respuesta.headers()['retry-after']);
+    await new Promise((resolver) => setTimeout(resolver, (segundos > 0 ? segundos : 6) * 1000));
+  }
 }
 
 async function api<T>(page: Page, metodo: 'get' | 'post' | 'put' | 'delete', ruta: string, data?: unknown): Promise<T> {
