@@ -1,6 +1,6 @@
 import { MedicionTurnoService } from '../../core/servicios/medicion-turno.service';
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
@@ -21,7 +21,9 @@ import { seguirCambios } from '../../core/guards/cambios.guard';
 
 import type { ReferenciaPapa } from '../../core/modelos/bodega.model';
 import type { ItemCatalogo } from '../../core/modelos/catalogos.model';
-import type { DetalleOrden } from '../../core/modelos/produccion.model';
+import { CorreccionBatchComponent } from './correccion-batch.component';
+import { AuthService } from '../../core/servicios/auth.service';
+import type { DetalleOrden, RegistroHorno } from '../../core/modelos/produccion.model';
 import { BodegaService } from '../../core/servicios/bodega.service';
 import { CatalogosService } from '../../core/servicios/catalogos.service';
 import { NotificacionesService } from '../../core/servicios/notificaciones.service';
@@ -68,6 +70,7 @@ import { IconoComponent } from '../../ui/icono.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.inert]': 'enviando() ? "" : null' },
   imports: [IconoComponent, 
+    CorreccionBatchComponent,
     PasoMezclaHornoComponent,
     PasoResumenHornoComponent,
     PasoHorarioHornoComponent,
@@ -85,6 +88,16 @@ import { IconoComponent } from '../../ui/icono.component';
 })
 export class HornoAsistentePage {
   readonly id = input.required<string>();
+
+  protected readonly auth = inject(AuthService);
+  private readonly correccion = viewChild(CorreccionBatchComponent);
+
+  protected actualizarRegistro(registro: RegistroHorno): void {
+    this.detalle.update((datos) => datos && ({
+      ...datos,
+      registros_horno: datos.registros_horno.map((r) => r.id === registro.id ? registro : r),
+    }));
+  }
 
   private readonly mediciones = inject(MedicionTurnoService);
   private readonly ordenes = inject(OrdenesService);
@@ -397,11 +410,11 @@ export class HornoAsistentePage {
   );
 
   operacionPendiente(): boolean {
-    return this.proteccion.ocupado();
+    return this.proteccion.ocupado() || !!this.correccion()?.ocupado();
   }
 
   cambiosPendientes(): boolean {
-    return this.proteccion.pendientes();
+    return this.proteccion.pendientes() || !!this.correccion()?.pendiente();
   }
 
   constructor() {

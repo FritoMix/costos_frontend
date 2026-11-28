@@ -176,6 +176,11 @@ export interface RegistroReferenciaGuardar {
   cantidad_bultos: number;
 }
 
+export interface ValoresBatch {
+  cantidad_baches: number;
+  aceite_agregado_litros: number;
+}
+
 export interface RegistroHornoGuardar {
   /** La app pone la hora de la tanda n; solo las órdenes sin hora de inicio la envían. */
   numero_tanda?: number | null;

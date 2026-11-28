@@ -74,7 +74,9 @@
           Producción de horno completa
         </h2>
         <p class="mx-auto mt-2 max-w-md text-sm font-medium text-slate-500">
-          @if (minutosDisponibles() === 0) {
+          @if (batch()) {
+            Ya se guardó el registro de producción de este horno.
+          } @else if (minutosDisponibles() === 0) {
             Esta orden ya tiene registradas sus
             {{ datos.orden.horas_produccion }}
             {{ datos.orden.horas_produccion === 1 ? 'hora' : 'horas' }}
@@ -84,6 +86,13 @@
             se puede agregar otra tanda.
           }
         </p>
+        @if (batch() && datos.orden.estado === 'en_produccion' && datos.registros_horno.length === 1) {
+          @let registro = datos.registros_horno[0];
+          @if (registro.cantidad_baches != null && (auth.esAdmin() || auth.usuario()?.id === registro.usuario.id)) {
+            <app-correccion-batch [registro]="registro" (guardado)="actualizarRegistro($event)"
+              (recargado)="detalle.set($event)" />
+          }
+        }
         <div class="mt-6 flex flex-wrap justify-center gap-3">
           <a
             routerLink="/horno"
